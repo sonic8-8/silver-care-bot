@@ -12,9 +12,11 @@ dist/
 dist-ssr/
 coverage/
 build/
+**/build/
 
 # Tooling cache
 .vite/
+.gradle/
 .cache/
 .eslintcache
 
