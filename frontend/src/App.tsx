@@ -1,45 +1,47 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Playground from './pages/Playground';
 
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // 5분
+            staleTime: 1000 * 60 * 5,
             retry: 1,
         },
     },
 });
 
+function HomePage() {
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            <main className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                        🤖 안심 가디언
+                    </h1>
+                    <p className="text-gray-500 mb-8">
+                        AI 반려로봇 보호자 웹앱
+                    </p>
+                    <Link
+                        to="/playground"
+                        className="inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition-colors"
+                    >
+                        🎨 Playground로 이동
+                    </Link>
+                </div>
+            </main>
+        </div>
+    );
+}
+
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
-                <div className="min-h-screen bg-gray-50 font-sans">
-                    <main className="flex items-center justify-center min-h-screen">
-                        <div className="text-center">
-                            <h1 className="text-display text-gray-900 mb-4">
-                                🤖 안심 가디언
-                            </h1>
-                            <p className="text-body text-gray-500">
-                                AI 반려로봇 보호자 웹앱
-                            </p>
-                            <div className="mt-8 p-6 bg-white rounded-lg shadow-sm">
-                                <p className="text-h3 text-gray-700 mb-2">
-                                    ✅ 프로젝트 설정 완료
-                                </p>
-                                <ul className="text-caption text-gray-500 space-y-1">
-                                    <li>• React 19 + TypeScript</li>
-                                    <li>• Tailwind CSS v3</li>
-                                    <li>• React Router v7</li>
-                                    <li>• TanStack Query v5</li>
-                                    <li>• Zustand v5</li>
-                                    <li>• Vitest + Playwright</li>
-                                    <li>• MSW 2.x</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </main>
-                </div>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/playground" element={<Playground />} />
+                </Routes>
             </BrowserRouter>
         </QueryClientProvider>
     );
