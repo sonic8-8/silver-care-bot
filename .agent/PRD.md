@@ -39,13 +39,17 @@
 | Accent | 웜 골드 | `#D4A574` |
 | Accent Light | 크림 | `#F5E6D3` |
 
-#### 로봇 LCD (피치 테마)
+#### 로봇 LCD (다크 시안 테마) - `lcd-impl.html` 기반
 | 용도 | 컬러 | 코드 |
 |------|------|------|
-| Primary | 피치 오렌지 | `#FFAB91` |
-| Secondary | 라이트 피치 | `#FFCCBC` |
-| Background | 크림 | `#FFF8F5` |
-| Text | 웜 브라운 | `#5D4E37` |
+| Background | 블랙 | `#000000` |
+| Eye | 시안 | `#22d3ee` |
+| Eye Glow | 시안 글로우 | `rgba(34, 211, 238, 0.6)` |
+| Primary | 토스 블루 | `#3182F6` |
+| Safe | 그린 | `#00C471` |
+| Danger | 레드 | `#F04452` |
+| Text | 화이트 | `#ffffff` |
+| Text Sub | 그레이 | `#9ca3af` |
 
 #### 공통 시맨틱 컬러
 | 상태 | 컬러 | 코드 | 배경 |
@@ -102,17 +106,85 @@
 
 ### 3.2 로봇 LCD 화면 (로봇 로그인 시)
 
-> **참고**: ui-implementation-plan.md Section 4 기준
+> **참고**: `lcd-impl.html` 기반 (Framer Motion 적용)
 
-| # | 화면 | 트리거 | 설명 |
-|---|------|--------|------|
-| 1 | 대기 | 평상시 | 표정 + 대사 + 시간 + 다음 일정 |
-| 2 | 인사 | 기상/귀가 | 날씨 + 일정 안내 |
-| 3 | 복약 알림 | 약 시간 | 초대형 버튼 (응, 먹었어~ / 아직이야~) |
-| 4 | 일정 알림 | 일정 N분 전 | 일정 카드 + 확인 버튼 |
-| 5 | 대화/듣는 중 | 음성 인식 | 🎤 + 파동 애니메이션 |
-| 6 | 긴급/낙상 감지 | 낙상 감지 | 초대형 버튼 (괜찮아~ / 도와줘!) |
-| 7 | 충전 중 | 도킹 시 | 충전 상태 + 대사 |
+#### 3.2.1 모드 정의 (RobotMode)
+
+| # | 모드 | 트리거 | 표정 | 눈 위치 | UI 요소 |
+|---|------|--------|------|---------|---------|
+| 1 | IDLE | 평상시 | neutral | 중앙 | 메시지 + 다음 일정 카드 |
+| 2 | GREETING | 기상/귀가 | happy | 상단 | 인사말 + 날씨 정보 |
+| 3 | MEDICATION | 약 시간 | neutral | 상단 | 약 아이콘(bounce) + 초대형 버튼 2개 |
+| 4 | SCHEDULE | 일정 N분 전 | surprised | 상단 | 일정 카드 + 확인 버튼 |
+| 5 | LISTENING | 음성 인식 | happy | 상단 | 파동 애니메이션 (3개 막대) |
+| 6 | EMERGENCY | 낙상 감지 | surprised | 상단 | 배경 점멸 + 119 버튼 |
+| 7 | SLEEP | 도킹/충전 | sleep | 중앙 | 충전 상태 메시지 |
+
+#### 3.2.2 표정 시스템 (emotion variants)
+
+```typescript
+type emotion = 'neutral' | 'happy' | 'angry' | 'surprised' | 'sleep' | 'suspicious';
+```
+
+| 표정 | 눈 높이 | 눈 너비 | borderRadius | 설명 |
+|------|---------|---------|--------------|------|
+| neutral | 240px | 180px | 50% | 기본 상태 |
+| happy | 160px | 200px | 40% 40% 60% 60% | 웃는 눈 |
+| surprised | 280px | 200px | 50% + scale 1.1 | 놀란 눈 |
+| sleep | 15px | 220px | 10px | 감은 눈 |
+| blink | 8px | 200px | 50% | 깜빡임 |
+
+#### 3.2.3 인터랙티브 요소
+
+**자동 깜빡임**:
+- 2-5초 랜덤 간격
+- 150ms 깜빡임 지속
+- SLEEP 모드 제외
+
+**마우스 추적**:
+- 눈 위치 ±20px 이동
+- sleep, blink, suspicious 상태 제외
+
+**화난 표정**:
+- 눈 회전 (좌: -15°, 우: +15°)
+- 미간 찌푸리기 효과
+
+#### 3.2.4 상태바 (Top Bar)
+
+```
+[시계 HH:MM] ─────────────── [WiFi 연결됨] [배터리 85%]
+```
+
+- 시계: 1초마다 업데이트
+- 배터리/WiFi: 실시간 상태
+
+#### 3.2.5 컨테이너 레이아웃
+
+| 모드 | 눈 위치 | 눈 크기 |
+|------|---------|---------|
+| IDLE, SLEEP | 중앙 (y: 0) | 100% |
+| GREETING, MEDICATION, SCHEDULE, LISTENING, EMERGENCY | 상단 (y: -120) | 60% |
+
+#### 3.2.6 모드별 UI 상세
+
+**IDLE**:
+- 메시지: "할머니~ 오늘도 좋은 하루 되세요!"
+- 하단: 다음 일정 카드 (cyan 테마)
+
+**MEDICATION**:
+- 약 아이콘 3개 bounce 애니메이션
+- 버튼: "응, 먹었어~" (green), "아직이야" (gray)
+- 버튼 높이: 80px+
+
+**EMERGENCY**:
+- 배경: 빨간색 점멸 (0.8초 간격)
+- 버튼: "119 구조 요청" (빨강), "괜찮아요, 오인 감지" (흰색)
+- 전체 화면 긴급 모드
+
+**LISTENING**:
+- 파동 애니메이션: 3개 막대
+- 높이 변화: 10px ↔ 40px
+- 반복 지속시간: 1초
 
 ---
 
@@ -129,7 +201,13 @@
 - 음성 호출어(Wake Word)로 사용
 - LCD 및 보호자 앱에 반영
 
-### 4.3 접근성
+### 4.3 로봇 LCD 애니메이션
+- Framer Motion 기반 동적 표정 시스템
+- 자동 깜빡임, 마우스 추적으로 생동감 부여
+- 모드 전환 시 부드러운 애니메이션 (spring transition)
+- 긴급 상황 시 배경 점멸로 즉각적인 주의 환기
+
+### 4.4 접근성
 | 앱 | 기준 | 세부 |
 |----|------|------|
 | 보호자 웹앱 | WCAG AA | 대비율 4.5:1, 터치 48px |
@@ -144,6 +222,7 @@
 | Framework | React 19 + Vite |
 | Language | TypeScript 5.x |
 | Styling | Tailwind CSS 3.x + cva + tailwind-merge |
+| Animation | Framer Motion 11.x |
 | Icons | Lucide React |
 | State (Server) | TanStack Query |
 | State (Client) | Zustand |

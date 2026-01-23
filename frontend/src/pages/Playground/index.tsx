@@ -4,13 +4,14 @@
  */
 import { useState, useEffect } from 'react';
 import { useThemeStore } from '../../shared/store/themeStore';
+import RobotLCD from './RobotLCD';
 import {
   Bell, ChevronRight, Home, Bot, Pill, Calendar,
   Settings, User, LogOut, Battery, Wifi, AlertCircle,
   CheckCircle2, Plus, ChevronLeft, Mail, Lock,
   Phone, MapPin, Activity, Camera, ArrowRight,
   Sofa, Utensils, Bed, Bath, Zap, Mic,
-  Monitor, X, CloudSun, List, StopCircle, Sun, Moon,
+  Monitor, X, CloudSun, List, Sun, Moon,
   FileText, BatteryCharging, Siren,
   Key, Hash, Hand, Flame, DoorClosed, Smile,
   Stethoscope, Sunrise
@@ -100,279 +101,6 @@ const SectionHeader = ({ title, action }: any) => (
   </div>
 );
 
-
-// ============================================
-// 🤖 Robot LCD Screens
-// ============================================
-const RobotFaceApp = ({ onLogout, isPreview = false, isLcd = false }: any) => {
-  const [mode, setMode] = useState('standby');
-
-  const SimControls = () => {
-    if (isPreview) return null;
-    return (
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-700 p-3 z-50 overflow-x-auto">
-        <div className="flex space-x-2 min-w-max justify-center px-4">
-          <button onClick={() => setMode('standby')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'standby' ? 'bg-primary-600 text-white' : 'bg-gray-700 text-gray-300'}`}>대기</button>
-          <button onClick={() => setMode('greeting')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'greeting' ? 'bg-primary-600 text-white' : 'bg-gray-700 text-gray-300'}`}>인사</button>
-          <button onClick={() => setMode('medication')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'medication' ? 'bg-peach text-white' : 'bg-gray-700 text-gray-300'}`}>복약</button>
-          <button onClick={() => setMode('schedule')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'schedule' ? 'bg-primary-600 text-white' : 'bg-gray-700 text-gray-300'}`}>일정</button>
-          <button onClick={() => setMode('listening')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'listening' ? 'bg-primary-600 text-white' : 'bg-gray-700 text-gray-300'}`}>듣기</button>
-          <button onClick={() => setMode('emergency')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'emergency' ? 'bg-danger text-white' : 'bg-gray-700 text-gray-300'}`}>긴급</button>
-          <button onClick={() => setMode('charging')} className={`px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold ${mode === 'charging' ? 'bg-warning text-white' : 'bg-gray-700 text-gray-300'}`}>충전</button>
-          <div className="w-px h-8 bg-gray-700 mx-2"></div>
-          <button onClick={onLogout} className="px-3 py-2.5 min-h-[48px] rounded-lg text-xs font-bold bg-gray-800 text-red-400 border border-red-900/50">종료</button>
-        </div>
-      </div>
-    );
-  };
-
-  const containerClass = isPreview
-    ? "h-full w-full bg-peach-bg text-peach-text flex flex-col items-center justify-center relative overflow-hidden font-sans scale-[0.8] origin-center"
-    : isLcd
-      ? "h-full w-full bg-peach-bg text-peach-text flex flex-col items-center justify-center relative overflow-hidden font-sans"
-      : "min-h-screen bg-peach-bg text-peach-text flex flex-col items-center justify-center relative overflow-hidden font-sans";
-
-  // ========================================
-  // 4.2 대기/기본 화면 (ui-implementation-plan.md)
-  // ========================================
-  if (mode === 'standby') {
-    return (
-      <div className={containerClass}>
-        {/* 상태바 */}
-        <div className="absolute top-6 right-6 flex items-center space-x-4 text-peach-text text-sm font-medium">
-          <div className="flex items-center space-x-1"><Battery size={18} /><span>85%</span></div>
-          <div className="flex items-center space-x-1"><Wifi size={18} /><span>연결됨</span></div>
-        </div>
-        <div className="absolute top-6 left-6 flex items-center space-x-2 text-peach-text text-sm font-medium">
-          <CloudSun size={20} /><span>24°C</span>
-        </div>
-
-        {/* 표정 */}
-        <div className="text-[120px] mb-4 cursor-pointer select-none" onClick={() => setMode('greeting')}>😊</div>
-
-        {/* 대사 */}
-        <p className="text-2xl font-medium mb-6 text-center">"할머니~ 오늘도 좋은 하루 되세요!"</p>
-
-        {/* 시간 */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold tracking-tight">오전 10:23</h1>
-          <p className="text-xl font-medium opacity-70 mt-2">1월 20일 (월)</p>
-        </div>
-
-        {/* 다음 일정 카드 */}
-        {!isPreview && (
-          <div className="bg-white/60 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/40 shadow-sm">
-            <div className="flex items-center space-x-3">
-              <Calendar size={24} className="text-peach" />
-              <div>
-                <p className="font-bold text-lg">다음 일정: 병원 방문</p>
-                <p className="text-sm opacity-70">오후 2:00</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.3 인사 화면 (기상/귀가)
-  // ========================================
-  if (mode === 'greeting') {
-    return (
-      <div className={containerClass}>
-        {/* 표정 + 태양 */}
-        <div className="text-center mb-4">
-          <div className="text-[60px]">☀️</div>
-          <div className="text-[100px] -mt-4">😊</div>
-        </div>
-
-        {/* 대사 */}
-        <h2 className="text-3xl font-bold mb-6 text-center">"할머니~ 잘 주무셨어요?"</h2>
-
-        {/* 날씨 정보 */}
-        <div className="bg-white/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/40 mb-6">
-          <div className="flex items-center space-x-2">
-            <CloudSun size={24} className="text-peach" />
-            <span className="font-medium text-lg">오늘 날씨: 맑음 -3°C</span>
-          </div>
-        </div>
-
-        {/* 일정 안내 */}
-        <p className="text-xl font-medium text-center opacity-80">"오늘 병원 가셔야 해요~ 2시에요!"</p>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.4 복약 알림 화면
-  // ========================================
-  if (mode === 'medication') {
-    return (
-      <div className={containerClass}>
-        {/* 약 아이콘 */}
-        <div className="text-[80px] mb-4">💊💊💊</div>
-
-        {/* 대사 */}
-        <h2 className="text-3xl font-bold mb-2 text-center">"할머니~ 약 드실 시간이에요!"</h2>
-        <p className="text-xl opacity-80 font-medium mb-8">아침약 (고혈압, 당뇨)</p>
-
-        {/* 초대형 버튼 2개 (80px+) */}
-        <div className="flex space-x-4 w-full max-w-md px-4">
-          <button className="flex-1 min-h-[80px] py-5 text-2xl font-bold rounded-2xl bg-safe text-white shadow-lg active:scale-95 transition-transform">
-            응, 먹었어~
-          </button>
-          <button className="flex-1 min-h-[80px] py-5 text-2xl font-bold rounded-2xl bg-gray-300 text-gray-700 shadow-lg active:scale-95 transition-transform">
-            아직이야~
-          </button>
-        </div>
-
-        {/* 안내 */}
-        <p className="text-sm opacity-60 mt-6">※ 버튼을 눌러 알려주세요</p>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.5 일정 알림 화면 (신규)
-  // ========================================
-  if (mode === 'schedule') {
-    return (
-      <div className={containerClass}>
-        {/* 일정 아이콘 */}
-        <div className="text-[80px] mb-4">📅</div>
-
-        {/* 대사 */}
-        <h2 className="text-3xl font-bold mb-6 text-center">"할머니~ 곧 일정이 있어요!"</h2>
-
-        {/* 일정 카드 */}
-        <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 w-full max-w-md mx-4 border border-white/40 shadow-sm space-y-4">
-          <div className="flex items-center space-x-3">
-            <Stethoscope size={28} className="text-peach" />
-            <span className="text-2xl font-bold">병원 가는 날이에요~</span>
-          </div>
-          <div className="space-y-2 text-lg pl-2">
-            <p className="flex items-center"><MapPin size={20} className="mr-2 text-peach" /> 서울대병원 내과</p>
-            <p className="flex items-center"><Calendar size={20} className="mr-2 text-peach" /> 오후 2:00 (2시간 후)</p>
-            <p className="flex items-center"><FileText size={20} className="mr-2 text-peach" /> 준비물: 신분증, 의료보험증</p>
-          </div>
-        </div>
-
-        {/* 확인 버튼 */}
-        <button className="mt-8 min-h-[80px] px-12 py-5 text-2xl font-bold rounded-2xl bg-safe text-white shadow-lg active:scale-95 transition-transform">
-          응, 알겠어~
-        </button>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.6 대화/듣는 중 화면 (신규)
-  // ========================================
-  if (mode === 'listening') {
-    return (
-      <div className={containerClass}>
-        {/* 마이크 + 파동 애니메이션 */}
-        <div className="relative flex items-center justify-center mb-8">
-          <div className="absolute w-40 h-40 rounded-full bg-peach/20 animate-ping"></div>
-          <div className="absolute w-32 h-32 rounded-full bg-peach/30 animate-pulse"></div>
-          <div className="relative w-24 h-24 rounded-full bg-peach flex items-center justify-center shadow-lg">
-            <Mic size={48} className="text-white" />
-          </div>
-        </div>
-
-        {/* 대사 */}
-        <h2 className="text-3xl font-bold mb-4 text-center">"이야기를 듣는 중이에요..."</h2>
-        <p className="text-xl opacity-60">(파동 애니메이션)</p>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.7 긴급/낙상 감지 화면
-  // ========================================
-  if (mode === 'emergency') {
-    return (
-      <div className={`${containerClass} !bg-danger text-white`}>
-        {/* 점멸 효과 */}
-        <div className="absolute inset-0 bg-red-900/50 animate-pulse"></div>
-
-        <div className="relative z-10 flex flex-col items-center text-center p-6">
-          {/* 경고 아이콘 */}
-          <div className="text-[80px] mb-4">🚨🚨🚨</div>
-
-          {/* 대사 */}
-          <h1 className="text-4xl font-extrabold mb-8">"할머니! 괜찮으세요?!"</h1>
-
-          {/* 초대형 버튼 2개 */}
-          <div className="w-full max-w-sm space-y-4">
-            <button className="w-full min-h-[80px] py-5 text-2xl font-bold rounded-2xl bg-safe text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center">
-              <span className="text-3xl mr-2">😊</span> 괜찮아~
-            </button>
-            <button className="w-full min-h-[80px] py-5 text-2xl font-bold rounded-2xl bg-white text-danger shadow-lg active:scale-95 transition-transform flex items-center justify-center">
-              <span className="text-3xl mr-2">🚨</span> 도와줘!
-            </button>
-          </div>
-
-          {/* 안내 */}
-          <p className="text-sm opacity-80 mt-8">※ 30초 내 응답 없으면 자동으로 보호자 알림</p>
-        </div>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  // ========================================
-  // 4.8 충전 중 화면
-  // ========================================
-  if (mode === 'charging') {
-    return (
-      <div className={`${containerClass} !bg-gray-900 !text-white`}>
-        {/* 시간 */}
-        <p className="absolute top-6 left-1/2 -translate-x-1/2 text-xl font-medium opacity-80">오후 11:30</p>
-
-        <div className="flex flex-col items-center justify-center">
-          {/* 표정 */}
-          <div className="text-[100px] mb-4">😴</div>
-
-          {/* 대사 */}
-          <h2 className="text-2xl font-bold mb-6 text-center">"할머니~ 저 충전할게요"</h2>
-
-          {/* 충전 정보 */}
-          <div className="bg-gray-800 rounded-2xl px-8 py-4 border border-gray-700 mb-6">
-            <div className="flex items-center space-x-3 mb-2">
-              <BatteryCharging size={24} className="text-safe" />
-              <div className="w-48 h-3 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full w-[75%] bg-safe animate-pulse"></div>
-              </div>
-              <span className="font-bold">75%</span>
-            </div>
-            <p className="text-sm text-gray-400 text-center">충전 완료 예상: 오전 6:00</p>
-          </div>
-
-          {/* 대사 2 */}
-          <p className="text-xl font-medium opacity-80">"안녕히 주무세요 💤"</p>
-        </div>
-
-        <SimControls />
-      </div>
-    );
-  }
-
-  return null;
-};
-
 // ============================================
 // 📱 Guardian App Screens
 // ============================================
@@ -411,17 +139,23 @@ const LoginScreen = ({ onLogin, onSignup }: any) => {
             <Input label="이메일" type="email" value="worker@toss.im" icon={<Mail size={18} />} />
             <Input label="비밀번호" type="password" value="12341234" icon={<Lock size={18} />} />
             <div className="pt-2"><Button onClick={() => onLogin('guardian')}>로그인</Button></div>
-            <div className="flex justify-center items-center space-x-2 mt-4">
+            <div className="flex justify-center mt-2">
+              <button className="min-h-[44px] px-3 text-xs text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100">비밀번호를 잊으셨나요?</button>
+            </div>
+            <div className="flex justify-center items-center space-x-2">
               <span className="text-xs text-gray-400 dark:text-gray-300">계정이 없으신가요?</span>
-              <button onClick={onSignup} className="min-h-[48px] px-3 text-xs font-bold text-primary-500 hover:text-primary-600">회원가입</button>
+              <button onClick={onSignup} className="min-h-[44px] px-3 text-xs font-bold text-primary-500 hover:text-primary-600">회원가입</button>
             </div>
           </>
         ) : (
           <>
             <Input label="기기 시리얼 넘버" type="text" value="ROBOT-2026-X82" icon={<Hash size={18} />} />
             <Input label="인증 코드" type="password" value="9999" icon={<Key size={18} />} />
-            <div className="pt-2"><Button onClick={() => onLogin('robot')} variant="dark">로봇 시작하기</Button></div>
-            <p className="text-center text-xs text-gray-400 dark:text-gray-200 mt-4">로봇의 LCD 화면에서 실행되는 모드입니다.</p>
+            <div className="pt-2"><Button onClick={() => onLogin('robot')}>로봇 시작하기</Button></div>
+            <div className="h-[44px] mt-2"></div>
+            <div className="flex justify-center items-center min-h-[44px]">
+              <p className="text-xs text-gray-400 dark:text-gray-200">로봇의 LCD 화면에서 실행되는 모드입니다.</p>
+            </div>
           </>
         )}
       </div>
@@ -710,9 +444,10 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
             {[
               { label: '긴급 알림', desc: '낙상, 미활동 등 위험 감지', on: true },
               { label: '복약 알림', desc: '약 복용/미복용 확인', on: true },
-              { label: '일상 알림', desc: '기상, 식사 등 생활 패턴', on: false }
+              { label: '일상 알림', desc: '기상, 식사 등 생활 패턴', on: false },
+              { label: '이메일 알림', desc: '중요 알림을 이메일로 전송', on: false }
             ].map((item, i) => (
-              <div key={i} className={`flex justify-between items-center p-4 ${i !== 2 ? 'border-b border-gray-50 dark:border-gray-700' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
+              <div key={i} className={`flex justify-between items-center p-4 ${i !== 3 ? 'border-b border-gray-50 dark:border-gray-700' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">{item.label}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">{item.desc}</div>
@@ -723,6 +458,79 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* 로봇 설정 */}
+        <section>
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
+            <Bot size={18} className="mr-2 text-gray-500" /> 로봇 설정
+          </h3>
+          <Card className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-bold text-gray-900 dark:text-white text-[15px]">아침 약 알림 시간</div>
+                <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">매일 반복</div>
+              </div>
+              <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50">08:00</div>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white text-[15px]">저녁 약 알림 시간</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">매일 반복</div>
+                </div>
+                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50">19:00</div>
+              </div>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white text-[15px]">TTS 볼륨</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">음성 안내 크기</div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-32 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full w-[70%] bg-primary-500"></div>
+                  </div>
+                  <span className="font-bold text-gray-900 dark:text-white text-sm min-w-[35px]">70%</span>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white text-[15px]">순찰 시간대</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">자동 순찰 활성화</div>
+                </div>
+                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 text-sm">09:00-18:00</div>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* 긴급 연락처 */}
+        <section>
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
+            <Phone size={18} className="mr-2 text-gray-500" /> 긴급 연락처
+          </h3>
+          <Card className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-bold text-gray-900 dark:text-white text-[15px]">1순위</div>
+                <div className="text-sm text-gray-500 dark:text-gray-200 mt-0.5">010-1234-5678 (자녀)</div>
+              </div>
+              <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 hover:bg-primary-100">수정</button>
+            </div>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white text-[15px]">2순위</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-200 mt-0.5">010-8765-4321 (복지사)</div>
+                </div>
+                <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 hover:bg-primary-100">수정</button>
+              </div>
+            </div>
+          </Card>
         </section>
 
         <div className="pt-4 pb-8">
@@ -866,14 +674,6 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{r.n}</span>
               </button>
             ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
-            <button className="flex items-center justify-center min-h-[48px] py-3 rounded-xl font-bold text-sm bg-primary-50 text-primary-500 hover:bg-primary-100">
-              <Mic size={18} className="mr-2" />음성 메시지
-            </button>
-            <button className="flex items-center justify-center min-h-[48px] py-3 rounded-xl font-bold text-sm bg-danger-bg text-danger hover:bg-danger/10">
-              <StopCircle size={18} className="mr-2" />동작 정지
-            </button>
           </div>
         </Card>
         <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
@@ -1120,10 +920,6 @@ const EmergencyScreen = ({ onBack }: any) => (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="text-gray-400 dark:text-gray-300 text-sm font-medium">카메라 연결 중...</span>
           </div>
-          <div className="absolute top-3 left-3 flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full animate-pulse bg-danger"></div>
-            <span className="text-xs text-white font-bold bg-black/50 px-2 py-0.5 rounded">LIVE</span>
-          </div>
         </div>
         <div className="p-4 text-left bg-gray-800 border-t border-gray-700">
           <div className="flex justify-between items-center mb-1">
@@ -1156,7 +952,7 @@ const RobotLCDScreen = ({ onBack }: any) => (
           <div className="text-white text-[10px] font-bold px-2 py-0.5 rounded animate-pulse bg-danger">REC</div>
           <div className="text-white text-[10px] font-bold px-2 py-0.5 rounded bg-safe">BAT 85%</div>
         </div>
-        <RobotFaceApp isPreview={true} />
+        <RobotLCD isPreview={true} />
       </div>
       <p className="text-gray-400 dark:text-gray-300 text-sm mt-8 animate-pulse">실시간 로봇 화면 수신 중...</p>
     </div>
@@ -1279,7 +1075,7 @@ export default function Playground() {
 
       {authMode === 'none' && !showSignup && <LoginScreen onLogin={handleLogin} onSignup={() => setShowSignup(true)} />}
       {authMode === 'none' && showSignup && <SignupScreen onBack={() => setShowSignup(false)} onComplete={() => { setShowSignup(false); setAuthMode('guardian'); }} />}
-      {authMode === 'robot' && <RobotFaceApp onLogout={handleLogout} isLcd={true} />}
+      {authMode === 'robot' && <RobotLCD onLogout={handleLogout} />}
       {authMode === 'guardian' && <GuardianAppContainer onLogout={handleLogout} />}
     </div>
   );
