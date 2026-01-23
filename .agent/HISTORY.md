@@ -23,6 +23,53 @@
 -->
 
 <details>
+<summary>2026-01-23: LCD 화면 리팩토링 (ui-implementation-plan.md 동기화)</summary>
+
+### 📋 계획 (PLAN 요약)
+- LCD 화면을 ui-implementation-plan.md 와이어프레임에 정확히 맞춤
+- 손주 말투 ("할머니~") 통일
+- 어르신용 초대형 버튼 (80px+) 추가
+- 불필요한 화면 삭제, 누락 화면 추가
+
+### 🛠️ 작업 내용
+
+#### 1. 삭제된 화면
+| 화면 | 삭제 이유 |
+|------|----------|
+| 통화 (`call`) | ui-implementation-plan.md에 없음 |
+| 수면 (`sleep`) | ui-implementation-plan.md에 없음 |
+
+#### 2. 추가된 화면
+| 화면 | 설명 |
+|------|------|
+| 일정 알림 (`schedule`) | 📅 + 일정 카드 + 확인 버튼 |
+| 대화/듣는 중 (`listening`) | 🎤 + 파동 애니메이션 |
+
+#### 3. 수정된 화면
+| 화면 | 변경 사항 |
+|------|----------|
+| 대기 | 대사 추가, 다음 일정 카드, 상태바 텍스트 |
+| 인사 | 피치 배경, 날씨 정보, 일정 안내 |
+| 복약 | 손주 말투, 80px+ 버튼 2개 |
+| 긴급 | 손주 말투, 80px+ 버튼 2개, 안내 문구 |
+| 충전 | 손주 말투, 시간 표시, 대사 2개 |
+
+#### 4. 접근성 개선
+- 다크 모드 로봇 로그인 버튼: `dark:bg-primary-600` 추가
+- 미사용 import 정리 (PhoneOff, Video, PhoneIncoming)
+
+### 📁 수정된 파일
+- `frontend/src/pages/Playground/index.tsx` - RobotFaceApp 전면 재작성
+- `.agent/PRD.md` - LCD 화면 목록 7개로 업데이트
+- `.agent/ADR.md` - ADR-005 추가
+
+### ✅ 검증 결과
+- 브라우저에서 7개 LCD 화면 모두 정상 동작 확인
+- 스크린샷 및 녹화 완료
+
+</details>
+
+<details>
 <summary>2026-01-22: Phase 1 디자인 시스템 구축 완료</summary>
 
 ### 작업 내용

@@ -10,6 +10,7 @@ export default {
           DEFAULT: '#1E3A5F',   // 네이비 딥블루
           50: '#E8F4FC',        // 아이스 블루 (배경)
           100: '#C5E1F7',
+          400: '#6B9BD2',       // 다크 모드용 밝은 블루
           500: '#1E3A5F',       // 메인
           600: '#2D5A87',       // 호버
         },
@@ -55,7 +56,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Pretendard', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display': ['32px', { lineHeight: '1.2', fontWeight: '700' }],
