@@ -2,14 +2,15 @@
  * 🤖 RobotLCD - Framer Motion 기반 로봇 LCD 화면
  * lcd-impl.html 기반 구현
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Battery, Wifi, Pill, Phone, Clock, Activity, Smile
+    Battery, Wifi, Pill, Phone, Clock, Activity, Smile, CloudSun, Siren, Calendar
 } from 'lucide-react';
 
 // --- 타입 정의 ---
 type RobotMode = 'IDLE' | 'GREETING' | 'MEDICATION' | 'SCHEDULE' | 'LISTENING' | 'EMERGENCY' | 'SLEEP';
+type ChipVariant = 'info' | 'schedule' | 'medication' | 'listening';
 
 interface RobotState {
     mode: RobotMode;
@@ -17,6 +18,8 @@ interface RobotState {
     message?: string;
     subMessage?: string;
 }
+
+const IDLE_SCHEDULE_THRESHOLD_MINUTES = 90;
 
 // --- 다크 시안 테마 (PRD 기준) ---
 const COLORS = {
@@ -28,6 +31,13 @@ const COLORS = {
     safe: '#00C471',
     text: '#ffffff',
     textSub: '#9ca3af',
+};
+
+const CHIP_STYLES: Record<ChipVariant, string> = {
+    info: 'text-cyan-400 bg-cyan-950/30 border-cyan-800/50',
+    schedule: 'text-blue-400 bg-blue-950/30 border-blue-800/50',
+    medication: 'text-amber-400 bg-amber-950/30 border-amber-800/50',
+    listening: 'text-cyan-400 bg-cyan-950/20 border-cyan-800/40',
 };
 
 // --- Eye 컴포넌트 ---
@@ -81,6 +91,13 @@ const ScenarioButton = ({ label, onClick, danger }: any) => (
     </button>
 );
 
+const InfoChip = ({ icon: Icon, text, variant = 'info' }: any) => (
+    <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full backdrop-blur-sm border ${CHIP_STYLES[variant]}`}>
+        <Icon size={24} />
+        <span className="text-lcd-caption font-semibold">{text}</span>
+    </div>
+);
+
 // --- 메인 RobotLCD 컴포넌트 ---
 interface RobotLCDProps {
     onLogout?: () => void;
@@ -91,18 +108,40 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
     const [state, setState] = useState<RobotState>({
         mode: 'IDLE',
         emotion: 'neutral',
-        message: '"할머니~ 오늘도 좋은 하루 되세요!"',
-        subMessage: '다음 일정: 병원 방문 (오후 2:00)'
+        message: '',
+        subMessage: ''
     });
 
     const [isBlinking, setIsBlinking] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [transientMessage, setTransientMessage] = useState<string | null>(null);
+    const transientTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [idleSchedule] = useState(() => {
+        const now = new Date();
+        const nextScheduleAt = new Date(now);
+        nextScheduleAt.setHours(14, 0, 0, 0);
+        if (nextScheduleAt <= now) {
+            nextScheduleAt.setDate(nextScheduleAt.getDate() + 1);
+        }
+        return {
+            label: '다음 일정: 병원 방문 (오후 2:00)',
+            at: nextScheduleAt,
+        };
+    });
 
     // --- 시계 업데이트 ---
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (transientTimeoutRef.current) {
+                clearTimeout(transientTimeoutRef.current);
+            }
+        };
     }, []);
 
     // --- 자동 깜빡임 로직 (SLEEP 모드 제외) ---
@@ -126,31 +165,47 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
 
     // --- 마우스 추적 ---
     const handleMouseMove = (e: React.MouseEvent) => {
-        const x = (e.clientX / window.innerWidth) * 2 - 1;
-        const y = (e.clientY / window.innerHeight) * 2 - 1;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
         setMousePos({ x, y });
     };
 
     // --- 눈 모양 정의 (Variants) - 1024x600 7인치 LCD 최적화 ---
     const eyeVariants = {
-        neutral: { height: 140, width: 110, borderRadius: "50%" },
-        happy: { height: 100, width: 120, borderRadius: "40% 40% 60% 60%", y: -5 },
-        angry: { height: 130, width: 110, borderRadius: "100% 0% 50% 50%" },
-        surprised: { height: 160, width: 120, borderRadius: "50%", scale: 1.1 },
-        sleep: { height: 10, width: 130, borderRadius: "10px", opacity: 0.4 },
-        suspicious: { height: 60, width: 120, borderRadius: "10px 10px 50% 50%" },
-        blink: { height: 6, width: 120, borderRadius: "50%", scaleY: 0.5 },
+        neutral: { height: 240, width: 180, borderRadius: "50%" },
+        happy: { height: 160, width: 200, borderRadius: "40% 40% 60% 60%", y: -5 },
+        angry: { height: 220, width: 180, borderRadius: "100% 0% 50% 50%" },
+        surprised: { height: 240, width: 180, borderRadius: "50%" },
+        sleep: { height: 15, width: 220, borderRadius: "10px", opacity: 0.4 },
+        suspicious: { height: 120, width: 200, borderRadius: "10px 10px 50% 50%" },
+        blink: { height: 8, width: 200, borderRadius: "50%", scaleY: 0.5 },
     };
 
     // 모드에 따른 눈 위치 조절 - 1024x600 최적화 (SimControls 영역 고려)
     const containerVariants = {
-        center: { y: -60, scale: 1 },
-        top: { y: -140, scale: 0.45 },
+        center: { y: 0, scale: 1 },
+        top: { y: -120, scale: 0.6 },
     };
 
     const currentEyeVariant = isBlinking ? 'blink' : state.emotion;
     const isCompactMode = ['GREETING', 'MEDICATION', 'SCHEDULE', 'LISTENING', 'EMERGENCY'].includes(state.mode);
     const isEmergency = state.mode === 'EMERGENCY';
+    const minutesToIdleSchedule = Math.round((idleSchedule.at.getTime() - currentTime.getTime()) / 60000);
+    const shouldShowIdleSchedule = state.mode === 'IDLE'
+        && !transientMessage
+        && minutesToIdleSchedule >= 0
+        && minutesToIdleSchedule <= IDLE_SCHEDULE_THRESHOLD_MINUTES;
+
+    const showTransientMessage = (message: string, durationMs = 3000) => {
+        if (transientTimeoutRef.current) {
+            clearTimeout(transientTimeoutRef.current);
+        }
+        setTransientMessage(message);
+        transientTimeoutRef.current = setTimeout(() => {
+            setTransientMessage(null);
+        }, durationMs);
+    };
 
     // --- SimControls ---
     const SimControls = () => {
@@ -160,15 +215,15 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                 <div className="flex space-x-2 min-w-max justify-center px-4">
                     <ScenarioButton
                         label="1. 대기"
-                        onClick={() => setState({ mode: 'IDLE', emotion: 'neutral', message: '"할머니~ 오늘도 좋은 하루 되세요!"', subMessage: '다음 일정: 병원 방문 (오후 2:00)' })}
+                        onClick={() => setState({ mode: 'IDLE', emotion: 'neutral', message: '', subMessage: '' })}
                     />
                     <ScenarioButton
                         label="2. 인사"
-                        onClick={() => setState({ mode: 'GREETING', emotion: 'happy', message: '"할머니~ 잘 주무셨어요?\n오늘 날씨가 참 좋아요!"', subMessage: '오늘 날씨: 맑음 ☀️' })}
+                        onClick={() => setState({ mode: 'GREETING', emotion: 'happy', message: '"할머니~ 잘 주무셨어요?\n오늘 날씨가 참 좋아요!"', subMessage: '오늘 날씨: 맑음' })}
                     />
                     <ScenarioButton
                         label="3. 복약"
-                        onClick={() => setState({ mode: 'MEDICATION', emotion: 'neutral', message: '"할머니~ 약 드실 시간이에요!"', subMessage: '아침약 (고혈압, 당뇨) 💊' })}
+                        onClick={() => setState({ mode: 'MEDICATION', emotion: 'neutral', message: '"할머니~ 약 드실 시간이에요!"', subMessage: '아침약 (고혈압, 당뇨)' })}
                     />
                     <ScenarioButton
                         label="4. 일정"
@@ -185,7 +240,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                     />
                     <ScenarioButton
                         label="7. 충전"
-                        onClick={() => setState({ mode: 'SLEEP', emotion: 'sleep', message: '"저 충전하고 올게요...\n안녕히 주무세요 💤"', subMessage: '배터리 충전 중 (75%)' })}
+                        onClick={() => setState({ mode: 'SLEEP', emotion: 'sleep', message: '"저 충전하고 올게요...\n안녕히 주무세요"', subMessage: '배터리 충전 중 (75%)' })}
                     />
                     <div className="w-px h-8 bg-gray-700 mx-2"></div>
                     {onLogout && (
@@ -203,7 +258,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
 
     return (
         <div
-            className={`w-full ${isPreview ? 'h-full' : 'h-screen'} flex flex-col items-center overflow-hidden relative transition-colors duration-500`}
+            className="w-full h-full flex flex-col items-center overflow-hidden relative transition-colors duration-500"
             style={{ backgroundColor: isEmergency ? '#300000' : COLORS.bg }}
             onMouseMove={handleMouseMove}
         >
@@ -217,19 +272,19 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
             )}
 
             {/* --- 상단 상태바 (Top Bar) - 1024x600 최적화 --- */}
-            <div className="w-full px-4 py-2 flex justify-between items-center z-50 text-white/80 font-mono text-base absolute top-0">
-                <div className="flex items-center gap-1">
-                    <Clock size={16} />
+            <div className="w-full px-8 py-4 flex justify-between items-center z-50 text-white/80 font-mono text-lcd-caption absolute top-0">
+                <div className="flex items-center gap-2">
+                    <Clock size={20} />
                     {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                        <Wifi size={16} />
-                        <span className="text-xs">연결됨</span>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Wifi size={20} />
+                        <span>연결됨</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <Battery size={16} />
-                        <span className="text-xs">85%</span>
+                    <div className="flex items-center gap-2">
+                        <Battery size={20} />
+                        <span>85%</span>
                     </div>
                 </div>
             </div>
@@ -242,7 +297,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                     animate={isCompactMode ? "top" : "center"}
                     variants={containerVariants}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                    className="flex items-center gap-8 sm:gap-16 relative"
+                    className="flex items-center gap-12 sm:gap-24 relative"
                 >
                     <Eye variant={currentEyeVariant} variants={eyeVariants} side="left" mousePos={mousePos} emotion={state.emotion} />
                     <Eye variant={currentEyeVariant} variants={eyeVariants} side="right" mousePos={mousePos} emotion={state.emotion} />
@@ -251,21 +306,27 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                 {/* 2. 하단 메시지 및 컨트롤 영역 */}
                 <AnimatePresence mode='wait'>
                     {/* IDLE 모드 */}
-                    {state.mode === 'IDLE' && (
+                    {state.mode === 'IDLE' && transientMessage && (
+                        <motion.div
+                            key="idle-reassure"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="absolute bottom-20 text-center space-y-2"
+                        >
+                            <h2 className="text-lcd-body font-semibold text-white/90">{transientMessage}</h2>
+                        </motion.div>
+                    )}
+
+                    {state.mode === 'IDLE' && shouldShowIdleSchedule && (
                         <motion.div
                             key="idle"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="absolute bottom-24 text-center space-y-1"
+                            className="absolute bottom-20 text-center space-y-2"
                         >
-                            <h2 className="text-2xl font-bold text-white/90">{state.message}</h2>
-                            {state.subMessage && (
-                                <div className="flex items-center justify-center gap-2 text-cyan-400 bg-cyan-950/30 px-4 py-2 rounded-full backdrop-blur-sm border border-cyan-800/50">
-                                    <Activity size={16} />
-                                    <span className="text-sm">{state.subMessage}</span>
-                                </div>
-                            )}
+                            <InfoChip icon={Activity} text={idleSchedule.label} variant="info" />
                         </motion.div>
                     )}
 
@@ -276,7 +337,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 50 }}
-                            className="absolute bottom-16 w-full max-w-3xl text-center space-y-2"
+                            className="absolute bottom-20 w-full max-w-3xl text-center space-y-6"
                         >
                             {state.mode === 'LISTENING' && (
                                 <div className="flex justify-center mb-4 gap-2">
@@ -290,13 +351,15 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                                     ))}
                                 </div>
                             )}
-                            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight whitespace-pre-line">
+                            <h1 className="text-lcd-title font-bold text-white leading-tight whitespace-pre-line">
                                 {state.message}
                             </h1>
                             {state.subMessage && (
-                                <p className="text-xl text-gray-300 bg-gray-900/50 inline-block px-6 py-3 rounded-2xl">
-                                    {state.subMessage}
-                                </p>
+                                <InfoChip
+                                    icon={state.mode === 'GREETING' ? CloudSun : state.mode === 'SCHEDULE' ? Calendar : Activity}
+                                    text={state.subMessage}
+                                    variant={state.mode === 'SCHEDULE' ? 'schedule' : state.mode === 'LISTENING' ? 'listening' : 'info'}
+                                />
                             )}
                         </motion.div>
                     )}
@@ -308,10 +371,10 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                             initial={{ opacity: 0, y: 100 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 100 }}
-                            className="absolute bottom-16 w-full max-w-4xl px-4 flex flex-col items-center gap-2"
+                            className="absolute bottom-12 w-full max-w-4xl px-4 flex flex-col items-center gap-8"
                         >
-                            <div className="text-center space-y-1">
-                                <div className="flex justify-center gap-1 mb-1">
+                            <div className="text-center space-y-2">
+                                <div className="flex justify-center gap-2 mb-2">
                                     <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6 }}>
                                         <Pill size={28} className="text-yellow-400" />
                                     </motion.div>
@@ -322,20 +385,26 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                                         <Pill size={28} className="text-white" />
                                     </motion.div>
                                 </div>
-                                <h1 className="text-xl font-bold text-white">{state.message}</h1>
-                                <p className="text-sm text-yellow-300">{state.subMessage}</p>
+                                <h1 className="text-lcd-body font-normal text-white">{state.message}</h1>
+                                <InfoChip icon={Pill} text={state.subMessage} variant="medication" />
                             </div>
 
                             <div className="flex w-full gap-3 justify-center">
                                 <button
-                                    className="flex-1 max-w-[180px] bg-[#00C471] hover:bg-[#00A05B] text-white text-lg font-bold py-3 rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    onClick={() => setState(prev => ({ ...prev, mode: 'IDLE', emotion: 'happy', message: '"잘하셨어요! 건강하세요~"' }))}
+                                    className="flex-1 max-w-[260px] min-h-[80px] bg-[#00C471] hover:bg-[#00A05B] text-white text-lcd-body font-semibold rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 px-6"
+                                    onClick={() => {
+                                        setState(prev => ({ ...prev, mode: 'IDLE', emotion: 'happy', message: '', subMessage: '' }));
+                                        showTransientMessage('"잘하셨어요! 건강하세요~"');
+                                    }}
                                 >
-                                    <Smile size={20} /> 응, 먹었어~
+                                    <Smile size={24} /> 응, 먹었어~
                                 </button>
                                 <button
-                                    className="flex-1 max-w-[180px] bg-gray-700 hover:bg-gray-600 text-gray-200 text-lg font-bold py-3 rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    onClick={() => setState(prev => ({ ...prev, mode: 'IDLE', emotion: 'neutral', message: '"나중에 다시 알려드릴게요."' }))}
+                                    className="flex-1 max-w-[260px] min-h-[80px] bg-gray-700 hover:bg-gray-600 text-gray-200 text-lcd-body font-semibold rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 px-6"
+                                    onClick={() => {
+                                        setState(prev => ({ ...prev, mode: 'IDLE', emotion: 'neutral', message: '', subMessage: '' }));
+                                        showTransientMessage('"나중에 다시 알려드릴게요."');
+                                    }}
                                 >
                                     아직이야
                                 </button>
@@ -350,19 +419,25 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute bottom-16 w-full max-w-lg px-4 flex flex-col items-center gap-2"
+                            className="absolute bottom-16 w-full max-w-2xl px-6 flex flex-col items-center gap-6"
                         >
                             <div className="text-center space-y-1">
-                                <h1 className="text-xl font-bold text-red-500 bg-black/50 px-3 py-1 rounded-lg">🚨 긴급 상황 🚨</h1>
-                                <p className="text-base text-white font-bold">{state.message}</p>
+                                <h1 className="text-lcd-title font-bold text-red-500 bg-black/50 px-4 py-2 rounded-lg flex items-center justify-center gap-3">
+                                    <Siren size={32} className="text-red-500" />
+                                    <span>긴급 상황</span>
+                                </h1>
+                                <p className="text-lcd-body text-white font-semibold">{state.message}</p>
                             </div>
 
-                            <button className="w-full bg-red-600 hover:bg-red-700 text-white text-xl font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center gap-2 animate-pulse">
-                                <Phone size={24} /> 119 구조 요청
+                            <button className="w-full min-h-[80px] bg-red-600 hover:bg-red-700 text-white text-lcd-body font-semibold rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center gap-2 animate-pulse px-6">
+                                <Phone size={28} /> 119 구조 요청
                             </button>
                             <button
-                                className="w-full bg-white text-black text-lg font-bold py-2 rounded-xl shadow-lg"
-                                onClick={() => setState({ mode: 'IDLE', emotion: 'neutral', message: '"다행이에요. 조심하세요!"' })}
+                                className="w-full min-h-[64px] bg-white text-black text-lcd-body font-semibold rounded-xl shadow-lg px-6"
+                                onClick={() => {
+                                    setState({ mode: 'IDLE', emotion: 'neutral', message: '', subMessage: '' });
+                                    showTransientMessage('다행이에요. 조심하세요!');
+                                }}
                             >
                                 괜찮아요, 오인 감지
                             </button>

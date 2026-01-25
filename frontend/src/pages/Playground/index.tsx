@@ -11,7 +11,7 @@ import {
   CheckCircle2, Plus, ChevronLeft, Mail, Lock,
   Phone, MapPin, Activity, Camera, ArrowRight,
   Sofa, Utensils, Bed, Bath, Zap, Mic,
-  Monitor, X, CloudSun, List, Sun, Moon,
+  Monitor, X, CloudSun, Sun, Moon,
   FileText, BatteryCharging, Siren,
   Key, Hash, Hand, Flame, DoorClosed, Smile,
   Stethoscope, Sunrise
@@ -28,13 +28,13 @@ const Button = ({ children, variant = 'primary', size = 'lg', className = '', ..
     lg: "py-4 px-4 text-[15px] rounded-lg"
   };
   const variants: Record<string, string> = {
-    primary: "bg-primary-500 text-white hover:bg-primary-600",
+    primary: "bg-primary-500 text-white hover:bg-primary-600 ring-1 ring-primary-200/70 dark:ring-2 dark:ring-primary-400/40",
     secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
     danger: "bg-danger text-white hover:bg-danger/90",
-    white: "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700",
+    white: "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700",
     dark: "bg-gray-900 text-white hover:bg-black dark:bg-primary-600 dark:hover:bg-primary-500"
   };
-  const variantClass = variants[variant] || "text-primary-500";
+  const variantClass = variants[variant] || "text-primary-500 dark:text-primary-400";
   return (
     <button className={`${baseStyle} ${sizes[size]} ${variantClass} ${className}`} {...props}>
       {children}
@@ -43,7 +43,7 @@ const Button = ({ children, variant = 'primary', size = 'lg', className = '', ..
 };
 
 const Card = ({ children, className = '', onClick }: any) => (
-  <div onClick={onClick} className={`bg-white dark:bg-gray-800 rounded-[24px] p-5 shadow-card border border-gray-100 dark:border-gray-700 ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}>
+  <div onClick={onClick} className={`bg-white dark:bg-gray-800 rounded-[24px] p-5 shadow-card border border-gray-100 dark:border-gray-600 ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}>
     {children}
   </div>
 );
@@ -73,7 +73,7 @@ const Badge = ({ status, text }: any) => {
     safe: { className: "bg-safe-bg text-safe", icon: CheckCircle2 },
     warning: { className: "bg-warning-bg text-warning", icon: AlertCircle },
     danger: { className: "bg-danger-bg text-danger", icon: AlertCircle },
-    neutral: { className: "bg-gray-100 text-gray-500", icon: Activity }
+    neutral: { className: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-200", icon: Activity }
   };
   const s = styles[status] || styles.neutral;
   const Icon = s.icon;
@@ -85,7 +85,7 @@ const Badge = ({ status, text }: any) => {
 };
 
 const Input = ({ label, type = "text", placeholder, value, icon, className }: any) => (
-  <div className={`bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-gray-700 transition-all ${className}`}>
+  <div className={`bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-600 focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-gray-700 transition-all ${className}`}>
     <label className="block text-xs font-bold text-gray-500 dark:text-gray-200 mb-1.5">{label}</label>
     <div className="flex items-center">
       <input type={type} placeholder={placeholder} defaultValue={value} className="w-full bg-transparent outline-none text-gray-900 dark:text-white font-semibold placeholder-gray-300 dark:placeholder-gray-600 text-[15px]" />
@@ -144,7 +144,7 @@ const LoginScreen = ({ onLogin, onSignup }: any) => {
             </div>
             <div className="flex justify-center items-center space-x-2">
               <span className="text-xs text-gray-400 dark:text-gray-300">계정이 없으신가요?</span>
-              <button onClick={onSignup} className="min-h-[44px] px-3 text-xs font-bold text-primary-500 hover:text-primary-600">회원가입</button>
+              <button onClick={onSignup} className="min-h-[44px] px-3 text-xs font-bold text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-100">회원가입</button>
             </div>
           </>
         ) : (
@@ -172,7 +172,7 @@ const SignupScreen = ({ onBack, onComplete }: any) => (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 flex items-center">
-          <Hand size={18} className="mr-2 text-primary-500" />
+          <Hand size={18} className="mr-2 text-primary-500 dark:text-primary-400" />
           환영합니다!
         </h2>
         <p className="text-gray-500 dark:text-gray-200 text-sm">보호자(복지사) 계정을 생성합니다.</p>
@@ -203,12 +203,12 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-safe">
       <Header title="관리 대상 선택" rightIcon={<Settings size={20} />} onRightClick={onSettings} />
       <div className="p-5 space-y-6">
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-[20px] shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-[20px] shadow-sm border border-gray-100 dark:border-gray-600">
           <h2 className="text-[20px] font-bold text-gray-900 dark:text-white mb-1 flex items-center">
-            <Hand size={18} className="mr-2 text-primary-500" />
+            <Hand size={18} className="mr-2 text-primary-500 dark:text-primary-400" />
             안녕하세요, 김복지사님
           </h2>
-          <p className="text-gray-500 dark:text-gray-200 text-[14px]">오늘 관리 대상: <span className="font-bold text-primary-500">4명</span></p>
+          <p className="text-gray-500 dark:text-gray-200 text-[14px]">오늘 관리 대상: <span className="font-bold text-primary-500 dark:text-primary-400">4명</span></p>
         </div>
 
         {elders.some(e => e.status === 'danger') && (
@@ -223,7 +223,7 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white">{elder.name} 님</h3>
-                      <span className="text-sm text-gray-500">· {elder.age}세</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-200">· {elder.age}세</span>
                     </div>
                     <p className="font-bold mt-1 text-[15px] flex items-center text-danger">
                       <Siren size={16} className="mr-1" /> {elder.location}
@@ -280,7 +280,7 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
 };
 
 const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
-  if (!elder) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-500">Loading...</div>;
+  if (!elder) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-500 dark:text-gray-200">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
@@ -293,8 +293,8 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
       />
       <div className="p-5 space-y-6">
         <Card className="text-center py-8">
-          <div className="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full shadow-md bg-primary-50">
-            <Smile size={36} className="text-primary-500" />
+          <div className="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full shadow-md bg-primary-50 dark:bg-primary-500/20">
+            <Smile size={36} className="text-primary-500 dark:text-primary-400" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">"{elder.name} 님은 안전합니다"</h2>
           <p className="text-sm text-gray-500 dark:text-gray-200 mb-6 flex items-center justify-center">
@@ -303,20 +303,20 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
               <span className="w-2 h-2 rounded-full bg-safe mr-1"></span>정상
             </span>
           </p>
-          <div className="grid grid-cols-3 gap-2 border-t border-gray-100 dark:border-gray-700 pt-6">
+          <div className="grid grid-cols-3 gap-2 border-t border-gray-100 dark:border-gray-600 pt-6">
             <div onClick={onHistory} className="cursor-pointer active:opacity-70">
               <div className="text-sm text-gray-400 dark:text-gray-300 mb-1 flex items-center justify-center">
                 <Sunrise size={14} className="mr-1" /> 기상
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-white">07:30</div>
             </div>
-            <div className="border-l border-gray-100 dark:border-gray-700">
+            <div className="border-l border-gray-100 dark:border-gray-600">
               <div className="text-sm text-gray-400 dark:text-gray-300 mb-1 flex items-center justify-center">
                 <Pill size={14} className="mr-1" /> 복약
               </div>
-              <div className="text-lg font-bold text-primary-500">1/2</div>
+              <div className="text-lg font-bold text-primary-500 dark:text-primary-400">1/2</div>
             </div>
-            <div className="border-l border-gray-100 dark:border-gray-700">
+            <div className="border-l border-gray-100 dark:border-gray-600">
               <div className="text-sm text-gray-400 dark:text-gray-300 mb-1 flex items-center justify-center">
                 <Activity size={14} className="mr-1" /> 활동
               </div>
@@ -326,8 +326,8 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
         </Card>
 
         <section>
-          <SectionHeader title="안심 지도" action={<button className="min-h-[48px] px-2 text-sm font-medium text-primary-500 hover:text-primary-600">전체보기 →</button>} />
-          <Card className="h-56 relative overflow-hidden border border-gray-200 dark:border-gray-700 !p-0 bg-gray-50 dark:bg-gray-800">
+          <SectionHeader title="안심 지도" action={<button className="min-h-[48px] px-2 text-sm font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-100">전체보기 →</button>} />
+          <Card className="h-56 relative overflow-hidden border border-gray-200 dark:border-gray-600 !p-0 bg-gray-50 dark:bg-gray-800">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="grid grid-cols-2 gap-2 w-3/4 h-3/4 opacity-50">
                 {['침실', '거실', '화장실', '주방'].map(r => (
@@ -347,14 +347,14 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
 
         <section>
           <SectionHeader title="순찰 피드" />
-          <div className="flex space-x-3 overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
+          <div className="flex justify-center gap-3 overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
             {[{ label: '가스밸브', status: '정상', time: '09:30', icon: Flame }, { label: '현관문', status: '잠김', time: '09:32', icon: DoorClosed }, { label: '콘센트', status: '정상', time: '09:35', icon: Zap }].map((item, idx) => (
-              <div key={idx} className="flex-shrink-0 w-32 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="text-2xl mb-2">
+              <div key={idx} className="flex-shrink-0 w-32 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-600 flex flex-col items-center text-center">
+                <div className="text-2xl mb-2 flex items-center justify-center">
                   <item.icon size={24} className={item.icon === Zap ? 'text-warning' : 'text-gray-700 dark:text-gray-200'} />
                 </div>
                 <div className="font-bold text-gray-900 dark:text-white text-sm mb-0.5">{item.label}</div>
-                <div className="text-xs font-medium mb-2 flex items-center text-safe">
+                <div className="text-xs font-medium mb-2 flex items-center justify-center text-safe">
                   <div className="w-1.5 h-1.5 rounded-full mr-1 bg-safe"></div>
                   {item.status}
                 </div>
@@ -369,7 +369,7 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
           <Card className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2"><Battery className="text-safe" size={20} /><span className="font-bold text-gray-900 dark:text-white">85%</span></div>
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
-            <div className="flex items-center space-x-2"><Wifi className="text-primary-500" size={20} /><span className="font-bold text-gray-900 dark:text-white">연결됨</span></div>
+            <div className="flex items-center space-x-2"><Wifi className="text-primary-500 dark:text-primary-400" size={20} /><span className="font-bold text-gray-900 dark:text-white">연결됨</span></div>
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
             <div className="flex items-center space-x-2"><Pill className="text-peach" size={20} /><span className="font-bold text-gray-900 dark:text-white">3개 남음</span></div>
           </Card>
@@ -390,7 +390,7 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
         {/* 프로필 */}
         <section>
           <div className="flex justify-between items-center mb-2 px-1">
-            <h3 className="font-bold text-gray-900 dark:text-white flex items-center text-base"><User size={18} className="mr-2 text-gray-500" /> 내 정보</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white flex items-center text-base"><User size={18} className="mr-2 text-gray-500 dark:text-gray-300" /> 내 정보</h3>
           </div>
           <Card className="flex justify-between items-center p-4">
             <div className="flex items-center space-x-4">
@@ -402,17 +402,17 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
                 <p className="text-sm text-gray-500 dark:text-gray-200">welfare@example.com</p>
               </div>
             </div>
-            <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 hover:bg-primary-100">수정</button>
+            <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 dark:bg-primary-500/20 hover:bg-primary-100 dark:text-primary-100 dark:hover:bg-primary-500/30 border border-primary-200 dark:border-primary-400/40">수정</button>
           </Card>
         </section>
 
         {/* 테마 설정 */}
         <section>
           <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
-            {resolvedTheme === 'dark' ? <Moon size={18} className="mr-2 text-gray-500" /> : <Sun size={18} className="mr-2 text-gray-500" />}
+            {resolvedTheme === 'dark' ? <Moon size={18} className="mr-2 text-gray-500 dark:text-gray-300" /> : <Sun size={18} className="mr-2 text-gray-500 dark:text-gray-300" />}
             화면 테마
           </h3>
-          <div className="bg-white dark:bg-gray-800 rounded-[20px] border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-[20px] border border-gray-100 dark:border-gray-600 overflow-hidden shadow-sm">
             {[
               { value: 'system', label: '시스템 설정', desc: '기기 설정에 따라 자동 변경' },
               { value: 'light', label: '라이트 모드', desc: '항상 밝은 화면' },
@@ -421,14 +421,14 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
               <div
                 key={item.value}
                 onClick={() => setMode(item.value as any)}
-                className={`flex justify-between items-center p-4 ${i !== 2 ? 'border-b border-gray-50 dark:border-gray-700' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`}
+                className={`flex justify-between items-center p-4 ${i !== 2 ? 'border-b border-gray-50 dark:border-gray-600' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`}
               >
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">{item.label}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">{item.desc}</div>
                 </div>
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mode === item.value ? 'border-primary-500' : 'border-gray-300 dark:border-gray-600'}`}>
-                  {mode === item.value && <div className="w-3 h-3 rounded-full bg-primary-500"></div>}
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${mode === item.value ? 'border-primary-500 dark:border-primary-400' : 'border-gray-300 dark:border-gray-600'}`}>
+                  {mode === item.value && <div className="w-3 h-3 rounded-full bg-primary-500 dark:bg-primary-400"></div>}
                 </div>
               </div>
             ))}
@@ -438,21 +438,21 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
         {/* 알림 설정 */}
         <section>
           <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
-            <Bell size={18} className="mr-2 text-gray-500" /> 알림 설정
+            <Bell size={18} className="mr-2 text-gray-500 dark:text-gray-300" /> 알림 설정
           </h3>
-          <div className="bg-white dark:bg-gray-800 rounded-[20px] border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-[20px] border border-gray-100 dark:border-gray-600 overflow-hidden shadow-sm">
             {[
               { label: '긴급 알림', desc: '낙상, 미활동 등 위험 감지', on: true },
               { label: '복약 알림', desc: '약 복용/미복용 확인', on: true },
               { label: '일상 알림', desc: '기상, 식사 등 생활 패턴', on: false },
               { label: '이메일 알림', desc: '중요 알림을 이메일로 전송', on: false }
             ].map((item, i) => (
-              <div key={i} className={`flex justify-between items-center p-4 ${i !== 3 ? 'border-b border-gray-50 dark:border-gray-700' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
+              <div key={i} className={`flex justify-between items-center p-4 ${i !== 3 ? 'border-b border-gray-50 dark:border-gray-600' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}>
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">{item.label}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">{item.desc}</div>
                 </div>
-                <div className={`w-12 h-7 rounded-full relative transition-colors cursor-pointer ${item.on ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                <div className={`w-12 h-7 rounded-full relative transition-colors cursor-pointer ${item.on ? 'bg-primary-500 dark:bg-primary-400' : 'bg-gray-200 dark:bg-gray-600'}`}>
                   <div className={`w-6 h-6 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm ${item.on ? 'left-[22px]' : 'left-0.5'}`}></div>
                 </div>
               </div>
@@ -463,7 +463,7 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
         {/* 로봇 설정 */}
         <section>
           <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
-            <Bot size={18} className="mr-2 text-gray-500" /> 로봇 설정
+            <Bot size={18} className="mr-2 text-gray-500 dark:text-gray-300" /> 로봇 설정
           </h3>
           <Card className="space-y-4">
             <div className="flex justify-between items-center">
@@ -471,18 +471,18 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
                 <div className="font-bold text-gray-900 dark:text-white text-[15px]">아침 약 알림 시간</div>
                 <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">매일 반복</div>
               </div>
-              <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50">08:00</div>
+                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-100 border border-primary-200 dark:border-primary-400/40">08:00</div>
             </div>
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">저녁 약 알림 시간</div>
                   <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">매일 반복</div>
                 </div>
-                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50">19:00</div>
+                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-100 border border-primary-200 dark:border-primary-400/40">19:00</div>
               </div>
             </div>
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">TTS 볼륨</div>
@@ -490,13 +490,13 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-32 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full w-[70%] bg-primary-500"></div>
+                    <div className="h-full w-[70%] bg-primary-500 dark:bg-primary-400"></div>
                   </div>
                   <span className="font-bold text-gray-900 dark:text-white text-sm min-w-[35px]">70%</span>
                 </div>
               </div>
             </div>
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">순찰 시간대</div>
@@ -511,7 +511,7 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
         {/* 긴급 연락처 */}
         <section>
           <h3 className="font-bold text-gray-900 dark:text-white mb-3 px-1 flex items-center text-base">
-            <Phone size={18} className="mr-2 text-gray-500" /> 긴급 연락처
+            <Phone size={18} className="mr-2 text-gray-500 dark:text-gray-300" /> 긴급 연락처
           </h3>
           <Card className="space-y-4">
             <div className="flex justify-between items-center">
@@ -519,15 +519,15 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
                 <div className="font-bold text-gray-900 dark:text-white text-[15px]">1순위</div>
                 <div className="text-sm text-gray-500 dark:text-gray-200 mt-0.5">010-1234-5678 (자녀)</div>
               </div>
-              <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 hover:bg-primary-100">수정</button>
+              <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 dark:bg-primary-500/20 hover:bg-primary-100 dark:text-primary-100 dark:hover:bg-primary-500/30 border border-primary-200 dark:border-primary-400/40">수정</button>
             </div>
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-bold text-gray-900 dark:text-white text-[15px]">2순위</div>
                   <div className="text-sm text-gray-500 dark:text-gray-200 mt-0.5">010-8765-4321 (복지사)</div>
                 </div>
-                <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 hover:bg-primary-100">수정</button>
+                <button className="min-h-[48px] text-sm font-bold px-4 rounded-lg text-primary-500 bg-primary-50 dark:bg-primary-500/20 hover:bg-primary-100 dark:text-primary-100 dark:hover:bg-primary-500/30 border border-primary-200 dark:border-primary-400/40">수정</button>
               </div>
             </div>
           </Card>
@@ -551,7 +551,7 @@ const ScheduleScreen = ({ onBack }: any) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
       <Header leftIcon={<ChevronLeft size={24} />} onLeftClick={onBack} title="일정 관리" />
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 pb-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-600 pb-4">
         <div className="flex justify-between items-center px-6 py-3">
           <span className="text-lg font-bold text-gray-900 dark:text-white">2026년 1월</span>
           <div className="flex space-x-4 text-gray-400 dark:text-gray-300">
@@ -561,29 +561,29 @@ const ScheduleScreen = ({ onBack }: any) => {
         </div>
         <div className="flex justify-between px-4 mt-1 text-center">
           {dates.map((item, i) => (
-            <div key={i} className={`flex flex-col items-center w-10 py-2 rounded-xl transition-colors cursor-pointer ${item.today ? 'bg-primary-50 dark:bg-primary-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-              <span className={`text-xs mb-1 ${item.today ? 'text-primary-500 font-bold' : 'text-gray-400 dark:text-gray-300'}`}>{item.d}</span>
-              <span className={`text-[15px] ${item.today ? 'font-bold text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-200 font-medium'}`}>{item.v}</span>
-              {item.today && <div className="w-1 h-1 rounded-full mt-1.5 bg-primary-500"></div>}
+            <div key={i} className={`flex flex-col items-center w-10 py-2 rounded-xl transition-colors cursor-pointer ${item.today ? 'bg-primary-50 dark:bg-primary-400/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <span className={`text-xs mb-1 ${item.today ? 'text-primary-500 font-bold dark:text-primary-100' : 'text-gray-400 dark:text-gray-300'}`}>{item.d}</span>
+              <span className={`text-[15px] ${item.today ? 'font-bold text-primary-600 dark:text-primary-100' : 'text-gray-700 dark:text-gray-200 font-medium'}`}>{item.v}</span>
+              {item.today && <div className="w-1 h-1 rounded-full mt-1.5 bg-primary-500 dark:bg-primary-300"></div>}
             </div>
           ))}
         </div>
       </div>
       <div className="p-5 space-y-4">
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-[20px] shadow-sm border border-blue-100 dark:border-primary-900/50 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-primary-500"></div>
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-[20px] shadow-sm border border-blue-100 dark:border-primary-500/30 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary-500 dark:bg-primary-400"></div>
           <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center space-x-2 font-bold text-sm text-primary-500">
-              <div className="p-1 rounded-full bg-primary-50"><Mic size={12} /></div>
+            <div className="flex items-center space-x-2 font-bold text-sm text-primary-500 dark:text-primary-400">
+              <div className="p-1 rounded-full bg-primary-50 dark:bg-primary-500/20"><Mic size={12} className="text-primary-500 dark:text-primary-100" /></div>
               <span>음성으로 등록된 일정 (1건)</span>
             </div>
           </div>
           <div className="pl-1">
             <div className="flex items-center mb-1">
-              <Mic size={18} className="mr-2 text-primary-500" />
+              <Mic size={18} className="mr-2 text-primary-500 dark:text-primary-400" />
               <p className="text-[15px] font-bold text-gray-900 dark:text-white">"손자 생일 케이크 사기"</p>
             </div>
-            <p className="text-xs text-gray-500 pl-7">01/22 (수) · 어르신이 직접 등록</p>
+            <p className="text-xs text-gray-500 dark:text-gray-200 pl-7">01/22 (수) · 어르신이 직접 등록</p>
           </div>
         </div>
         <div className="pt-2">
@@ -618,7 +618,7 @@ const ScheduleScreen = ({ onBack }: any) => {
             </div>
           </Card>
         </div>
-        <Button variant="secondary" className="mt-4 bg-primary-50 text-primary-500 hover:bg-primary-100">
+        <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
           <Plus size={18} className="mr-2" /> 일정 추가
         </Button>
       </div>
@@ -644,8 +644,8 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
                 <div className="h-full w-[85%] bg-safe"></div>
               </div>
             </div>
-            <div className="flex flex-col items-center border-l border-r border-gray-100 dark:border-gray-700 px-2">
-              <Wifi className="mb-2 text-primary-500" size={24} />
+            <div className="flex flex-col items-center border-l border-r border-gray-100 dark:border-gray-600 px-2">
+              <Wifi className="mb-2 text-primary-500 dark:text-primary-400" size={24} />
               <span className="text-xs text-gray-400 dark:text-gray-300 mb-0.5">네트워크</span>
               <span className="font-bold text-gray-900 dark:text-white text-lg mb-2">연결됨</span>
               <div className="flex items-center justify-center h-1.5">
@@ -669,7 +669,7 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
           <p className="text-sm font-bold text-gray-500 dark:text-gray-200 mb-3">로봇 이동 명령</p>
           <div className="grid grid-cols-3 gap-3 mb-4">
             {[{ n: '거실', i: Sofa }, { n: '주방', i: Utensils }, { n: '침실', i: Bed }, { n: '화장실', i: Bath }, { n: '현관', i: LogOut }, { n: '충전기', i: Zap }].map((r, idx) => (
-              <button key={idx} className="flex flex-col items-center justify-center min-h-[64px] bg-gray-50 dark:bg-gray-700 py-4 rounded-2xl active:bg-primary-50 dark:active:bg-primary-900/30 active:scale-95 transition-all">
+              <button key={idx} className="flex flex-col items-center justify-center min-h-[64px] bg-gray-50 dark:bg-gray-700 py-4 rounded-2xl active:bg-primary-50 dark:active:bg-primary-500/20 active:scale-95 transition-all">
                 <r.i size={24} className="text-gray-700 dark:text-gray-200 mb-2" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{r.n}</span>
               </button>
@@ -681,18 +681,20 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
         </Button>
       </section>
       <section>
-        <SectionHeader title="LCD 미러링" action={<button onClick={onLcd} className="min-h-[48px] px-2 text-sm font-medium flex items-center text-primary-500 hover:text-primary-600">전체화면 <ArrowRight size={14} className="ml-1" /></button>} />
+        <SectionHeader title="LCD 미러링" action={<button onClick={onLcd} className="min-h-[48px] px-2 text-sm font-medium flex items-center text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-100">전체화면 <ArrowRight size={14} className="ml-1" /></button>} />
         <Card onClick={onLcd} className="bg-gray-900 text-white relative overflow-hidden aspect-[1024/600] !rounded-[24px] flex flex-col items-center justify-center cursor-pointer active:scale-[0.98] transition-transform">
           <div className="absolute top-3 left-3 flex items-center space-x-2 bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
             <Monitor size={12} /><span className="text-[10px] font-medium">실시간 화면</span>
           </div>
           <div className="scale-[0.6] origin-center">
-            <div className="text-[100px] text-center animate-pulse">😊</div>
+            <div className="flex justify-center">
+              <Smile size={96} className="text-cyan-300 animate-pulse" />
+            </div>
             <div className="text-center mt-4">
               <h1 className="text-4xl font-bold">14:30</h1>
             </div>
           </div>
-          <div className="absolute bottom-3 right-3 text-[10px] text-gray-500">Tap to expand</div>
+          <div className="absolute bottom-3 right-3 text-[10px] text-gray-500 dark:text-gray-300">Tap to expand</div>
         </Card>
       </section>
     </div>
@@ -708,20 +710,20 @@ const MedicationScreen = ({ onBack }: any) => (
         <div className="flex justify-between items-end mb-6">
           <div>
             <h3 className="font-bold text-gray-900 dark:text-white text-lg">이번 주 복약 현황</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">총 6회 중 <span className="font-bold text-primary-500">5회 복용</span></p>
+            <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">총 6회 중 <span className="font-bold text-primary-500 dark:text-primary-400">5회 복용</span></p>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-primary-500">83%</div>
+            <div className="text-3xl font-bold text-primary-500 dark:text-primary-400">83%</div>
           </div>
         </div>
         <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 mb-6 overflow-hidden">
-          <div className="h-full rounded-full w-[83%] bg-primary-500"></div>
+          <div className="h-full rounded-full w-[83%] bg-primary-500 dark:bg-primary-400"></div>
         </div>
         <div className="grid grid-cols-7 gap-2 text-center">
           {['월', '화', '수', '목', '금', '토', '일'].map((d, i) => (
             <div key={d} className="flex flex-col items-center space-y-3">
               <span className="text-xs text-gray-400 dark:text-gray-300 font-medium">{d}</span>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${i < 3 ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : i === 3 ? 'bg-gray-100 dark:bg-gray-700 text-gray-300' : 'bg-transparent text-gray-200 dark:text-gray-200 border border-gray-100 dark:border-gray-700'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${i < 3 ? 'bg-green-100 dark:bg-green-400/20 text-green-600 dark:text-green-200' : i === 3 ? 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-200' : 'bg-transparent text-gray-200 dark:text-gray-200 border border-gray-100 dark:border-gray-600'}`}>
                 {i < 3 ? <CheckCircle2 size={18} /> : i === 3 ? '-' : ''}
               </div>
             </div>
@@ -743,20 +745,20 @@ const MedicationScreen = ({ onBack }: any) => (
           </Card>
           <Card className="flex justify-between items-center py-5">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary-50 text-primary-500"><Pill size={24} /></div>
-              <div>
-                <h4 className="font-bold text-gray-900 dark:text-white text-[15px]">당뇨약 (아침/저녁)</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">1정씩 · 식후 30분</p>
-              </div>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary-50 dark:bg-primary-400/25 text-primary-500 dark:text-primary-100"><Pill size={24} /></div>
+            <div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-[15px]">당뇨약 (아침/저녁)</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">1정씩 · 식후 30분</p>
+            </div>
             </div>
             <button className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-300"><ChevronRight size={20} /></button>
           </Card>
         </div>
-        <Button variant="secondary" className="mt-4 bg-primary-50 text-primary-500 hover:bg-primary-100">
+        <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
           <Plus size={18} className="mr-2" /> 약 추가하기
         </Button>
       </section>
-      <Card className="bg-gray-900 text-white border-none shadow-xl">
+      <Card className="bg-gray-900 text-white border border-white/10 shadow-xl">
         <div className="flex justify-between items-start mb-5">
           <div>
             <h4 className="font-bold text-lg">디스펜서 잔량</h4>
@@ -784,7 +786,7 @@ const HistoryScreen = ({ onBack }: any) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
       <Header leftIcon={<ChevronLeft size={24} />} onLeftClick={onBack} title="기록" />
-      <div className="bg-white dark:bg-gray-800 px-5 pt-2 pb-4 border-b border-gray-100 dark:border-gray-700 sticky top-[52px] z-40">
+      <div className="bg-white dark:bg-gray-800 px-5 pt-2 pb-4 border-b border-gray-100 dark:border-gray-600 sticky top-[52px] z-40">
         <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 relative">
           <div className={`absolute top-1 bottom-1 w-[49%] bg-white dark:bg-gray-600 rounded-lg shadow-sm transition-all duration-300 ${tab === 'log' ? 'left-[50%]' : 'left-1'}`}></div>
           <button onClick={() => setTab('report')} className={`flex-1 min-h-[48px] py-2.5 rounded-lg text-sm font-bold z-10 transition-colors ${tab === 'report' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-300'}`}>AI 리포트</button>
@@ -818,7 +820,7 @@ const HistoryScreen = ({ onBack }: any) => {
               <h4 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center"><FileText size={18} className="mr-2 text-gray-400 dark:text-gray-300" />자주 사용한 단어</h4>
               <div className="flex flex-wrap gap-2">
                 {['#손자 (23회)', '#건강 (18회)', '#날씨 (12회)', '#식사 (8회)'].map((tag, i) => (
-                  <span key={tag} className={`px-3 py-1.5 rounded-lg text-sm font-bold ${i === 0 ? 'bg-primary-50 text-primary-600 dark:text-primary-400' : 'bg-gray-100 text-gray-500 dark:text-gray-200'}`}>{tag}</span>
+                  <span key={tag} className={`px-3 py-1.5 rounded-lg text-sm font-bold ${i === 0 ? 'bg-primary-50 dark:bg-primary-500/20 text-primary-600 dark:text-primary-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-200'}`}>{tag}</span>
                 ))}
               </div>
             </Card>
@@ -826,19 +828,19 @@ const HistoryScreen = ({ onBack }: any) => {
         ) : (
           <div className="space-y-6 animate-fade-in-up">
             <div className="flex items-center space-x-2"><span className="font-bold text-lg text-gray-900 dark:text-white">1월 20일 (오늘)</span></div>
-            <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-4 space-y-8 pl-8 pb-4">
+            <div className="relative border-l-2 border-gray-200 dark:border-gray-600 ml-4 space-y-8 pl-8 pb-4">
               {[
                 { time: '10:00', icon: LogOut, bgClass: 'bg-warning-bg', textClass: 'text-warning', title: '외출 감지', desc: '현관문 열림 확인됨' },
-                { time: '09:30', icon: Camera, bgClass: 'bg-primary-50', textClass: 'text-primary-500', title: '순찰 완료', desc: '가스밸브, 전열기구 정상' },
+                { time: '09:30', icon: Camera, bgClass: 'bg-primary-50 dark:bg-primary-500/20', textClass: 'text-primary-500 dark:text-primary-400', title: '순찰 완료', desc: '가스밸브, 전열기구 정상' },
                 { time: '08:15', icon: Pill, bgClass: 'bg-safe-bg', textClass: 'text-safe', title: '아침 약 복용', desc: '디스펜서 작동 완료' },
                 { time: '07:30', icon: Activity, bgClass: 'bg-warning-bg', textClass: 'text-warning', title: '기상 감지', desc: '침실에서 움직임 감지' }
               ].map((log, i) => (
                 <div key={i} className="relative group">
-                  <div className="absolute -left-[39px] top-1 w-3 h-3 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-full group-hover:border-primary-500 transition-colors"></div>
+                  <div className="absolute -left-[39px] top-1 w-3 h-3 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-600 rounded-full group-hover:border-primary-500 dark:group-hover:border-primary-400 transition-colors"></div>
                   <div className={`absolute -left-[54px] top-0 w-9 h-9 rounded-full flex items-center justify-center ring-4 ring-gray-50 dark:ring-gray-900 z-10 ${log.bgClass}`}>
                     <log.icon size={16} className={log.textClass} />
                   </div>
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-1">
                       <h4 className="text-[15px] font-bold text-gray-900 dark:text-white">{log.title}</h4>
                       <span className="text-xs font-bold text-gray-400 dark:text-gray-300">{log.time}</span>
@@ -867,17 +869,17 @@ const NotificationScreen = ({ onBack }: any) => {
   const getIcon = (type: string) => {
     if (type === 'danger') return <div className="p-2 rounded-full bg-danger-bg text-danger"><AlertCircle size={20} /></div>;
     if (type === 'success') return <div className="p-2 rounded-full bg-safe-bg text-safe"><Pill size={20} /></div>;
-    if (type === 'info') return <div className="p-2 rounded-full bg-primary-50 text-primary-500"><Activity size={20} /></div>;
+    if (type === 'info') return <div className="p-2 rounded-full bg-primary-50 dark:bg-primary-500/20 text-primary-500 dark:text-primary-100"><Activity size={20} /></div>;
     return <div className="p-2 rounded-full bg-warning-bg text-warning"><Calendar size={20} /></div>;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
-      <Header leftIcon={<ChevronLeft size={24} />} onLeftClick={onBack} title="알림" rightIcon={<span className="text-xs text-gray-500 font-medium cursor-pointer hover:text-gray-900 dark:hover:text-white">모두 읽음</span>} />
+      <Header leftIcon={<ChevronLeft size={24} />} onLeftClick={onBack} title="알림" rightIcon={<span className="text-xs text-gray-500 dark:text-gray-200 font-medium cursor-pointer hover:text-gray-900 dark:hover:text-white">모두 읽음</span>} />
       <div className="p-5 space-y-4">
         <p className="text-xs font-bold text-gray-400 dark:text-gray-300 px-1">오늘</p>
         {notifications.map((noti) => (
-          <div key={noti.id} className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border transition-all ${!noti.read ? 'border-primary-200 dark:border-primary-900/50 shadow-sm' : 'border-gray-100 dark:border-gray-700'}`}>
+          <div key={noti.id} className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border transition-all ${!noti.read ? 'border-primary-200 dark:border-primary-500/40 shadow-sm' : 'border-gray-100 dark:border-gray-600'}`}>
             <div className="flex items-start space-x-3">
               <div className="mt-0.5 flex-shrink-0">{getIcon(noti.type)}</div>
               <div className="flex-1">
@@ -885,14 +887,14 @@ const NotificationScreen = ({ onBack }: any) => {
                   <h4 className={`text-[15px] font-bold ${noti.type === 'danger' ? 'text-danger' : 'text-gray-900 dark:text-white'} ${noti.read ? 'opacity-80' : ''}`}>{noti.title}</h4>
                   <span className="text-xs text-gray-400 dark:text-gray-300 font-medium whitespace-nowrap ml-2">{noti.time}</span>
                 </div>
-                <p className={`text-[13px] leading-snug ${noti.read ? 'text-gray-400 dark:text-gray-300' : 'text-gray-600 dark:text-gray-200'}`}>{noti.msg}</p>
+                <p className={`text-[13px] leading-snug ${noti.read ? 'text-gray-400 dark:text-gray-200' : 'text-gray-600 dark:text-gray-200'}`}>{noti.msg}</p>
                 {noti.type === 'danger' && (
                   <button className="mt-3 w-full min-h-[48px] text-xs font-bold py-2.5 rounded-xl flex items-center justify-center transition-colors bg-danger-bg text-danger hover:bg-danger/10">
                     <Camera size={14} className="mr-1.5" /> 현장 화면 확인하기
                   </button>
                 )}
               </div>
-              {!noti.read && <div className="w-2 h-2 rounded-full mt-1.5 bg-primary-500"></div>}
+              {!noti.read && <div className="w-2 h-2 rounded-full mt-1.5 bg-primary-500 dark:bg-primary-400"></div>}
             </div>
           </div>
         ))}
@@ -916,7 +918,7 @@ const EmergencyScreen = ({ onBack }: any) => (
       </div>
       <div className="bg-gray-800 rounded-2xl overflow-hidden mb-8 border border-gray-700 shadow-2xl relative">
         <div className="aspect-video bg-gray-700 flex items-center justify-center relative">
-          <Camera size={48} className="text-gray-600" />
+          <Camera size={48} className="text-gray-600 dark:text-gray-200" />
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="text-gray-400 dark:text-gray-300 text-sm font-medium">카메라 연결 중...</span>
           </div>
@@ -937,7 +939,7 @@ const EmergencyScreen = ({ onBack }: any) => (
           보호자 직접 통화
         </Button>
       </div>
-      <button onClick={onBack} className="mt-8 min-h-[48px] px-3 text-gray-500 text-sm underline hover:text-gray-300 transition-colors">오인 감지로 알림 끄기</button>
+      <button onClick={onBack} className="mt-8 min-h-[48px] px-3 text-gray-500 dark:text-gray-200 text-sm underline hover:text-gray-300 dark:hover:text-gray-100 transition-colors">오인 감지로 알림 끄기</button>
     </div>
   </div>
 );
@@ -947,7 +949,10 @@ const RobotLCDScreen = ({ onBack }: any) => (
   <div className="min-h-screen bg-gray-900 flex flex-col">
     <Header leftIcon={<X size={24} />} onLeftClick={onBack} title="로봇 화면 미러링" transparent />
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg aspect-[1024/600] bg-black rounded-[32px] border-[12px] border-gray-800 shadow-2xl overflow-hidden relative flex items-center justify-center ring-4 ring-gray-700/50">
+      <div
+        className="w-[90vw] max-w-[1024px] aspect-[1024/600] bg-black rounded-[32px] border-[12px] border-gray-800 shadow-2xl overflow-hidden relative flex items-center justify-center ring-4 ring-gray-700/50"
+        style={{ width: 'min(90vw, 1024px, calc(70vh * 1024 / 600))' }}
+      >
         <div className="absolute top-4 right-4 flex space-x-2 z-10">
           <div className="text-white text-[10px] font-bold px-2 py-0.5 rounded animate-pulse bg-danger">REC</div>
           <div className="text-white text-[10px] font-bold px-2 py-0.5 rounded bg-safe">BAT 85%</div>
@@ -975,7 +980,7 @@ const GuardianAppContainer = ({ onLogout }: any) => {
     if (tabId === 'robot') setCurrentScreen('robot');
     if (tabId === 'pill') setCurrentScreen('medication');
     if (tabId === 'cal') setCurrentScreen('schedule');
-    if (tabId === 'more') setCurrentScreen('settings');
+    if (tabId === 'settings') setCurrentScreen('settings');
   };
 
   if (currentScreen === 'elders') {
@@ -1015,7 +1020,7 @@ const GuardianAppContainer = ({ onLogout }: any) => {
               { id: 'robot', icon: Bot, label: '로봇' },
               { id: 'pill', icon: Pill, label: '약' },
               { id: 'cal', icon: Calendar, label: '일정' },
-              { id: 'more', icon: List, label: '더보기' }
+              { id: 'settings', icon: Settings, label: '설정' }
             ].map((item) => {
               const isActive = activeTab === item.id;
               const Icon = item.icon;
@@ -1023,7 +1028,7 @@ const GuardianAppContainer = ({ onLogout }: any) => {
                 <button
                   key={item.id}
                   onClick={() => handleTabChange(item.id)}
-                  className={`flex flex-col items-center justify-center w-14 h-full space-y-1 transition-all duration-200 ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                  className={`flex flex-col items-center justify-center w-14 h-full space-y-1 transition-all duration-200 ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-200 hover:text-gray-600 dark:hover:text-gray-100'}`}
                 >
                   <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
                   <span className={`text-[11px] leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
