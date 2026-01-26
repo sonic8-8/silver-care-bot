@@ -52,7 +52,10 @@ const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
     const rotation = emotion === 'angry' ? angryRotation : 0;
 
     return (
-        <div className="relative">
+        <motion.div
+            style={{ x: moveX, y: moveY, rotate: rotation }}
+            className="relative"
+        >
             <motion.div
                 animate={variant}
                 variants={variants}
@@ -60,22 +63,32 @@ const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
                 style={{
                     backgroundColor: COLORS.eye,
                     boxShadow: `0 0 50px 10px ${COLORS.eyeGlow}`,
-                    x: moveX,
-                    y: moveY,
-                    rotate: rotation,
                 }}
-                className="origin-center"
-            />
-            <AnimatePresence>
-                {variant !== 'blink' && variant !== 'sleep' && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
-                        className="absolute top-[20%] right-[20%] w-8 h-8 bg-white rounded-full blur-[2px]"
-                        style={{ x: moveX, y: moveY }}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
+                className="relative overflow-hidden origin-center"
+            >
+                <motion.div
+                    animate={
+                        emotion === 'happy'
+                            ? { y: 0, opacity: 1 }
+                            : { y: 100, opacity: 0 }
+                    }
+                    transition={{ duration: 0.2 }}
+                    className="absolute bottom-[-87%] left-[-5%] w-[110%] h-[110%] bg-black z-10"
+                    style={{
+                        borderRadius: "200px 200px 80px 80px",
+                        boxShadow: `0 -12px 18px ${COLORS.eyeGlow}`,
+                    }}
+                />
+                <AnimatePresence>
+                    {variant !== 'blink' && variant !== 'sleep' && (
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
+                            className="absolute top-[20%] right-[20%] w-8 h-8 bg-white rounded-full blur-[2px] z-0"
+                        />
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </motion.div>
     );
 };
 
@@ -188,7 +201,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
     // --- 눈 모양 정의 (Variants) - 1024x600 7인치 LCD 최적화 ---
     const eyeVariants = {
         neutral: { height: 240, width: 180, borderRadius: "50%" },
-        happy: { height: 160, width: 200, borderRadius: "40% 40% 60% 60%", y: -5 },
+        happy: { height: 150, width: 240, borderRadius: "120px 120px 20px 20px", y: -20, scaleY: 1 },
         angry: { height: 220, width: 180, borderRadius: "100% 0% 50% 50%" },
         surprised: { height: 240, width: 180, borderRadius: "50%" },
         sleep: { height: 15, width: 220, borderRadius: "10px", opacity: 0.4 },
@@ -354,7 +367,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                             className="absolute bottom-20 w-full max-w-3xl text-center space-y-6"
                         >
                             {state.mode === 'LISTENING' && (
-                                <div className="flex justify-center mb-4 gap-2">
+                                <div className="flex items-end justify-center mb-4 gap-2 h-10">
                                     {[1, 2, 3].map(i => (
                                         <motion.div
                                             key={i}
