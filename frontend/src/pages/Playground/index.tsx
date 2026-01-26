@@ -11,8 +11,8 @@ import {
   CheckCircle2, Plus, ChevronLeft, Mail, Lock,
   Phone, MapPin, Activity, Camera, ArrowRight,
   Sofa, Utensils, Bed, Bath, Zap, Mic,
-  Monitor, X, CloudSun, Sun, Moon,
-  FileText, BatteryCharging, Siren,
+  Monitor, X, Sun, Moon,
+  FileText, Siren,
   Key, Hash, Hand, Flame, DoorClosed, Smile,
   Stethoscope, Sunrise
 } from 'lucide-react';
@@ -471,7 +471,7 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
                 <div className="font-bold text-gray-900 dark:text-white text-[15px]">아침 약 알림 시간</div>
                 <div className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">매일 반복</div>
               </div>
-                <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-100 border border-primary-200 dark:border-primary-400/40">08:00</div>
+              <div className="min-h-[48px] flex items-center px-4 py-2 rounded-lg font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-100 border border-primary-200 dark:border-primary-400/40">08:00</div>
             </div>
             <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
               <div className="flex justify-between items-center">
@@ -746,10 +746,10 @@ const MedicationScreen = ({ onBack }: any) => (
           <Card className="flex justify-between items-center py-5">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary-50 dark:bg-primary-400/25 text-primary-500 dark:text-primary-100"><Pill size={24} /></div>
-            <div>
-              <h4 className="font-bold text-gray-900 dark:text-white text-[15px]">당뇨약 (아침/저녁)</h4>
-              <p className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">1정씩 · 식후 30분</p>
-            </div>
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white text-[15px]">당뇨약 (아침/저녁)</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-200 mt-0.5">1정씩 · 식후 30분</p>
+              </div>
             </div>
             <button className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-300"><ChevronRight size={20} /></button>
           </Card>

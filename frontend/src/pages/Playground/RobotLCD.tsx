@@ -3,10 +3,12 @@
  * lcd-impl.html 기반 구현
  */
 import { useState, useEffect, useRef } from 'react';
+import type { MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Battery, Wifi, Pill, Phone, Clock, Activity, Smile, CloudSun, Siren, Calendar
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 // --- 타입 정의 ---
 type RobotMode = 'IDLE' | 'GREETING' | 'MEDICATION' | 'SCHEDULE' | 'LISTENING' | 'EMERGENCY' | 'SLEEP';
@@ -78,7 +80,13 @@ const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
 };
 
 // --- ScenarioButton 컴포넌트 ---
-const ScenarioButton = ({ label, onClick, danger }: any) => (
+interface ScenarioButtonProps {
+    label: string;
+    onClick: () => void;
+    danger?: boolean;
+}
+
+const ScenarioButton = ({ label, onClick, danger }: ScenarioButtonProps) => (
     <button
         onClick={onClick}
         className={`px-3 py-2 rounded-lg text-xs font-bold transition-all text-left
@@ -91,10 +99,16 @@ const ScenarioButton = ({ label, onClick, danger }: any) => (
     </button>
 );
 
-const InfoChip = ({ icon: Icon, text, variant = 'info' }: any) => (
+interface InfoChipProps {
+    icon: LucideIcon;
+    text: string | undefined;
+    variant?: ChipVariant;
+}
+
+const InfoChip = ({ icon: Icon, text, variant = 'info' }: InfoChipProps) => (
     <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full backdrop-blur-sm border ${CHIP_STYLES[variant]}`}>
         <Icon size={24} />
-        <span className="text-lcd-caption font-semibold">{text}</span>
+        <span className="text-lcd-caption font-semibold">{text ?? ''}</span>
     </div>
 );
 
@@ -164,7 +178,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
     }, [state.mode]);
 
     // --- 마우스 추적 ---
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
