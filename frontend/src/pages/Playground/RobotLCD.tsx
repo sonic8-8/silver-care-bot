@@ -66,6 +66,7 @@ const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
                 }}
                 className="relative overflow-hidden origin-center"
             >
+
                 <motion.div
                     animate={
                         emotion === 'happy'
@@ -73,12 +74,17 @@ const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
                             : { y: 100, opacity: 0 }
                     }
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-[-87%] left-[-5%] w-[110%] h-[110%] bg-black z-10"
+                    className="absolute bottom-[-105%] left-[-5%] w-[110%] h-[110%] bg-black z-10"
                     style={{
                         borderRadius: "200px 200px 80px 80px",
-                        boxShadow: `0 -12px 18px ${COLORS.eyeGlow}`,
+                        boxShadow: `inset 0 10px 20px 0px ${COLORS.eyeGlow}`,
+
+                        marginTop: "-1px"
                     }}
-                />
+                >
+                </motion.div>
+
+                {/* --- 동공/반사광 --- */}
                 <AnimatePresence>
                     {variant !== 'blink' && variant !== 'sleep' && (
                         <motion.div
@@ -200,13 +206,13 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
 
     // --- 눈 모양 정의 (Variants) - 1024x600 7인치 LCD 최적화 ---
     const eyeVariants = {
-        neutral: { height: 240, width: 180, borderRadius: "50%" },
-        happy: { height: 150, width: 240, borderRadius: "120px 120px 20px 20px", y: -20, scaleY: 1 },
+        neutral: { height: 360, width: 270, borderRadius: "50%" },
+        happy: { height: 210, width: 360, borderRadius: "200px 200px 20px 20px", y: -20, scaleY: 1 },
         angry: { height: 220, width: 180, borderRadius: "100% 0% 50% 50%" },
-        surprised: { height: 240, width: 180, borderRadius: "50%" },
-        sleep: { height: 15, width: 220, borderRadius: "10px", opacity: 0.4 },
-        suspicious: { height: 120, width: 200, borderRadius: "10px 10px 50% 50%" },
-        blink: { height: 8, width: 200, borderRadius: "50%", scaleY: 0.5 },
+        surprised: { height: 360, width: 270, borderRadius: "50%" },
+        sleep: { height: 15, width: 270, borderRadius: "10px", opacity: 0.4 },
+        suspicious: { height: 120, width: 270, borderRadius: "10px 10px 50% 50%" },
+        blink: { height: 8, width: 270, borderRadius: "50%", scaleY: 0.5 },
     };
 
     // 모드에 따른 눈 위치 조절 - 1024x600 최적화 (SimControls 영역 고려)
@@ -324,7 +330,7 @@ const RobotLCD = ({ onLogout, isPreview = false }: RobotLCDProps) => {
                     animate={isCompactMode ? "top" : "center"}
                     variants={containerVariants}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                    className="flex items-center gap-12 sm:gap-24 relative"
+                    className="flex items-center gap-28 sm:gap-56 relative"
                 >
                     <Eye variant={currentEyeVariant} variants={eyeVariants} side="left" mousePos={mousePos} emotion={state.emotion} />
                     <Eye variant={currentEyeVariant} variants={eyeVariants} side="right" mousePos={mousePos} emotion={state.emotion} />
