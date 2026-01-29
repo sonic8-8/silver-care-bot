@@ -5,111 +5,53 @@
 ---
 
 ## 📅 세션 정보
-- **날짜**: 2026-01-23
-- **작업 시간**: 오후 세션
+- **날짜**: 2026-01-29
+- **작업 시간**: 저녁 세션 (17:53 ~ 18:07)
 
 ---
 
 ## ✅ 완료된 작업
 
-### UI 화면 점검 및 수정 (ui-implementation-plan.md 비교)
+### 이전 세션 (오후)
+- API 명세서 작성 완료 (`docs/api-*.md`)
+- 데이터베이스 ERD 설계 완료 (`docs/database-erd.md`)
+- Docker 인프라 설정 완료
 
-| Step | 항목 | 상태 |
-|------|------|------|
-| 1 | 로그인 버튼 색상 통일 (primary) | ✅ |
-| 2 | 로그인 탭 전환 시 위치 이동 문제 해결 | ✅ |
-| 3 | 비밀번호 찾기 링크 추가 | ✅ |
-| 4 | 전체 화면 12개 문서 대비 점검 | ✅ |
-| 5 | LCD 화면 7개 문서 대비 점검 | ✅ |
-| 6 | 긴급 화면 LIVE 표시 삭제 | ✅ |
-| 7 | 설정 화면에 로봇 설정 섹션 추가 | ✅ |
-| 8 | 설정 화면에 긴급 연락처 섹션 추가 | ✅ |
-| 9 | 설정 화면에 이메일 알림 토글 추가 | ✅ |
-| 10 | 로그인 탭 전환 위치 문제 완전 해결 | ✅ |
-| 11 | 불필요한 기능 제거 (음성메시지/동작정지) | ✅ |
-
-### 적용된 변경 사항
-
-| 파일 | 변경 내용 |
-|------|----------|
-| `Playground/index.tsx:423` | `variant="dark"` 제거 → 로봇 로그인 버튼 primary 통일 |
-| `Playground/index.tsx:424-426` | 로봇 탭 설명 텍스트에 `min-h-[48px]` 추가 (높이 맞춤) |
-| `Playground/index.tsx:414-417` | 비밀번호 찾기 링크 추가 |
-| `Playground/index.tsx:875-882` | 음성 메시지/동작 정지 버튼 삭제 (불필요한 기능 제거) |
-| `Playground/index.tsx:1117-1123` | 긴급 화면 LIVE 표시 삭제 |
-| `Playground/index.tsx:715-719` | 알림 설정에 이메일 알림 토글 추가 |
-| `Playground/index.tsx:733-786` | 로봇 설정 섹션 추가 (약 알림, TTS 볼륨, 순찰 시간대) |
-| `Playground/index.tsx:788-808` | 긴급 연락처 섹션 추가 (1순위, 2순위) |
-| `Playground/index.tsx:427-429` | 로봇 탭 높이 완전 동기화 (빈 공간 추가) |
+### 현재 세션
+- CLAUDE.md, HANDOFF.md, 워크플로우 확인 완료
+- PRD 작성 방향 논의 시작
 
 ---
 
-## 📊 화면별 점검 결과
+## 💡 다음 세션 계획
 
-### 보호자 앱 화면 (12개)
+### 1단계: PRD 작성 (실제 서비스 구현용)
 
-| 화면 | 문서 대비 | 비고 |
-|------|----------|------|
-| 로그인 | ✅ | 탭/다크모드 추가됨 |
-| 회원가입 | ✅ | 인사말 추가됨 |
-| 노인 선택 | ✅ | 헤더 추가됨 |
-| 홈 대시보드 | ✅ | 뒤로가기 추가됨 |
-| 일정 관리 | ⚠️ | 주간 캘린더 (문서는 월간) - 의도적 |
-| 로봇 제어 | ✅ | |
-| 기록/리포트 | ✅ | |
-| 약 관리 | ✅ | |
-| 알림 | ✅ | |
-| 설정 | ✅ | |
-| 긴급 상황 | ✅ | |
-| LCD 미러링 | ✅ | |
+> [!IMPORTANT]
+> 기존 PRD.md는 UI 초안용이었음. 새로운 PRD는 실제 서비스 구현을 위한 것.
 
-### LCD 화면 (7개)
+**PRD 작성 전 결정 필요 사항:**
 
-| 화면 | 상태 |
-|------|------|
-| 대기/기본 | ✅ 완벽 일치 |
-| 인사 | ✅ 완벽 일치 |
-| 복약 알림 | ✅ 완벽 일치 |
-| 일정 알림 | ✅ 완벽 일치 |
-| 듣는 중 | ✅ 완벽 일치 |
-| 긴급/낙상 | ✅ 완벽 일치 |
-| 충전 중 | ✅ 완벽 일치 |
+| # | 질문 | 옵션 |
+|---|------|------|
+| 1 | **개발 범위** | 백엔드만? 프론트엔드+백엔드 통합? |
+| 2 | **우선순위** | requirements-specification.md 순서대로? 특정 기능 우선? |
+| 3 | **데이터베이스** | PostgreSQL (HANDOFF 권장) vs MySQL (CLAUDE.md) |
+| 4 | **개발 기간 & 팀** | 예상 기간? 혼자? 팀? |
+| 5 | **MVP 범위** | 로봇 연동(WebSocket) 포함? 웹앱 기본 기능만? |
 
----
+**참고 문서:**
+- `docs/requirements-specification.md` - 요구사항 명세
+- `docs/api-specification.md` - REST API 40+ 엔드포인트
+- `docs/database-erd.md` - 14개 테이블 설계
+- `docs/persona-scenario.md` - 페르소나 및 시나리오
 
-## 📝 문서 대비 의도적 차이점
+### 2단계: PLAN 작성
 
-| 항목 | 문서 | 구현 | 이유 |
-|------|------|------|------|
-| 다크모드 | 없음 | 전체 지원 | UX 개선 |
-| 로그인 탭 | 없음 | 보호자/로봇 탭 | LCD 모드 진입 |
-| 캘린더 | 월간 | 주간 | 모바일 UX 개선 |
-
----
-
----
-
-## 💡 다음 세션 추천 작업
-
-### Option 1: 컴포넌트 분리 및 라우팅
-1. **컴포넌트 분리** (TDD 적용)
-   - `shared/ui/` 폴더로 Button, Card, Input 등 이동
-   - 각 컴포넌트별 테스트 작성
-
-2. **페이지 라우팅**
-   - React Router 설정
-   - 현재 Playground에서 개별 페이지로 분리
-
-### Option 2: 백엔드 API 연동 준비
-- MSW 핸들러 정의
-- API 타입 정의
-- TanStack Query 설정
-
----
-
-## ⚠️ 알려진 이슈
-
-- 없음
+PRD 승인 후:
+1. 구현 계획 작성 (PLAN.md)
+2. 사용자 승인 대기
+3. TDD 기반 구현 시작
 
 ---
 
@@ -118,8 +60,17 @@
 | 파일 | 경로 |
 |------|------|
 | CLAUDE.md | `CLAUDE.md` |
-| PRD.md | `.agent/PRD.md` |
-| PLAN.md | `.agent/PLAN.md` |
-| ADR.md | `.agent/ADR.md` |
-| Playground | `frontend/src/pages/Playground/index.tsx` |
-| ui-implementation-plan | `docs/ui-implementation-plan.md` |
+| 기존 PRD (UI용) | `.agent/PRD.md` |
+| API 명세서 | `docs/api-specification.md` |
+| DB ERD | `docs/database-erd.md` |
+| 요구사항 명세 | `docs/requirements-specification.md` |
+
+---
+
+## 🔗 배포 URL
+
+| 환경 | URL |
+|------|-----|
+| Client | `https://i14c104.p.ssafy.io/` |
+| API | `https://i14c104.p.ssafy.io/api/` |
+| WebSocket | `wss://i14c104.p.ssafy.io/ws` |
