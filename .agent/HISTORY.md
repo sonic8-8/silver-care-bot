@@ -5,6 +5,89 @@
 ---
 
 <details>
+<summary>2026-01-29: 배포 파이프라인/리버스 프록시 구성 정리</summary>
+
+### 📋 계획 (PLAN 요약)
+- Jenkins 컨테이너에 Docker CLI/Compose 설치
+- Nginx 리버스 프록시로 경로 기반 라우팅 구성
+- 포트 충돌 해소 및 보안 강화
+
+### 🛠️ 작업 내용
+- Jenkins 컨테이너에 Docker CLI/Compose 플러그인 설치용 커스텀 이미지 적용
+- Jenkins 접근 경로를 `/jenkins`로 프록시하도록 Nginx 설정 구성
+- Web 앱 포트 충돌 해소를 위해 내부 바인딩(127.0.0.1) 포트 맵 정리
+- Backend Dockerfile에서 `gradlew` 실행 권한 복구
+- Jenkins URL을 `/jenkins` 기반으로 설정하고 Webhook 경로를 통일
+- 파이프라인 changeset 조건으로 인한 배포 스킵 확인 및 임시 강제 실행 안내
+
+### ⚠️ 이슈/해결
+| 문제 | 해결 |
+|------|------|
+| Jenkins 컨테이너에 docker CLI 미설치 | 커스텀 이미지로 해결 |
+| `/jenkins` 404 | `proxy_pass` 슬래시 제거로 경로 유지 |
+| `502 Bad Gateway` | web 컨테이너 미기동 확인 후 파이프라인 강제 실행 |
+| backend `./gradlew Permission denied` | `COPY . .` 이후 chmod 추가 |
+| Jenkins changeset 조건으로 스테이지 스킵 | Replay에서 when 제거로 임시 배포 |
+
+### 📁 수정된 파일
+- `web/docker-compose.yml` (frontend/backend 포트 8081/8082 내부 바인딩)
+- `web/default` (/, /api, /jenkins 프록시 추가)
+- `web/backend/Dockerfile` (gradlew 실행 권한 복구)
+
+### 🔧 운영 환경 변경
+- Jenkins 컨테이너 포트: `127.0.0.1:8083`으로 내부 바인딩
+- Jenkins 옵션: `JENKINS_OPTS=--prefix=/jenkins`
+- Nginx 경로 라우팅: `/`(frontend), `/api/`(backend), `/jenkins/`(Jenkins)
+- GitLab Webhook: `/jenkins/generic-webhook-trigger` 경로로 변경
+
+</details>
+
+<details>
+<summary>2026-01-29: 프론트 UI 리팩터링 및 배포 설정 정비</summary>
+
+### 📋 계획 (PLAN 요약)
+- Playground/LCD UI를 React로 정리하고 다크 모드/디자인 토큰을 반영
+- 프론트 정적 배포(Docker+Nginx) 준비
+- 문서 업데이트 및 리포 구조 정리
+
+### 🛠️ 작업 내용
+
+#### 1. 프론트 UI/UX 개편
+- `frontend/src/pages/Playground/index.tsx`에 로그인/회원가입/노인선택/대시보드/일정/로봇제어/약관리/기록/알림/설정/긴급 화면 구성
+- 공통 UI 컴포넌트(Button/Card/Header/Badge/Input) 추가 및 접근성 포커스 링 적용
+- 다크 모드 대응 및 딥블루 테마 일관화
+
+#### 2. Robot LCD 고도화
+- `frontend/src/pages/Playground/RobotLCD.tsx`에 Framer Motion 기반 상태 전환(IDLE/GREETING/MEDICATION/SCHEDULE/LISTENING/EMERGENCY/SLEEP) 구현
+- 시나리오 버튼으로 상태 미리보기 제공
+
+#### 3. 테마/개발환경 정비
+- `tailwind.config.js`에 딥블루/피치/시맨틱 컬러 토큰, 폰트/타이포/섀도 정의
+- 테마 스토어(`themeStore`)로 시스템/로컬 스토리지 기반 다크모드 전환
+- MSW 핸들러/테스트 셋업 보강
+
+#### 4. 배포 및 구조 정리
+- `frontend/Dockerfile`, `frontend/nginx/default.conf` 추가(SPA 라우팅 + 캐시 정책)
+- `backend/**` 및 HTML 프로토타입(`impl.html`, `lcd-impl.html`) 제거
+- `.agent/**`, `docs/**`, `CLAUDE.md` 문서 대규모 업데이트
+
+### 📁 수정된 파일
+- `frontend/src/pages/Playground/index.tsx`
+- `frontend/src/pages/Playground/RobotLCD.tsx`
+- `frontend/src/shared/store/themeStore.ts`
+- `frontend/tailwind.config.js`
+- `frontend/Dockerfile`
+- `frontend/nginx/default.conf`
+- `backend/**` (삭제)
+- `impl.html`, `lcd-impl.html` (삭제)
+
+### ⚠️ 확인 필요 사항
+- 루트 `/src/**`는 `frontend/src`와 중복 구조로 보임. 의도 여부 확인 필요.
+- `backend/**` 삭제가 최종 방침인지 확인 필요(별도 레포로 이전 등).
+
+</details>
+
+<details>
 <summary>2026-01-23: UI 화면 점검 및 수정 (ui-implementation-plan.md 동기화 확인)</summary>
 
 ### 📋 계획 (PLAN 요약)
