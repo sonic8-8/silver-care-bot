@@ -39,21 +39,93 @@
 > **Note**: 백엔드 관점에서 로봇은 **Jetson Orin Nano만 통신 대상**입니다.  
 > Arduino는 Jetson 내부에서 Serial/I2C 통신으로 모터/센서를 제어합니다.
 
-### 1.2 통신 방식
+### 1.2 AI 시스템 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AI SYSTEM ARCHITECTURE                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                        Jetson Orin Nano                              │   │
+│  │  ┌─────────────────────┐    ┌─────────────────────────────────┐     │   │
+│  │  │     Vision AI       │    │          Speech AI               │     │   │
+│  │  │  ┌───────────────┐  │    │  ┌─────────────────────────┐    │     │   │
+│  │  │  │ YOLO v8 nano  │  │    │  │ OpenWakeWord (호출)      │    │     │   │
+│  │  │  │ (객체 탐지)    │  │    │  │         ↓               │    │     │   │
+│  │  │  └───────────────┘  │    │  │ Whisper (STT)            │    │     │   │
+│  │  │  ┌───────────────┐  │    │  │         ↓               │    │     │   │
+│  │  │  │ SORT          │  │    │  │ GPT-5-nano (LLM)         │    │     │   │
+│  │  │  │ (객체 추적)    │  │    │  │         ↓               │    │     │   │
+│  │  │  └───────────────┘  │    │  │ FastSpeech2 (TTS)        │    │     │   │
+│  │  │  ┌───────────────┐  │    │  └─────────────────────────┘    │     │   │
+│  │  │  │ 커스텀 모델    │  │    └─────────────────────────────────┘     │   │
+│  │  │  │ (상태 판단)    │  │                                            │   │
+│  │  │  └───────────────┘  │                                            │   │
+│  │  └─────────────────────┘                                            │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Vision AI 모델 스택
+
+| 타입 | 용도 | 모델 |
+|------|------|------|
+| 비전 | 객체 탐지 | YOLO v8 nano |
+| 비전 | 객체 추적 | SORT |
+| 비전 | 상태 판단 | 커스텀 모델 |
+
+#### Speech AI 모델 스택
+
+| 타입 | 용도 | 모델 |
+|------|------|------|
+| Speech | 웨이크워드 감지 | OpenWakeWord |
+| STT | 음성 → 텍스트 | whisper-large-v3-turbo |
+| LLM | 대화, 명령 분석 | OPENAI (GPT-5-nano) |
+| TTS | 텍스트 → 음성 | FastSpeech2 |
+
+#### Vision AI 기능
+
+| 기능 | 입력 | 출력 | 우선순위 |
+|------|------|------|----------|
+| 객체 추종 | 센서 데이터 | 거리, 각도 | 🔴 High |
+| 정찰 기능 | 센서 데이터 | ON/OFF 상태 (가스밸브, 창문, 멀티탭) | 🔴 High |
+| 기상/취침 감지 | 센서 데이터 | WAKE / SLEEP | 🔴 High |
+| 낙상 판단 | 센서 데이터 | 낙상 여부 | 🔻 후순위 |
+| 투약 여부 | 센서 데이터 | 복용 확인 | 🔻 후순위 |
+
+> **정찰 결과 웹앱 표시**:
+> - ON (confidence ≥ 80%): "안전" 🟢
+> - OFF (confidence ≥ 80%): "확인 필요" 🟡
+
+#### Speech AI 기능
+
+| 기능 | Intent | CommandType | 설명 |
+|------|--------|-------------|------|
+| 일반 대화 | `CHAT` | `null` | 일상 대화, 감정 분석 (대부분 NEUTRAL) |
+| 웹 검색/날씨 | `COMMAND` | `SEARCH` | 날씨, 웹 검색 결과 조회 |
+| 일정 등록 | `COMMAND` | `SCHEDULE` | 음성으로 일정 등록 |
+| 로봇 이동 | `COMMAND` | `MOVE` | 로봇 이동 명령 |
+
+> **⚠️ 감정 분석 후순위**: 음성 인식 정확도 이슈로 대부분 `NEUTRAL`로 처리
+
+### 1.3 통신 방식
 
 | 통신 유형 | 프로토콜 | 용도 |
 |----------|---------|------|
 | **REST API** | HTTP/HTTPS | CRUD 작업, 상태 조회, 명령 전송 |
 | **WebSocket** | WS/WSS | 실시간 상태 업데이트, 긴급 알림, LCD 미러링 |
 
-### 1.3 우선순위 정의
+### 1.4 우선순위 정의
 
 | Phase | 우선순위 | 기능 |
 |-------|---------|------|
 | **Phase 1** | 🔴 Critical | 인증, 노인/로봇 등록, 로봇 상태, 긴급 상황 |
-| **Phase 2** | 🟡 High | 복약 관리, 알림, 일정 관리 |
-| **Phase 3** | 🟢 Medium | AI 리포트, 활동 로그, 순찰 피드 |
+| **Phase 2** | 🟡 High | 복약 관리, 알림, 일정 관리, Vision AI, Speech AI |
+| **Phase 3** | 🟢 Medium | AI 리포트, 활동 로그, 순찰 피드, Visual SLAM |
 | **Phase 4** | 🔵 Low | 안심 지도, 고급 분석 |
+| **후순위** | 🔻 Deferred | 낙상 판단, 투약 여부 (Vision), 감정 분석 (Speech), 디스펜서 |
 
 ---
 
@@ -440,6 +512,45 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 
 ---
 
+#### POST `/api/robots/{robotId}/lcd-mode`
+> LCD 화면 모드 변경 (Python AI 서비스 → 서버)
+
+**Request**
+```json
+{
+  "mode": "LISTENING",
+  "emotion": "neutral",
+  "message": "",
+  "subMessage": ""
+}
+```
+
+| emotion | 설명 |
+|---------|------|
+| `neutral` | 평상시, 긴급 상황 |
+| `happy` | 인사, 복약 완료, 일정 알림 |
+| `sleep` | 충전 중 |
+
+> **MVP emotion**: 3가지만 사용
+
+**서버 동작:**
+1. LCD 상태 DB 업데이트
+2. WebSocket으로 `/topic/robot/{robotId}/lcd`에 push
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "mode": "LISTENING",
+    "emotion": "neutral",
+    "updatedAt": "2026-01-30T10:30:00+09:00"
+  }
+}
+```
+
+---
+
 ### 3.4 복약 관리 (Medication) 🟡 Phase 2
 
 #### GET `/api/elders/{elderId}/medications`
@@ -629,16 +740,26 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 **Request** *(Jetson Orin에서 처리 후 전송)*
 ```json
 {
-  "voiceOriginal": "손자 생일 케이크 사달라고 해야겠어",
+  "voiceOriginal": "손자아아 생일 케이크으 사달라고 해야게써",
   "parsedData": {
+    "normalizedText": "손자 생일 케이크 사달라고 해야겠어",
     "title": "손자 생일 케이크 사기",
     "datetime": "2026-01-22T00:00:00+09:00",
     "type": "PERSONAL",
-    "confidence": 0.92
+    "confidence": 0.92,
+    "intent": "COMMAND",
+    "commandType": "SCHEDULE"
   },
   "recordedAt": "2026-01-20T15:30:00+09:00"
 }
 ```
+
+| intent | commandType | 설명 |
+|--------|-------------|------|
+| `CHAT` | `null` | 일반 대화 |
+| `COMMAND` | `SEARCH` | 웹 검색, 날씨 조회 |
+| `COMMAND` | `SCHEDULE` | 일정 등록 |
+| `COMMAND` | `MOVE` | 로봇 이동 명령 |
 
 ---
 
@@ -951,16 +1072,64 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 
 ---
 
-#### POST `/api/robots/{robotId}/map/upload`
+#### POST `/api/robots/{robotId}/map`
 > 맵 데이터 업로드 (로봇 Visual SLAM → 서버)
 
 **Request** *(multipart/form-data)*
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `mapImage` | File (PGM) | 맵 이미지 (~300KB) |
+| `mapConfig` | File (YAML) | 맵 설정 파일 |
+| `rooms` | JSON String | 방 정보 배열 (선택) |
+
+**YAML 설정 파일 예시:**
+```yaml
+image: maptest1.pgm
+resolution: 0.05
+origin: [-4.11898, -3.58054, 0.0]
+negate: 0
+occupied_thresh: 0.5
+free_thresh: 0.196
 ```
-mapImage: [Binary - PNG/JPG]
-metadata: {
-  "capturedAt": "2026-01-28T12:00:00+09:00",
-  "slamVersion": "v2.1",
-  "resolution": { "width": 1024, "height": 768 }
+
+**rooms JSON 예시:**
+```json
+[
+  { "id": "LIVING_ROOM", "name": "거실", "x": 100, "y": 200 },
+  { "id": "KITCHEN", "name": "주방", "x": 300, "y": 150 },
+  { "id": "BEDROOM", "name": "침실", "x": 450, "y": 300 }
+]
+```
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "mapId": "map-001",
+    "uploadedAt": "2026-01-30T11:50:00+09:00",
+    "rooms": [
+      { "id": "LIVING_ROOM", "name": "거실" },
+      { "id": "KITCHEN", "name": "주방" }
+    ]
+  }
+}
+```
+
+---
+
+#### PUT `/api/robots/{robotId}/location`
+> 로봇 위치 업데이트 (로봇 → 서버, 2초 간격 권장)
+
+**Request**
+```json
+{
+  "x": 450,
+  "y": 150,
+  "roomId": "LIVING_ROOM",
+  "heading": 45,
+  "timestamp": "2026-01-29T10:23:00+09:00"
 }
 ```
 
@@ -969,31 +1138,87 @@ metadata: {
 {
   "success": true,
   "data": {
-    "mapId": "map-elder-1-v3",
-    "processedHtml": "<div class='room-layout'>...</div>",
-    "rooms": [ ... ],
-    "processedAt": "2026-01-28T12:00:30+09:00"
+    "received": true,
+    "serverTime": "2026-01-29T10:23:01+09:00"
   }
 }
 ```
 
-> ⚠️ 서버에서 Spring AI로 이미지 분석 후 HTML 형식으로 변환
+---
+
+#### GET `/api/robots/{robotId}/rooms`
+> 방 목록 조회
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "rooms": [
+      { "id": "LIVING_ROOM", "name": "거실", "x": 100, "y": 200 },
+      { "id": "KITCHEN", "name": "주방", "x": 300, "y": 150 },
+      { "id": "BEDROOM", "name": "침실", "x": 450, "y": 300 }
+    ]
+  }
+}
+```
 
 ---
 
-#### POST `/api/robots/{robotId}/position`
-> 로봇 위치 업데이트 (로봇 → 서버)
+#### POST `/api/robots/{robotId}/rooms`
+> 방 등록 (현재 로봇 위치 기준)
 
 **Request**
 ```json
 {
-  "x": 450,
-  "y": 150,
-  "roomId": "room-2",
-  "heading": 45,
-  "timestamp": "2026-01-29T10:23:00+09:00"
+  "name": "거실",
+  "useCurrentLocation": true
 }
 ```
+
+또는 좌표 직접 지정:
+```json
+{
+  "id": "LIVING_ROOM",
+  "name": "거실",
+  "x": 450,
+  "y": 150,
+  "useCurrentLocation": false
+}
+```
+
+**Response** `201 Created`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "LIVING_ROOM",
+    "name": "거실",
+    "x": 450,
+    "y": 150,
+    "createdAt": "2026-01-30T12:00:00+09:00"
+  }
+}
+```
+
+---
+
+#### PUT `/api/robots/{robotId}/rooms/{roomId}`
+> 방 정보 수정
+
+**Request**
+```json
+{
+  "name": "안방"
+}
+```
+
+---
+
+#### DELETE `/api/robots/{robotId}/rooms/{roomId}`
+> 방 삭제
+
+**Response** `204 No Content`
 
 ---
 
@@ -1104,6 +1329,167 @@ metadata: {
 
 ---
 
+### 3.12 AI API (Speech AI) 🟡 Phase 2
+
+#### POST `/api/robots/{robotId}/conversations`
+> 대화 기록 저장 (로봇 AI → 서버)
+
+**Request**
+```json
+{
+  "voiceOriginal": "오느을 날씨이 좋네요오",
+  "parsedData": {
+    "normalizedText": "오늘 날씨 좋네요",
+    "intent": "CHAT",
+    "commandType": null,
+    "confidence": 0.88,
+    "duration": 120,
+    "sentiment": "NEUTRAL",
+    "keywords": ["날씨", "좋다"]
+  },
+  "recordedAt": "2026-01-30T10:30:00+09:00"
+}
+```
+
+| 필드 | 설명 |
+|------|------|
+| `voiceOriginal` | STT 원본 결과 (깨진 텍스트 포함) |
+| `normalizedText` | LLM이 정규화한 텍스트 |
+
+| sentiment | 설명 |
+|-----------|------|
+| `POSITIVE` | 긍정적 |
+| `NEUTRAL` | 중립 (대부분 이 값으로 처리) |
+| `NEGATIVE` | 부정적 |
+
+> ⚠️ **감정 분석 후순위**: 음성 인식 정확도 이슈로 대부분 `NEUTRAL`로 저장됨
+
+---
+
+#### POST `/api/robots/{robotId}/search-results`
+> 검색 결과 저장 (로봇 AI → 서버)
+
+**Request**
+```json
+{
+  "voiceOriginal": "오느을 날씨가아 어때애?",
+  "parsedData": {
+    "normalizedText": "오늘 날씨가 어때?",
+    "intent": "COMMAND",
+    "commandType": "SEARCH",
+    "confidence": 0.92,
+    "duration": 8,
+    "sentiment": "NEUTRAL",
+    "keywords": ["날씨"]
+  },
+  "recordedAt": "2026-01-30T10:30:00+09:00",
+  "searchedData": {
+    "type": "WEATHER",
+    "content": "오늘 서울 날씨는 맑음, 최고 5도, 최저 -3도입니다."
+  }
+}
+```
+
+| searchedData.type | 설명 |
+|-------------------|------|
+| `WEATHER` | 날씨 조회 |
+| `WEB_SEARCH` | 웹 검색 |
+
+---
+
+### 3.13 AI API (Vision AI) 🟡 Phase 2
+
+#### POST `/api/robots/{robotId}/patrol-results`
+> 정찰 결과 저장 (로봇 Vision AI → 서버)
+
+**Request**
+```json
+{
+  "patrolledAt": "2026-01-30T09:30:00+09:00",
+  "results": [
+    { "target": "GAS_VALVE", "status": "ON", "confidence": 0.92, "label": "안전" },
+    { "target": "WINDOW", "status": "OFF", "confidence": 0.85, "label": "확인 필요" },
+    { "target": "MULTI_TAP", "status": "ON", "confidence": 0.88, "label": "안전" }
+  ],
+  "overallStatus": "WARNING"
+}
+```
+
+| target | 설명 |
+|--------|------|
+| `GAS_VALVE` | 가스밸브 |
+| `WINDOW` | 창문 |
+| `MULTI_TAP` | 멀티탭 |
+
+| status | 웹앱 표시 | 조건 |
+|--------|----------|------|
+| `ON` | 안전 🟢 | confidence ≥ 80% |
+| `OFF` | 확인 필요 🟡 | confidence ≥ 80% |
+
+| overallStatus | 설명 |
+|---------------|------|
+| `SAFE` | 모든 항목 안전 |
+| `WARNING` | 하나 이상 확인 필요 |
+
+---
+
+#### POST `/api/robots/{robotId}/sleep-wake`
+> 기상/취침 감지 기록 (로봇 Vision AI → 서버)
+
+**Request**
+```json
+{
+  "status": "WAKE",
+  "detectedAt": "2026-01-30T07:30:00+09:00",
+  "confidence": 0.91
+}
+```
+
+| status | 설명 |
+|--------|------|
+| `WAKE` | 기상 감지 |
+| `SLEEP` | 취침 감지 (누울 경우) |
+
+---
+
+### 3.14 복약 알림 (Medication Reminder) 🔻 후순위
+
+> ⚠️ 디스펜서 연동은 후순위 기능입니다.
+
+#### POST `/api/robots/{robotId}/medication-reminder`
+> 복약 알림 시작 (로봇 → 서버)
+
+**Request**
+```json
+{
+  "elderId": 1,
+  "medicationId": 1,
+  "startedAt": "2026-01-30T08:00:00+09:00"
+}
+```
+
+---
+
+#### POST `/api/robots/{robotId}/medication-response`
+> 어르신 복약 응답 기록 (로봇 → 서버)
+
+**Request**
+```json
+{
+  "elderId": 1,
+  "medicationId": 1,
+  "action": "TAKE",
+  "respondedAt": "2026-01-30T08:05:00+09:00"
+}
+```
+
+| action | 설명 | 후속 처리 |
+|--------|------|----------|
+| `TAKE` | 지금 먹을게요 | 디스펜서 약 배출 → 복약 완료 기록 |
+| `LATER` | 나중에요 | N분 후 다시 알림 |
+
+---
+
 ## 4. WebSocket 명세
 
 ### 4.1 연결
@@ -1150,7 +1536,12 @@ const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
 ---
 
 #### `LCD_MODE_CHANGE`
-> LCD 화면 모드 변경
+> LCD 화면 모드 변경 (서버 → LCD 웹앱)
+
+**구독 토픽**: `/topic/robot/{robotId}/lcd`
+
+> LCD 웹앱(React)은 이 토픽을 구독하여 실시간으로 화면을 전환합니다.
+> Python AI가 `POST /api/robots/{robotId}/lcd-mode` 호출 시 서버가 이 메시지를 push합니다.
 
 ```json
 {
@@ -1158,12 +1549,18 @@ const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
   "payload": {
     "robotId": 1,
     "mode": "MEDICATION",
-    "emotion": "neutral",
-    "message": "\"할머니~ 약 드실 시간이에요!\"",
+    "emotion": "happy",
+    "message": "할머니~ 약 드실 시간이에요!",
     "subMessage": "아침약 (고혈압, 당뇨)"
   }
 }
 ```
+
+| emotion | 설명 |
+|---------|------|
+| `neutral` | 평상시, 긴급 상황 |
+| `happy` | 인사, 복약 완료, 일정 알림 |
+| `sleep` | 충전 중 |
 
 ---
 
@@ -1413,18 +1810,25 @@ const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
 | `UserRole` | WORKER, FAMILY |
 | `ElderStatus` | SAFE, WARNING, DANGER |
 | `RobotLcdMode` | IDLE, GREETING, MEDICATION, SCHEDULE, LISTENING, EMERGENCY, SLEEP |
-| `Emotion` | neutral, happy, angry, surprised, sleep, suspicious |
+| `Emotion` | neutral, happy, sleep (MVP) |
 | `MedicationFrequency` | MORNING, EVENING, BOTH |
 | `MedicationStatus` | TAKEN, MISSED, PENDING |
 | `ScheduleType` | HOSPITAL, MEDICATION, PERSONAL, FAMILY, OTHER |
 | `ScheduleSource` | MANUAL, VOICE, SYSTEM |
 | `NotificationType` | EMERGENCY, MEDICATION, SCHEDULE, ACTIVITY, SYSTEM |
 | `ActivityType` | WAKE_UP, SLEEP, MEDICATION_TAKEN, MEDICATION_MISSED, PATROL_COMPLETE, OUT_DETECTED, RETURN_DETECTED, CONVERSATION, EMERGENCY |
-| `PatrolTarget` | GAS_VALVE, DOOR, OUTLET, WINDOW, APPLIANCE |
-| `PatrolStatus` | NORMAL, LOCKED, UNLOCKED, ON, OFF, NEEDS_CHECK |
+| `PatrolTarget` | GAS_VALVE, WINDOW, MULTI_TAP |
+| `PatrolStatus` | ON, OFF |
+| `PatrolOverallStatus` | SAFE, WARNING |
 | `EmergencyType` | FALL_DETECTED, NO_RESPONSE, SOS_BUTTON, UNUSUAL_PATTERN |
 | `CommandType` | MOVE_TO, START_PATROL, RETURN_TO_DOCK, SPEAK, CHANGE_LCD_MODE |
 | `CommandStatus` | RECEIVED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED |
+| `Intent` | CHAT, COMMAND |
+| `VoiceCommandType` | SEARCH, SCHEDULE, MOVE |
+| `Sentiment` | POSITIVE, NEUTRAL, NEGATIVE |
+| `SearchType` | WEATHER, WEB_SEARCH |
+| `SleepWakeStatus` | WAKE, SLEEP |
+| `MedicationAction` | TAKE, LATER |
 
 ---
 
@@ -1433,6 +1837,10 @@ const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
 | 1.0.0 | 2026-01-29 | 초안 작성 |
+| 1.1.0 | 2026-01-30 | AI 시스템 아키텍처 추가 (Vision AI, Speech AI), 모델 스택 정보 추가, 새로운 AI API 추가 (conversations, search-results, patrol-results, sleep-wake), Visual SLAM API 수정 (맵 업로드 PGM/YAML, 방 관리 CRUD), 후순위 기능 표시 (낙상, 투약, 감정 분석, 디스펜서) |
+| 1.2.0 | 2026-01-30 | MVP 단순화: Emotion을 neutral, happy, sleep 3가지로 축소 |
+| 1.3.0 | 2026-01-30 | LCD 화면 전환 아키텍처 수정: REST API + WebSocket 기반으로 변경, `POST /api/robots/{robotId}/lcd-mode` API 추가, WebSocket 토픽 `/topic/robot/{robotId}/lcd` 명세 추가 |
+| 1.3.1 | 2026-01-30 | Speech AI API에 `normalizedText` 필드 추가 (STT 원본 → 정규화된 텍스트) |
 
 ---
 
@@ -1443,23 +1851,31 @@ const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
 - `POST /api/robots/{robotId}/sync`
 - `POST /api/robots/{robotId}/events`
 - `POST /api/robots/{robotId}/emergency`
-- `POST /api/robots/{robotId}/patrol/report`
-- `POST /api/robots/{robotId}/position`
+- `PUT /api/robots/{robotId}/location`
 - `POST /api/robots/{robotId}/commands/{commandId}/ack`
 - WebSocket 연결 및 수신
 
-### AI (Jetson Orin)
-- `POST /api/elders/{elderId}/schedules/voice`
-- `POST /api/elders/{elderId}/medications/records`
-- `POST /api/robots/{robotId}/map/upload`
-- 이벤트 전처리 후 임베디드로 전달
+### AI (Jetson Orin) - Vision AI
+- `POST /api/robots/{robotId}/patrol-results` (정찰 결과)
+- `POST /api/robots/{robotId}/sleep-wake` (기상/취침 감지)
+- `POST /api/robots/{robotId}/map` (맵 업로드)
+- 객체 추종 (센서 → 거리, 각도)
+
+### AI (Jetson Orin) - Speech AI
+- `POST /api/robots/{robotId}/lcd-mode` (LCD 화면 전환) ⭐ 신규
+- `POST /api/robots/{robotId}/conversations` (대화 기록)
+- `POST /api/robots/{robotId}/search-results` (검색 결과)
+- `POST /api/elders/{elderId}/schedules/voice` (음성 일정)
+- `POST /api/elders/{elderId}/medications/records` (복약 기록)
 
 ### 백엔드 (Spring)
 - 모든 REST API 구현
 - WebSocket 서버 구현
-- Spring AI 맵 처리
+- 방 관리 CRUD (`/api/robots/{robotId}/rooms`)
 
 ### 프론트엔드 (React)
 - 모든 GET API 호출
 - 일부 POST/PATCH API (사용자 입력)
+- 방 등록 UI (현재 로봇 위치 기준)
 - WebSocket 클라이언트 구현
+
