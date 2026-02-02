@@ -362,6 +362,71 @@ primary: {
 
 ---
 
+## ADR-011: 4 Agent 병렬 작업 분배 전략
+
+| 항목 | 내용 |
+|------|------|
+| 날짜 | 2026-02-02 |
+| 상태 | 승인됨 |
+| 결정 | 4개 AI 에이전트를 도메인별로 분리하여 병렬 작업 |
+
+### 컨텍스트
+- PRD v2.0 승인 후 구현 단계 진입
+- 개발 속도 향상을 위해 4개의 Codex 에이전트 병렬 실행 계획
+- 파일 충돌 없이 독립적 작업 가능한 분배 전략 필요
+
+### 결정 내용
+
+#### 1. Phase 0 분배 (인프라 설정)
+| Agent | 역할 | 핵심 산출물 |
+|-------|------|------------|
+| Agent 1 | BE-INFRA | Spring Boot, Security, Docker |
+| Agent 2 | FE-INFRA | Vite, Tailwind, Router |
+| Agent 3 | DB-SCHEMA | Flyway, Entity, Repository |
+| Agent 4 | CONTRACTS | ApiResponse, Axios, MSW |
+
+#### 2. Phase 1+ 분배 (도메인별)
+| Agent | 도메인 | 범위 |
+|-------|--------|------|
+| Agent 1 | AUTH | 인증/인가 Full-Stack |
+| Agent 2 | ELDER | 노인+긴급 Full-Stack |
+| Agent 3 | ROBOT | 로봇+스케줄러 Full-Stack |
+| Agent 4 | WEBSOCKET | 실시간 통신 Full-Stack |
+
+#### 3. 머지 순서
+```
+Phase 0: DB-SCHEMA → BE-INFRA → CONTRACTS → FE-INFRA
+Phase 1: AUTH(필수) → WEBSOCKET → ELDER/ROBOT(순서 무관)
+```
+
+### 결정 이유 (Kent Beck 원칙 적용)
+
+| 원칙 | 적용 |
+|------|------|
+| **Independence** | 도메인 경계로 분리 → 파일 충돌 최소화 |
+| **Contract First** | Phase 0에서 API 응답/타입 먼저 정의 |
+| **Tiny Steps** | 1 API = 1 커밋, 즉시 검증 가능 |
+| **Always Shippable** | 각 Agent 결과물 독립 동작 |
+
+### 검토된 대안
+
+| 대안 | 기각 이유 |
+|------|----------|
+| 레이어별 분리 (BE/FE/DB/Test) | API가 Entity 의존 → 순차적 병목 |
+| Phase별 순차 실행 | 병렬화 이점 없음 |
+| 기능별 세분화 (10+ Agent) | 관리 복잡도 증가 |
+
+### 관련 문서
+- `.agent/PARALLEL-WORK.md`: 상세 분배 전략
+- `CLAUDE.md`: 병렬 작업 규칙 섹션
+
+### 결과
+- 4개 에이전트 동시 작업 가능
+- 파일 소유권 명확화로 충돌 방지
+- 싱크 포인트로 통합 품질 보장
+
+---
+
 ## 🔄 업데이트 이력
 
 | 날짜 | ADR | 변경 |
@@ -376,3 +441,4 @@ primary: {
 | 2026-01-29 | ADR-008 | 다크 모드 클래스 기반 토글 |
 | 2026-01-29 | ADR-009 | LCD Framer Motion 애니메이션 |
 | 2026-01-29 | ADR-010 | 시스템 간 통신 아키텍처 |
+| 2026-02-02 | ADR-011 | 4 Agent 병렬 작업 분배 전략 |

@@ -1,246 +1,246 @@
-# 🧠 SCRATCHPAD
+# SCRATCHPAD
 
 > 현재 작업 중인 사고 과정 및 판단 기록
 
 ---
 
-## 📅 2026-01-23: LCD 화면 Framer Motion 리팩토링
+## 2026-02-02: 새 세션 시작
 
-### 1. 시작: 사용자 요청 분석
+### HANDOFF 확인
 
-**사용자 요청**:
-- `lcd-impl.html` 파일을 최상위 루트에 추가함
-- 기존 LCD 화면을 `lcd-impl.html`의 코드로 변경하고 싶음
-- Playground에 적용
+**인계 내용 요약:**
+- 날짜: 2026-01-29 세션에서 인계
+- 완료된 작업:
+  - API 명세서 작성 (`docs/api-*.md`)
+  - 데이터베이스 ERD 설계 (`docs/database-erd.md`)
+  - Docker 인프라 설정
+  - PRD 작성 방향 논의 시작
 
-**첫 인상**:
-- 파일명은 `.html`이지만 내용은 React/TypeScript 코드
-- Framer Motion 사용 (애니메이션 라이브러리)
-- 기존보다 훨씬 더 동적이고 인터랙티브한 UI
+**다음 작업:**
+- PRD 작성 (실제 서비스 구현용)
+- PRD 작성 전 5가지 결정 필요
 
-### 2. lcd-impl.html 코드 분석
+### PRD 작성 전 결정 필요 사항
 
-**주요 특징**:
-1. **Framer Motion 애니메이션**
-   - `motion` 컴포넌트, `AnimatePresence` 사용
-   - 눈 깜빡임, 마우스 추적
-   - 모드별 부드러운 전환
-   - 긴급 상황 점멸 효과
+| # | 질문 | 상태 |
+|---|------|------|
+| 1 | 개발 범위 | ✅ FE + BE 통합 |
+| 2 | 우선순위 | ⏳ PRD에서 정의 |
+| 3 | 데이터베이스 | ✅ PostgreSQL |
+| 4 | 팀 구성 | ✅ 혼자 개발 (1인 풀스택) |
+| 5 | MVP 범위 | ✅ 로봇 연동(WebSocket) 포함 |
 
-2. **표정 시스템**
-   - 6가지 감정: neutral, happy, angry, surprised, sleep, suspicious
-   - 눈 모양 variants (높이, 너비, borderRadius 변화)
-   - blink 효과 추가
-
-3. **7가지 모드** (기존과 동일)
-   - IDLE, GREETING, MEDICATION, SCHEDULE, LISTENING, EMERGENCY, SLEEP
-
-4. **인터랙티브 요소**
-   - 마우스 추적 (눈이 마우스를 따라감)
-   - 자동 깜빡임 (2-5초 간격)
-   - 시나리오 테스트 버튼 (개발자용)
-
-5. **고급 UI 요소**
-   - 상단 상태바 (시계, WiFi, 배터리)
-   - 컨테이너 variants (눈 위치 조절)
-   - 복약 알림용 큰 버튼 (80px+)
-   - 애니메이션 파동 효과 (LISTENING 모드)
-
-### 3. 기존 Playground와 비교
-
-| 항목 | 기존 (Playground) | 신규 (lcd-impl.html) |
-|------|------------------|---------------------|
-| 애니메이션 | 이모지 기반 정적 | Framer Motion 동적 |
-| 눈 | 이모지 😊 | SVG 눈 + variants |
-| 깜빡임 | 없음 | 자동 + 수동 |
-| 마우스 추적 | 없음 | 있음 (눈이 따라감) |
-| 표정 | 이모지 변경 | 눈 모양 변형 |
-| 배경 애니메이션 | 없음 | 긴급 시 점멸 |
-| 상태바 | 없음 | 시계/WiFi/배터리 |
-| 버튼 | 일반 크기 | 80px+ 초대형 |
-
-### 4. 기술적 고려사항
-
-**장점**:
-1. 훨씬 더 동적이고 생동감 있음
-2. 어르신이 보기에 더 친근함 (눈이 움직임)
-3. 애니메이션이 자연스러움
-4. 인터랙티브 (테스트하기 쉬움)
-
-**단점**:
-1. Framer Motion 패키지 설치 필요 (약 100KB+)
-2. 코드 complexity 증가
-3. 성능 고려 (애니메이션 많음)
-4. 로봇 LCD 하드웨어 스펙 확인 필요
-
-**의존성 문제**:
-- `grep_search` 결과: Framer Motion 미설치
-- 설치 필요: `npm install framer-motion`
-
-### 5. 구현 전략 결정
-
-**옵션 A**: 전체 교체
-- lcd-impl.html 코드를 그대로 적용
-- 기존 RobotFaceApp 완전 교체
-- 장점: 최신 UI, 단점: 큰 변경
-
-**옵션 B**: 점진적 마이그레이션
-- 핵심 애니메이션만 먼저 적용
-- 나머지는 단계적 추가
-- 장점: 안정성, 단점: 시간 소요
-
-**옵션 C**: 하이브리드
-- 기존 구조 유지 + 애니메이션 추가
-- 7개 모드 매핑은 동일하게
-- 장점: 균형, 단점: 중복 코드
-
-**내 판단**: 
-- **옵션 A (전체 교체)** 선택
-- 이유:
-  1. 사용자가 "lcd-impl.html로 변경하고 싶어"라고 명확히 언급
-  2. 기존 코드는 이모지 기반으로 제한적
-  3. 새 코드가 훨씬 더 완성도 높음
-  4. 7개 모드는 동일하므로 호환성 문제 없음
-
-### 6. 다음 단계: PLAN 작성 필요
-- 구현 계획 상세화
-- 사용자 승인 대기
-- Framer Motion 설치
-- 코드 마이그레이션
+**참고 문서:**
+- `docs/requirements-specification.md` - 요구사항 명세
+- `docs/api-specification.md` - REST API 40+ 엔드포인트
+- `docs/database-erd.md` - 14개 테이블 설계
+- `docs/persona-scenario.md` - 페르소나 및 시나리오
 
 ---
 
-## 📝 2026-01-23 16:05 - PRD 업데이트 작업
+## PRD v2.0 작성 완료
 
-**사용자 피드백**:
-- "PRD.md는 왜 작성하지 않는거야?"
-- 올바른 지적! 워크플로우상 PRD 업데이트 필요
+**작성 내용:**
+1. **개요**: 목적, 사용자(복지사/가족/어르신/로봇), 시스템 아키텍처, 통신 방식
+2. **기술 스택**:
+   - FE: React + Vite, TypeScript, TanStack Query, Zustand, Framer Motion
+   - BE: Spring Boot 3.x, PostgreSQL, Spring Security + JWT, WebSocket + STOMP
+   - Infra: Docker, Jenkins, Nginx
+3. **기능 요구사항 (4 Phase)**:
+   - Phase 1 (Critical): 인증, 노인 관리, 로봇 상태/제어, 긴급 상황
+   - Phase 2 (High): 복약 관리, 일정 관리, 알림, 대시보드
+   - Phase 3 (Medium): 활동 로그, AI 리포트, 순찰 피드
+   - Phase 4 (Low): 안심 지도, 영상 스냅샷
+4. **화면 명세**: 보호자 웹앱 12개 + 로봇 LCD 7개 모드
+5. **비기능 요구사항**: 성능, 보안, 로봇 연결, 접근성
+6. **데이터 모델**: 10개 주요 테이블
+7. **WebSocket 토픽**: 5개 토픽 정의
 
-**판단**:
-- 기존 PRD.md 존재함
-- LCD 화면 섹션에 Framer Motion 애니메이션 요구사항 추가 필요
-- 워크플로우: PRD 업데이트 → PLAN 재검토 → 승인 → 구현
-
-**실행**:
-1. PRD.md 열기
-2. LCD 화면 섹션 찾기
-3. 애니메이션 요구사항 추가
-
-**완료**:
-✅ Section 3.2.1 "애니메이션 요구사항" 추가
-- 기술 스택: Framer Motion
-- 표정 시스템: 6가지 감정, 자동 깜빡임, 마우스 추적
-- 모드별 애니메이션 상세화
-- 상태바 요구사항
-
-✅ Section 4.3 "로봇 LCD 애니메이션" 추가
-- 기능 요구사항으로 명시
-
-✅ Section 5 기술 스택에 Framer Motion 추가
-
-**다음 단계**:
-- PRD 업데이트 커밋 필요 없음 (PLAN 승인 후 함께 커밋)
-- 사용자에게 PRD + PLAN 동시 승인 요청
+**다음 단계:**
+- ⏳ 사용자 PRD 승인 대기
+- PRD 승인 후 → PLAN.md 작성
 
 ---
 
-## 🛠️ 2026-01-23 16:17 - 구현 시작 (EXECUTION)
+## ERD 재설계 (2026-02-02)
 
-**사용자 승인**: ✅ PRD.md + PLAN.md 승인 완료
+### API 문서 분석 결과
 
-**Phase 1: Framer Motion 설치**
-- `npm install framer-motion` 실행 중
+**기존 ERD vs API 명세 차이점:**
 
----
+1. **누락된 테이블:**
+   - CONVERSATION (대화 기록) - `/api/robots/{robotId}/conversations`
+   - SEARCH_RESULT (검색 결과) - `/api/robots/{robotId}/search-results`
+   - ROOM (방 정보) - `/api/robots/{robotId}/rooms` CRUD
 
-## 🛠️ 2026-01-23 16:25 - RobotLCD.tsx 생성 완료
+2. **사용자 결정:**
+   - USER-ELDER: 1:N 관계 유지
+   - AI 데이터: CONVERSATION + SEARCH_RESULT 분리
+   - ROOM: 별도 테이블로 분리
 
-**별도 파일 생성 방식으로 진행**:
-- RobotFaceApp이 270줄+로 너무 커서 한 번에 교체 불가능
-- `RobotLCD.tsx` 별도 파일 생성 (357줄)
-- lcd-impl.html 코드 완전 이식
-- Playground에서 import 후 사용
+3. **수정 필요 사항:**
+   - ROBOT: lcd_sub_message 추가
+   - PATROL_ITEM.target: GAS_VALVE, WINDOW, MULTI_TAP, DOOR, OUTLET 통합
+   - ROOM_MAP: rooms JSON → ROOM 테이블 FK로 변경
 
-**구현 완료**:
-- ✅ Eye 컴포넌트 (자동 깜빡임, 마우스 추적, 6가지 감정)
-- ✅ 7개 모드 (IDLE, GREETING, MEDICATION, SCHEDULE, LISTENING, EMERGENCY, SLEEP)
-- ✅ 다크 시안 테마 (검정 배경 + 시안 눈)
-- ✅ Framer Motion 애니메이션
-- ✅ Playground 연동
+### ERD v2.0 작성 완료
 
----
+**변경 사항 (14개 → 17개 테이블):**
 
-## �� 2026-01-23 16:30 - 브라우저 테스트 완료
+| 분류 | 변경 | 내용 |
+|------|------|------|
+| 추가 | CONVERSATION | AI 대화 기록 (voiceOriginal, normalizedText, intent, commandType) |
+| 추가 | SEARCH_RESULT | 검색/날씨 조회 결과 |
+| 추가 | ROOM | 방 정보 (robot_id, room_id, name, x, y) |
+| 수정 | ROBOT | lcd_sub_message, current_x/y/heading 추가 |
+| 수정 | SCHEDULE | normalized_text, confidence 추가 |
+| 수정 | PATROL_ITEM | target에 MULTI_TAP 추가 |
+| 삭제 | ROOM_MAP | 삭제 (ROOM 테이블로 대체) |
+| 삭제 | ROBOT_EVENT | 삭제 (ACTIVITY로 통합) |
 
-**테스트 결과**: **전부 성공** ✅
-
-검증 항목:
-- [x] 7개 모드 모두 정상 작동
-- [x] 눈 자동 깜빡임 (2-5초 간격)
-- [x] 마우스 추적 기능
-- [x] 감정별 눈 모양 변화
-- [x] 다크 시안 테마 (검정 배경 #000000, 시안 눈 #22d3ee)
-- [x] 상단 상태바 (시간, WiFi, 배터리)
-- [x] Framer Motion 전환 애니메이션 부드러움
-- [x] 긴급 모드 배경 점멸 효과
-
-**스크린샷 3개 확인**:
-1. GREETING: 시안 눈, "할머니~ 잘 주무셨어요?" 메시지
-2. MEDICATION: happy 눈, 큰 버튼 2개
-3. EMERGENCY: 듣기 모드, 파동 바 애니메이션
-
----
-
-## 📝 2026-01-23 16:33 - 문서화 완료
-
-- ✅ PLAN.md 체크리스트 업데이트
-- ✅ walkthrough.md 생성 (스크린샷 포함)
-- ⏳ task.md 업데이트 예정
-- ⏳ 사용자에게 완료 보고 예정
-
-**기존 RobotFaceApp 정리**:
-- 현재 미사용 상태로 남음 (삭제 시도했으나 파일 크기로 실패)
-- 후속 작업으로 별도 정리 필요
+**테이블 구성 (17개):**
+- Core: USER, ELDER, EMERGENCY_CONTACT (3)
+- Robot: ROBOT, ROOM (2)
+- Health: MEDICATION, MEDICATION_RECORD (2)
+- Schedule: SCHEDULE (1)
+- Activity: ACTIVITY, EMERGENCY (2)
+- Notification: NOTIFICATION (1)
+- Patrol: PATROL_RESULT, PATROL_ITEM (2)
+- Command: ROBOT_COMMAND (1)
+- AI: CONVERSATION, SEARCH_RESULT, AI_REPORT (3)
 
 ---
 
-## 🔧 2026-01-23 - LCD UI 잘림 문제 해결
+## 역할별 화면 흐름 결정 (2026-02-02)
 
-**문제 발견**:
-- 사용자 피드백: LCD UI가 잘려서 보임
-- 눈 크기 문제가 아니라 컨테이너 크기 문제
+**결정 사항:**
+1. **복지사 (WORKER)**: N명 어르신 관리 → 로그인 후 `/elders` (노인 선택) → 대시보드
+2. **가족 (FAMILY)**: 1명 어르신만 등록 가능 → 로그인 후 바로 대시보드 이동
 
-**원인 분석**:
-1. **RobotLCD.tsx**: `h-screen` (100vh) 사용 → 화면 전체 높이 기준
-2. **index.tsx RobotLCDScreen**:
-   - `aspect-[1024/600]` → 고정 비율로 제한
-   - `overflow-hidden` → 넘치는 부분 잘림
-   - 부모가 작은데 자식(RobotLCD)이 `h-screen`이라 잘림!
+**이유:**
+- 독거노인 돌봄 서비스 특성상 가족은 본인 부모님 1명만 관리
+- 불필요한 화면 단계 제거로 UX 단순화
+- 여러 어르신 관리가 필요하면 복지사 역할로 가입
 
-**해결 방안**:
-- **Option 1**: RobotLCD를 responsive하게 수정 (isPreview에 따라 h-full/h-screen)
-- **Option 2**: index.tsx의 RobotLCDScreen 수정
+---
 
-**선택**: Option 1 (사용자 승인)
+## ✅ PRD v2.0 + ERD v2.0 작성 완료 (2026-02-02)
 
-**실행 계획**:
-1. RobotLCD.tsx 수정:
-   - isPreview === true → `h-full` (부모에 맞춤)
-   - isPreview === false → `h-screen` (전체 화면)
-2. index.tsx RobotLCDScreen 수정:
-   - RobotFaceApp → RobotLCD로 교체
-3. 테스트
+### 완료된 문서
 
-**실행 결과**:
-✅ **1차 수정 완료**:
-- RobotLCD.tsx:206 - `className` 동적 변경:
-  ```tsx
-  className={`w-full ${isPreview ? 'h-full' : 'h-screen'} flex...`}
-  ```
-- index.tsx:955 - RobotFaceApp → RobotLCD 교체
+| 문서 | 버전 | 위치 | 내용 |
+|------|------|------|------|
+| PRD | v2.0 | `.agent/PRD.md` | 서비스 구현용 기획서 (11개 섹션) |
+| ERD | v2.0 | `docs/database-erd.md` | 17개 테이블, PostgreSQL ENUM 정의 |
 
-**예상 결과**:
-- isPreview={true}일 때: 부모 컨테이너(aspect-[1024/600])에 맞춰서 h-full 적용
-- 로봇 로그인 시(isPreview={false}): 전체 화면(h-screen) 유지
-- 잘림 현상 해결!
+### PRD v2.0 주요 내용
+- **1. 개요**: 목적, 사용자(역할별 어르신 수), 아키텍처, 통신
+- **2. 기술 스택**: React+Vite, Spring Boot, PostgreSQL
+- **3. 기능 요구사항**: 4 Phase (Critical → High → Medium → Low)
+- **4. 화면 명세**: 역할별 흐름 + 보호자 웹앱 12개 + 로봇 LCD 7개
+- **5-10**: 비기능 요구사항, 데이터 모델, API 우선순위, WebSocket 토픽 등
 
+### ERD v2.0 주요 변경
+- 14개 → 17개 테이블 (+3)
+- 추가: CONVERSATION, SEARCH_RESULT, ROOM
+- 수정: ROBOT (좌표, lcd_sub_message), SCHEDULE (음성 인식), PATROL_ITEM (MULTI_TAP)
+- 삭제: ROOM_MAP, ROBOT_EVENT
+
+---
+
+## ✅ 병렬 작업 분배 전략 수립 (2026-02-02)
+
+### 사용자 요청
+- 4개의 Codex 에이전트 병렬 실행 예정
+- PLAN.md 기반 작업 분배 방안 필요
+- MD 파일로 정리 요청
+
+### 분석 과정
+
+**1. PLAN.md 구조 분석:**
+- Phase 0: 프로젝트 설정 (BE/FE/DB/공통)
+- Phase 1-5: 기능 구현 (도메인별)
+
+**2. 분배 전략 검토:**
+
+| 전략 | 장점 | 단점 | 결론 |
+|------|------|------|------|
+| 레이어별 (BE/FE/DB/Test) | 명확한 분리 | API→Entity 의존성 병목 | ❌ 기각 |
+| Phase별 순차 | 간단 | 병렬화 불가 | ❌ 기각 |
+| 도메인별 Full-Stack | 독립성 높음 | 초기 설정 공유 필요 | ✅ 채택 |
+| 하이브리드 | Phase 0 병렬 + 도메인별 | 복잡도 약간 증가 | ✅ 최종 선택 |
+
+**3. Kent Beck 원칙 적용:**
+- Independence: 도메인 경계로 분리
+- Contract First: Phase 0에서 인터페이스 합의
+- Tiny Steps: 1 API = 1 커밋
+- Always Shippable: 각 Agent 결과물 독립 동작
+
+### 산출물
+- `.agent/PARALLEL-WORK.md` 작성 완료 (v1.0)
+
+### 후속 작업
+- CLAUDE.md 업데이트 (Tech Stack, 병렬 작업 규칙)
+- RULES.md 업데이트 (병렬 작업 금지/필수 사항)
+- ADR.md 업데이트 (ADR-011 추가)
+
+---
+
+## ✅ 워크플로우 문서 업데이트 (2026-02-02)
+
+### 업데이트 대상 분석
+
+| 파일 | 필요 변경 | 상태 |
+|------|----------|------|
+| `CLAUDE.md` | Tech Stack, 병렬 작업 섹션 | ✅ 완료 |
+| `RULES.md` | 병렬 작업 금지/필수 사항 | ✅ 완료 |
+| `ADR.md` | ADR-011 추가 | ✅ 완료 |
+| `SCRATCHPAD.md` | 세션 작업 기록 | ✅ 완료 |
+
+### CLAUDE.md 변경 내용
+1. **Tech Stack > Backend**
+   - Database: MySQL → PostgreSQL 15+
+   - Migration: Flyway 추가
+   - Realtime: WebSocket + STOMP + SockJS 추가
+   - Infra: Jenkins, Nginx 추가
+
+2. **파일 시스템 테이블**
+   - `PARALLEL-WORK.md` 추가 (Who - 병렬 작업 분배)
+
+3. **Git Convention**
+   - 병렬 브랜치 패턴 추가: `feature/phase{N}-{domain}`
+
+4. **신규 섹션: 🤖 병렬 작업 규칙**
+   - Agent 식별자 (1~4)
+   - 파일 소유권 규칙
+   - 공유 파일 수정 규칙
+   - 커밋 메시지 규칙 ([Agent N])
+   - 머지 순서
+   - 싱크 포인트 체크리스트
+   - Mock 전략
+
+### RULES.md 변경 내용
+1. **금지 사항 > 병렬 작업**
+   - 타 Agent 담당 파일 수정 금지
+   - 공유 파일 동시 수정 금지
+   - 의존성 미완료 작업 선행 금지
+   - 싱크 포인트 미확인 머지 금지
+   - Agent ID 없는 커밋 금지
+
+2. **필수 사항 > 병렬 작업**
+   - 커밋 메시지에 Agent ID 명시
+   - 브랜치 네이밍 규칙 준수
+   - 싱크 포인트 체크리스트 확인
+   - Mock으로 의존성 우회
+   - 일일 싱크 공유
+
+### ADR-011 추가
+- 제목: 4 Agent 병렬 작업 분배 전략
+- 결정: 도메인별 분리, 하이브리드 접근
+- 이유: Kent Beck 원칙 (Independence, Contract First)
+
+### 다음 단계
+- ⏳ PLAN.md 승인 대기
+- 승인 후 → Phase 0 구현 시작 (4 Agent 병렬)
+
+---

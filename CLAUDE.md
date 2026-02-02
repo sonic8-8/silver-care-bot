@@ -21,11 +21,13 @@
 ### Backend
 | 카테고리 | 기술 |
 |----------|------|
-| Framework | Spring Boot (Java 17+) |
+| Framework | Spring Boot 3.x (Java 17+) |
 | ORM | Spring Data JPA |
-| Database | MySQL |
+| Database | PostgreSQL 15+ |
+| Migration | Flyway |
 | Docs | Spring REST Docs (AsciiDoc) |
-| Infra | Docker, GitHub Actions |
+| Realtime | WebSocket + STOMP + SockJS |
+| Infra | Docker, Jenkins, Nginx |
 
 ### Testing
 | 레벨 | 도구 | 커버리지 목표 |
@@ -231,19 +233,27 @@ export const elderHandlers = [
 
 ## 🔀 Git Convention
 
-### Branch Strategy (Git Flow)
+### Branch Strategy (Git Flow + Parallel)
 ```
-master (production)
+main (production)
   └── develop (integration)
-        ├── feature/login-page
-        ├── feature/elder-api
-        └── hotfix/critical-bug-fix
+        │
+        ├── feature/phase0-be-infra      # Agent 1
+        ├── feature/phase0-fe-infra      # Agent 2
+        ├── feature/phase0-db-schema     # Agent 3
+        ├── feature/phase0-contracts     # Agent 4
+        │
+        ├── feature/phase1-auth          # Agent 1
+        ├── feature/phase1-elder         # Agent 2
+        ├── feature/phase1-robot         # Agent 3
+        └── feature/phase1-websocket     # Agent 4
 ```
 
 ### Branch Naming
 | 타입 | 패턴 | 예시 |
 |------|------|------|
-| 기능 | `feature/{description}` | `feature/login-form` |
+| 병렬 기능 | `feature/phase{N}-{domain}` | `feature/phase1-auth` |
+| 일반 기능 | `feature/{description}` | `feature/login-form` |
 | 버그 | `bugfix/{description}` | `bugfix/null-pointer` |
 | 핫픽스 | `hotfix/{description}` | `hotfix/security-patch` |
 | 릴리스 | `release/v{version}` | `release/v1.0.0` |
@@ -297,6 +307,7 @@ Closes #123
 | `SCRATCHPAD.md` | Now | 단기 기억 및 사고 과정 | **Active** |
 | `HISTORY.md` | Done | 프로젝트 영구 작업 로그 | **Archive** |
 | `HANDOFF.md` | Next | 세션 종료 시 인수인계서 | **Bridge** |
+| `PARALLEL-WORK.md` | Who | 병렬 작업 분배 - "누가" 무엇을 할지 | **Reference** |
 
 ```
 .agent/
@@ -308,7 +319,8 @@ Closes #123
 ├── RULES.md              # Constraints - 제약조건
 ├── SCRATCHPAD.md         # Now - 작업 중 메모
 ├── HISTORY.md            # Done - 영구 로그
-└── HANDOFF.md            # Next - 세션 인계
+├── HANDOFF.md            # Next - 세션 인계
+└── PARALLEL-WORK.md      # Who - 병렬 작업 분배
 ```
 
 ---
@@ -543,6 +555,126 @@ Closes #123
 타 팀(AI, 임베디드)과의 연동 시:
 - JSON 키값 규격 확인 절차 필수
 - API 스펙 문서화 후 연동 진행
+
+---
+
+## 🤖 병렬 작업 규칙 (Parallel Work)
+
+> 4개의 AI 에이전트가 동시에 작업할 때 적용되는 규칙
+> 상세 분배 내용: `.agent/PARALLEL-WORK.md` 참조
+
+### Agent 식별자
+
+| Agent | 역할 | Phase 0 담당 | Phase 1+ 담당 |
+|-------|------|-------------|---------------|
+| **Agent 1** | BE-INFRA / AUTH | Spring Boot, Security, Docker | 인증 도메인 |
+| **Agent 2** | FE-INFRA / ELDER | Vite, Tailwind, Router | 노인+긴급 도메인 |
+| **Agent 3** | DB-SCHEMA / ROBOT | Flyway, Entity, Repository | 로봇 도메인 |
+| **Agent 4** | CONTRACTS / WEBSOCKET | ApiResponse, Axios, MSW | WebSocket 도메인 |
+
+### 파일 소유권 규칙
+
+```
+⚠️ 타 Agent 담당 파일 수정 금지!
+
+Agent 1 소유:
+  /backend/src/main/java/.../config/Security*
+  /backend/src/main/java/.../api/auth/**
+  /frontend/src/features/auth/**
+  /frontend/src/pages/Login/**
+
+Agent 2 소유:
+  /frontend/src/app/router.tsx (라우트 추가 권한)
+  /frontend/src/features/elder/**
+  /frontend/src/pages/Elder*/**
+  /backend/src/main/java/.../api/elder/**
+  /backend/src/main/java/.../api/emergency/**
+
+Agent 3 소유:
+  /backend/src/main/resources/db/migration/**
+  /backend/src/main/java/.../domain/**
+  /backend/src/main/java/.../api/robot/**
+  /frontend/src/features/robot/**
+
+Agent 4 소유:
+  /backend/src/main/java/.../api/common/**
+  /backend/src/main/java/.../config/WebSocket*
+  /frontend/src/shared/**
+  /frontend/src/mocks/**
+```
+
+### 공유 파일 수정 규칙
+
+| 파일 | 담당 Agent | 다른 Agent 수정 방법 |
+|------|-----------|---------------------|
+| `/backend/build.gradle` | Agent 1 | PR 요청 또는 슬랙 |
+| `/frontend/package.json` | Agent 2 | PR 요청 또는 슬랙 |
+| `/frontend/src/app/router.tsx` | Agent 2 | 라우트 추가 요청 |
+| `/backend/application.yml` | Agent 1 | 설정 추가 요청 |
+
+### 커밋 메시지 규칙
+
+```
+<type>(<scope>): <subject> [Agent N]
+
+예시:
+feat(auth): JWT 인증 필터 구현 [Agent 1]
+feat(elder): 노인 CRUD API 구현 [Agent 2]
+chore(db): V2 마이그레이션 스크립트 추가 [Agent 3]
+feat(ws): WebSocket 토픽 설정 [Agent 4]
+```
+
+### 머지 순서
+
+#### Phase 0 (순서 중요)
+```
+1. Agent 3 (DB-SCHEMA) → develop  # Entity가 기반
+2. Agent 1 (BE-INFRA) → develop   # DB 위에 설정
+3. Agent 4 (CONTRACTS) → develop  # 공통 응답 형식
+4. Agent 2 (FE-INFRA) → develop   # 충돌 없음
+```
+
+#### Phase 1 (순서 중요)
+```
+1. Agent 1 (AUTH) → develop       # 인증이 최우선
+2. Agent 4 (WEBSOCKET) → develop  # 실시간 기반
+3. Agent 2, 3 → develop           # 순서 무관
+```
+
+### 싱크 포인트 (동기화 시점)
+
+#### Phase 0 완료 체크리스트
+- [ ] `docker-compose up` → PostgreSQL + App 정상 실행
+- [ ] Flyway 마이그레이션 성공
+- [ ] `npm run dev` → Frontend 정상 실행
+- [ ] 모든 Entity Repository 테스트 통과
+- [ ] MSW Mock API 응답 확인
+
+#### Phase 1 완료 체크리스트
+- [ ] 회원가입 → 로그인 → 보호된 API 호출 E2E
+- [ ] 긴급 상황 → WebSocket 알림 → 해제 E2E
+- [ ] WORKER/FAMILY 역할별 라우팅 정상
+- [ ] 오프라인 판정 스케줄러 동작
+
+### 의존성 우회 (Mock 전략)
+
+Auth 완료 전 다른 Agent가 작업하려면:
+
+```java
+// Backend: Mock Security Context
+@WithMockUser(username = "test@test.com", roles = {"WORKER"})
+class ElderControllerTest { ... }
+```
+
+```typescript
+// Frontend: MSW Mock 인증
+http.post('/api/auth/login', () => {
+  return HttpResponse.json({
+    accessToken: 'mock-jwt-token',
+    refreshToken: 'mock-refresh-token',
+  });
+});
+```
 
 ---
 
