@@ -34,13 +34,13 @@
 > 개발 환경 및 공통 설정
 
 #### 0.1 Backend 초기 설정
-- [ ] Spring Boot 프로젝트 생성 (Gradle, Java 17)
-- [ ] PostgreSQL 연동 설정 (application.yml)
-- [ ] JPA + Hibernate 설정
-- [ ] Flyway 마이그레이션 설정
-- [ ] Spring Security 기본 설정
-- [ ] Spring REST Docs 설정
-- [ ] Docker Compose (PostgreSQL + App)
+- [x] Spring Boot 프로젝트 생성 (Gradle, Java 17)
+- [x] PostgreSQL 연동 설정 (application.yml)
+- [x] JPA + Hibernate 설정
+- [x] Flyway 마이그레이션 설정
+- [x] Spring Security 기본 설정
+- [x] Spring REST Docs 설정
+- [x] Docker Compose (PostgreSQL + App)
 - [ ] 공통 응답 형식 정의 (ApiResponse, ErrorResponse)
 - [ ] 글로벌 예외 처리 (GlobalExceptionHandler)
 
@@ -58,6 +58,51 @@
 - [ ] ESLint + Prettier 설정
 - [ ] Git hooks (husky + lint-staged)
 - [ ] 환경변수 설정 (.env)
+
+#### 0.4 Playground 컴포넌트 분리 (Frontend)
+> Playground 프로토타입 코드를 실제 컴포넌트로 분리
+
+##### 0.4.1 공유 UI 컴포넌트 (`/frontend/src/shared/ui/`)
+- [ ] `Button.tsx` - 공통 버튼 (variants: primary, secondary, danger, white, dark)
+- [ ] `Card.tsx` - 카드 컨테이너
+- [ ] `Header.tsx` - 페이지 헤더 (뒤로가기, 타이틀, 액션 버튼)
+- [ ] `Badge.tsx` - 상태 뱃지 (safe, warning, danger, neutral)
+- [ ] `Input.tsx` - 입력 필드 (라벨, 아이콘 지원)
+- [ ] `SectionHeader.tsx` - 섹션 제목 + 액션 버튼
+
+##### 0.4.2 페이지 컴포넌트 분리 (`/frontend/src/pages/`)
+- [ ] `Login/LoginScreen.tsx` - 로그인 (보호자/로봇 탭)
+- [ ] `Signup/SignupScreen.tsx` - 회원가입
+- [ ] `Elders/ElderSelectScreen.tsx` - 노인 선택 (복지사 전용)
+- [ ] `Dashboard/DashboardScreen.tsx` - 홈 대시보드
+- [ ] `Settings/SettingsScreen.tsx` - 설정 (테마, 알림, 로봇 설정)
+- [ ] `Schedule/ScheduleScreen.tsx` - 일정 관리
+- [ ] `Robot/RobotControlScreen.tsx` - 로봇 제어
+- [ ] `Robot/RobotLCDScreen.tsx` - LCD 미러링 전체화면
+- [ ] `Medication/MedicationScreen.tsx` - 약 관리
+- [ ] `History/HistoryScreen.tsx` - 기록/AI 리포트
+- [ ] `Notification/NotificationScreen.tsx` - 알림 목록
+- [ ] `Emergency/EmergencyScreen.tsx` - 긴급 상황 풀스크린
+
+##### 0.4.3 컨테이너 및 네비게이션
+- [ ] `GuardianAppContainer.tsx` - 메인 앱 컨테이너 (탭 네비게이션 포함)
+- [ ] `BottomNavigation.tsx` - 하단 탭바 컴포넌트
+
+##### 0.4.4 LCD 컴포넌트 (`/frontend/src/features/robot-lcd/` 또는 `/frontend-lcd/`)
+- [ ] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
+- [ ] `Eye.tsx` - 눈 애니메이션 컴포넌트
+- [ ] `InfoChip.tsx` - 상태 정보 칩
+- [ ] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
+
+##### 0.4.5 타입 정의 (`/frontend/src/shared/types/`)
+- [ ] `ui.types.ts` - UI 컴포넌트 공통 타입 (ButtonVariant, BadgeStatus 등)
+- [ ] `screen.types.ts` - 화면별 Props 타입
+
+> ⚠️ **분리 원칙**:
+> - 파일당 하나의 컴포넌트 원칙 준수
+> - cva를 활용한 variant 정의
+> - Props 타입 명시적 정의
+> - Playground는 분리 후 삭제 또는 개발용으로 유지
 
 ---
 
@@ -483,3 +528,4 @@
 |------|------|----------|
 | v1.0 | 2026-02-02 | 초안 작성. PRD v2.0 기반 6 Phase 구현 계획 |
 | v1.1 | 2026-02-02 | PRD 대비 누락 항목 보완: WebSocket 토픽 5개 명시, Framer Motion 추가, 오프라인 판정/알림 로직, 긴급연락처 API 상세화, 접근성 검증 계획, Flyway 명시, 역할별 라우팅 상세화, 대시보드 Backend API 추가 |
+| v1.2 | 2026-02-03 | Phase 0.4 추가: Playground 컴포넌트 분리 계획 (공유 UI 6개, 페이지 12개, LCD 4개, 타입 정의) |
