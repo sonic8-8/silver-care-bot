@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App';
+import App from './app/App';
 
 // MSW 개발 환경 설정 (선택적)
 async function enableMocking() {
