@@ -7,6 +7,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
     error?: string;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
+    icon?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -17,11 +18,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         error,
         leftIcon,
         rightIcon,
+        icon,
         id,
         ...props
     }, ref) => {
         const inputId = React.useId();
         const resolvedId = id ?? inputId;
+        const resolvedRightIcon = rightIcon ?? icon;
 
         return (
             <div className="flex flex-col gap-1">
@@ -36,9 +39,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                             {leftIcon}
                         </span>
                     )}
-                    {rightIcon && (
+                    {resolvedRightIcon && (
                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            {rightIcon}
+                            {resolvedRightIcon}
                         </span>
                     )}
                     <input
@@ -47,7 +50,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         className={cn(
                             'h-12 w-full rounded-md border border-gray-200 bg-white px-4 text-body text-gray-900 placeholder:text-gray-400 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
                             leftIcon && 'pl-10',
-                            rightIcon && 'pr-10',
+                            resolvedRightIcon && 'pr-10',
                             error && 'border-danger focus-visible:ring-danger',
                             className
                         )}
