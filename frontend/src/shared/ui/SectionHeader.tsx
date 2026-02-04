@@ -5,6 +5,7 @@ import { Button } from './Button';
 export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     description?: string;
+    action?: React.ReactNode;
     actionLabel?: string;
     actionIcon?: React.ReactNode;
     onAction?: () => void;
@@ -13,12 +14,25 @@ export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement>
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
     title,
     description,
+    action,
     actionLabel,
     actionIcon,
     onAction,
     className,
     ...props
 }) => {
+    if (action) {
+        return (
+            <div className={cn('flex items-center justify-between gap-4', className)} {...props}>
+                <div className="flex flex-col">
+                    <h2 className="text-h3 text-gray-900">{title}</h2>
+                    {description && <p className="text-sm text-gray-500">{description}</p>}
+                </div>
+                {action}
+            </div>
+        );
+    }
+
     const hasAction = Boolean(actionLabel || actionIcon);
 
     return (

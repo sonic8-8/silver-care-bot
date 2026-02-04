@@ -464,3 +464,52 @@
 - 승인 후 → Phase 0 구현 시작 (4 Agent 병렬)
 
 ---
+
+## 2026-02-04: Agent 2 - Playground UI 중복 제거 + LCD 연결
+
+### 문제
+- `frontend/src/pages/Playground/index.tsx`에 Button/Card/Header/Badge/Input/SectionHeader가 로컬로 중복 정의되어 있음
+- `any` 타입이 다수 존재
+- Robot LCD가 Playground 로컬 파일에만 있어 `/pages/Robot/RobotLCDScreen.tsx`와 분리되어 있음
+
+### 판단
+- 공유 UI 재사용을 위해 로컬 UI 정의는 제거하고 `shared/ui`를 직접 import
+- `any` 제거를 위해 화면별 Props/Elder 타입을 명시
+- LCD 중복 제거를 위해 실제 구현을 `features/robot-lcd/RobotLCD.tsx`로 이동하고, Playground 파일은 thin wrapper로 축소
+
+### 실행
+1. `pages/Playground/RobotLCD.tsx`를 `features/robot-lcd/RobotLCD.tsx`로 이동
+2. `pages/Playground/RobotLCD.tsx`를 re-export wrapper로 변경
+3. `pages/Playground/index.tsx`
+   - 로컬 UI 컴포넌트 정의 제거
+   - `@/shared/ui` 컴포넌트 사용으로 전환
+   - `BadgeStatus` 기반 `ElderSummary`/화면 Props 타입 추가
+   - `any` 전부 제거
+   - Playground에서 RobotLCD를 `@/features/robot-lcd/RobotLCD`로 직접 import
+4. `pages/Robot/RobotLCDScreen.tsx`에서 RobotLCD 실제 렌더링 연결
+5. `shared/ui` 확장
+   - `Header`: `title`을 `ReactNode`, `transparent` 지원
+   - `SectionHeader`: `action` 노드 직접 전달 지원
+   - `Input`: `icon` alias 지원
+6. `.agent/PLAN.md`의 0.4.4 체크박스 4개 완료 처리
+
+### 결과
+- Playground 중복 UI 제거 완료
+- shared/ui 적용 완료
+- Robot LCD가 RobotLCDScreen 및 Playground 양쪽에서 동일 소스 사용
+- `any` 제거 완료
+
+## 2026-02-04: Agent 2 - Playground 중복 UI 제거 및 LCD 연결 (재검증)
+
+### 점검/확인
+- 작업 디렉토리 확인: `/mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-2`
+- `frontend/src/pages/Playground/index.tsx` 내부의 Button/Card/Header/Badge/Input/SectionHeader 로컬 정의 제거 상태 확인
+- `@/shared/ui` 기반 사용 확인 (`Button`, `Card`, `Header`, `Badge`, `Input`, `SectionHeader`)
+- `BadgeStatus`를 `@/shared/types/ui.types`에서 import하여 Playground 타입에 적용 확인
+- `frontend/src/pages/Playground/RobotLCD.tsx`는 thin wrapper(`@/features/robot-lcd/RobotLCD` re-export) 형태 유지 확인
+- `.agent/PLAN.md` 0.4.4 체크박스 4개 `[x]` 확인
+
+### 테스트
+- 실행: `npm run test:run -- src/pages/Playground/index.tsx`
+- 결과: 실패 (`vitest: not found`)
+- 원인: `frontend/node_modules` 미설치로 Vitest 실행 불가

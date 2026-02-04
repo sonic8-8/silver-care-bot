@@ -89,10 +89,10 @@
 - [ ] `BottomNavigation.tsx` - 하단 탭바 컴포넌트
 
 ##### 0.4.4 LCD 컴포넌트 (`/frontend/src/features/robot-lcd/` 또는 `/frontend-lcd/`)
-- [ ] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
-- [ ] `Eye.tsx` - 눈 애니메이션 컴포넌트
-- [ ] `InfoChip.tsx` - 상태 정보 칩
-- [ ] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
+- [x] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
+- [x] `Eye.tsx` - 눈 애니메이션 컴포넌트
+- [x] `InfoChip.tsx` - 상태 정보 칩
+- [x] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
 
 ##### 0.4.5 타입 정의 (`/frontend/src/shared/types/`)
 - [ ] `ui.types.ts` - UI 컴포넌트 공통 타입 (ButtonVariant, BadgeStatus 등)

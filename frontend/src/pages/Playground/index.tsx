@@ -3,8 +3,11 @@
  * impl.html 기반 전체 화면 + 딥블루 테마 + 다크 모드
  */
 import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { Badge, Button, Card, Header, Input, SectionHeader } from '@/shared/ui';
+import type { BadgeStatus } from '@/shared/types/ui.types';
 import { useThemeStore } from '../../shared/store/themeStore';
-import RobotLCD from './RobotLCD';
+import RobotLCD from '@/features/robot-lcd/RobotLCD';
 import {
   Bell, ChevronRight, Home, Bot, Pill, Calendar,
   Settings, User, LogOut, Battery, Wifi, AlertCircle,
@@ -22,99 +25,70 @@ import {
 // ============================================
 const iconButtonRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 dark:focus-visible:ring-primary-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900";
 
-const Button = ({ children, variant = 'primary', size = 'lg', className = '', ...props }: any) => {
-  const baseStyle = "w-full min-h-[48px] font-semibold transition-all active:scale-[0.98] flex items-center justify-center";
-  const sizes: Record<string, string> = {
-    sm: "py-2.5 px-3 text-xs rounded-md",
-    md: "py-3 px-4 text-sm rounded-lg",
-    lg: "py-4 px-4 text-[15px] rounded-lg"
-  };
-  const variants: Record<string, string> = {
-    primary: "bg-primary-500 text-white hover:bg-primary-600 ring-1 ring-primary-200/70 dark:ring-3 dark:ring-primary-400/40",
-    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
-    danger: "bg-danger text-white hover:bg-danger/90",
-    white: "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600/50 dark:hover:bg-gray-700",
-    dark: "bg-gray-900 text-white hover:bg-black dark:bg-primary-600 dark:hover:bg-primary-500"
-  };
-  const variantClass = variants[variant] || "text-primary-500 dark:text-primary-400";
-  return (
-    <button className={`${baseStyle} ${sizes[size]} ${variantClass} ${className}`} {...props}>
-      {children}
-    </button>
-  );
-};
+type ThemeMode = 'system' | 'light' | 'dark';
+type AuthRole = 'guardian' | 'robot';
+type ActiveTab = 'home' | 'robot' | 'pill' | 'cal' | 'settings';
+type PlaygroundScreen = 'elders' | 'dashboard' | 'settings' | 'schedule' | 'robot' | 'medication' | 'history' | 'notifications' | 'emergency' | 'lcd';
 
-const Card = ({ children, className = '', onClick }: any) => (
-  <div onClick={onClick} className={`bg-white dark:bg-gray-800 rounded-[24px] p-5 shadow-card border border-gray-100 dark:border-gray-600/50 ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}>
-    {children}
-  </div>
-);
+interface ElderSummary {
+  id: number;
+  name: string;
+  age: number;
+  status: Exclude<BadgeStatus, 'neutral'>;
+  lastCheck: string;
+  location: string;
+}
 
-const Header = ({ title, leftIcon, rightIcon, onLeftClick, onRightClick, leftLabel, rightLabel, transparent = false }: any) => (
-  <div className={`sticky top-0 z-50 flex items-center justify-between px-4 min-h-[56px] transition-all ${transparent ? 'bg-transparent text-white' : 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white'}`}>
-    <div className="w-12 flex items-center">
-      {leftIcon && (
-        <button
-          onClick={onLeftClick}
-          aria-label={leftLabel}
-          className={`w-12 h-12 -ml-2 flex items-center justify-center rounded-full transition-colors ${iconButtonRing} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-        >
-          {leftIcon}
-        </button>
-      )}
-    </div>
-    <div className="font-bold text-[17px]">{title}</div>
-    <div className="w-12 flex justify-end items-center">
-      {rightIcon && (
-        <button
-          onClick={onRightClick}
-          aria-label={rightLabel}
-          className={`w-12 h-12 -mr-2 relative flex items-center justify-center rounded-full transition-colors ${iconButtonRing} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-        >
-          {rightIcon}
-        </button>
-      )}
-    </div>
-  </div>
-);
+interface LoginScreenProps {
+  onLogin: (role: AuthRole) => void;
+  onSignup: () => void;
+}
 
-const Badge = ({ status, text }: any) => {
-  const styles: Record<string, any> = {
-    safe: { className: "bg-safe-bg text-safe dark:bg-safe/20", icon: CheckCircle2 },
-    warning: { className: "bg-warning-bg text-warning dark:bg-warning/20", icon: AlertCircle },
-    danger: { className: "bg-danger-bg text-danger dark:bg-danger/20", icon: AlertCircle },
-    neutral: { className: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-200", icon: Activity }
-  };
-  const s = styles[status] || styles.neutral;
-  const Icon = s.icon;
-  return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-[8px] text-[11px] font-bold ${s.className}`}>
-      <Icon size={12} className="mr-1" />{text}
-    </span>
-  );
-};
+interface SignupScreenProps {
+  onBack: () => void;
+  onComplete: () => void;
+}
 
-const Input = ({ label, type = "text", placeholder, value, icon, className }: any) => (
-  <div className={`bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-600/50 focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-gray-700 transition-all ${className}`}>
-    <label className="block text-xs font-bold text-gray-500 dark:text-gray-300 mb-1.5">{label}</label>
-    <div className="flex items-center">
-      <input type={type} placeholder={placeholder} defaultValue={value} className="w-full bg-transparent outline-none text-gray-900 dark:text-white font-semibold placeholder-gray-300 dark:placeholder-gray-600 text-[15px]" />
-      {icon && <span className="text-gray-400 dark:text-gray-300 ml-2">{icon}</span>}
-    </div>
-  </div>
-);
+interface ElderSelectScreenProps {
+  onSelect: (elder: ElderSummary) => void;
+  onSettings: () => void;
+  onEmergency: (elder: ElderSummary) => void;
+}
 
-const SectionHeader = ({ title, action }: any) => (
-  <div className="flex justify-between items-center mb-3 mt-2 px-1">
-    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{title}</h3>
-    {action && action}
-  </div>
+interface DashboardScreenProps {
+  elder: ElderSummary | null;
+  onBack: () => void;
+  onNoti: () => void;
+  onHistory: () => void;
+}
+
+interface BasicScreenProps {
+  onBack: () => void;
+}
+
+interface SettingsScreenProps extends BasicScreenProps {
+  onLogout: () => void;
+}
+
+interface RobotControlScreenProps extends BasicScreenProps {
+  onLcd: () => void;
+}
+
+interface GuardianAppContainerProps {
+  onLogout: () => void;
+}
+
+const StatusBadge = ({ status, text }: { status: BadgeStatus; text: ReactNode }) => (
+  <Badge status={status} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold">
+    {status === 'safe' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+    {text}
+  </Badge>
 );
 
 // ============================================
 // 📱 Guardian App Screens
 // ============================================
-const LoginScreen = ({ onLogin, onSignup }: any) => {
+const LoginScreen = ({ onLogin, onSignup }: LoginScreenProps) => {
   const [role, setRole] = useState('guardian');
   const { setMode: setThemeMode, resolvedTheme } = useThemeStore();
 
@@ -147,9 +121,9 @@ const LoginScreen = ({ onLogin, onSignup }: any) => {
       <div className="space-y-4">
         {role === 'guardian' ? (
           <>
-            <Input label="이메일" type="email" value="worker@toss.im" icon={<Mail size={18} />} />
-            <Input label="비밀번호" type="password" value="12341234" icon={<Lock size={18} />} />
-            <div className="pt-2"><Button onClick={() => onLogin('guardian')}>로그인</Button></div>
+            <Input label="이메일" type="email" defaultValue="worker@toss.im" icon={<Mail size={18} />} />
+            <Input label="비밀번호" type="password" defaultValue="12341234" icon={<Lock size={18} />} />
+            <div className="pt-2"><Button fullWidth onClick={() => onLogin('guardian')}>로그인</Button></div>
             <div className="flex justify-center mt-2">
               <button className="min-h-[44px] px-3 text-xs text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100">비밀번호를 잊으셨나요?</button>
             </div>
@@ -160,9 +134,9 @@ const LoginScreen = ({ onLogin, onSignup }: any) => {
           </>
         ) : (
           <>
-            <Input label="기기 시리얼 넘버" type="text" value="ROBOT-2026-X82" icon={<Hash size={18} />} />
-            <Input label="인증 코드" type="password" value="9999" icon={<Key size={18} />} />
-            <div className="pt-2"><Button onClick={() => onLogin('robot')}>로봇 시작하기</Button></div>
+            <Input label="기기 시리얼 넘버" type="text" defaultValue="ROBOT-2026-X82" icon={<Hash size={18} />} />
+            <Input label="인증 코드" type="password" defaultValue="9999" icon={<Key size={18} />} />
+            <div className="pt-2"><Button fullWidth onClick={() => onLogin('robot')}>로봇 시작하기</Button></div>
             <div className="h-[44px] mt-2"></div>
             <div className="flex justify-center items-center min-h-[44px]">
               <p className="text-xs text-gray-400 dark:text-gray-300">로봇의 LCD 화면에서 실행되는 모드입니다.</p>
@@ -174,7 +148,7 @@ const LoginScreen = ({ onLogin, onSignup }: any) => {
   );
 };
 
-const SignupScreen = ({ onBack, onComplete }: any) => (
+const SignupScreen = ({ onBack, onComplete }: SignupScreenProps) => (
   <div className="min-h-screen bg-white dark:bg-gray-900 p-6 pb-safe">
     <div className="flex items-center mb-8">
       <button
@@ -203,13 +177,13 @@ const SignupScreen = ({ onBack, onComplete }: any) => (
         </div>
         <Input label="연락처" placeholder="010-0000-0000" />
       </div>
-      <div className="pt-4"><Button onClick={onComplete}>가입하기</Button></div>
+      <div className="pt-4"><Button fullWidth onClick={onComplete}>가입하기</Button></div>
     </div>
   </div>
 );
 
-const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
-  const elders = [
+const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: ElderSelectScreenProps) => {
+  const elders: ElderSummary[] = [
     { id: 1, name: '박영자', age: 82, status: 'danger', lastCheck: '5분 전', location: '낙상 감지됨' },
     { id: 2, name: '김옥분', age: 80, status: 'safe', lastCheck: '10분 전', location: '안전' },
     { id: 3, name: '이순희', age: 78, status: 'safe', lastCheck: '25분 전', location: '안전' },
@@ -246,7 +220,7 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
                       <Siren size={16} className="mr-1" /> {elder.location}
                     </p>
                   </div>
-                  <Badge status="danger" text="긴급" />
+                  <StatusBadge status="danger" text="긴급" />
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-between items-center border-danger/30">
                   <span className="text-xs font-medium text-danger">{elder.lastCheck}</span>
@@ -269,7 +243,7 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="text-[16px] font-bold text-gray-900 dark:text-white">{elder.name} 님</h3>
-                      <Badge status={elder.status} text={elder.status === 'safe' ? '안전' : '외출'} />
+                      <StatusBadge status={elder.status} text={elder.status === 'safe' ? '안전' : '외출'} />
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5 flex items-center">
                       {elder.lastCheck}
@@ -296,7 +270,7 @@ const ElderSelectScreen = ({ onSelect, onSettings, onEmergency }: any) => {
   );
 };
 
-const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
+const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: DashboardScreenProps) => {
   if (!elder) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-500 dark:text-gray-300">Loading...</div>;
 
   return (
@@ -399,8 +373,13 @@ const DashboardScreen = ({ elder, onBack, onNoti, onHistory }: any) => {
 };
 
 // 더보기 화면 (설정)
-const SettingsScreen = ({ onBack, onLogout }: any) => {
+const SettingsScreen = ({ onBack, onLogout }: SettingsScreenProps) => {
   const { mode, setMode, resolvedTheme } = useThemeStore();
+  const themeOptions: { value: ThemeMode; label: string; desc: string }[] = [
+    { value: 'system', label: '시스템 설정', desc: '기기 설정에 따라 자동 변경' },
+    { value: 'light', label: '라이트 모드', desc: '항상 밝은 화면' },
+    { value: 'dark', label: '다크 모드', desc: '항상 어두운 화면' },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
@@ -432,14 +411,10 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
             화면 테마
           </h3>
           <div className="bg-white dark:bg-gray-800 rounded-[20px] border border-gray-100 dark:border-gray-600/50 overflow-hidden shadow-sm">
-            {[
-              { value: 'system', label: '시스템 설정', desc: '기기 설정에 따라 자동 변경' },
-              { value: 'light', label: '라이트 모드', desc: '항상 밝은 화면' },
-              { value: 'dark', label: '다크 모드', desc: '항상 어두운 화면' }
-            ].map((item, i) => (
+            {themeOptions.map((item, i) => (
               <div
                 key={item.value}
-                onClick={() => setMode(item.value as any)}
+                onClick={() => setMode(item.value)}
                 className={`flex justify-between items-center p-4 ${i !== 2 ? 'border-b border-gray-50 dark:border-gray-600/50' : ''} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`}
               >
                 <div>
@@ -561,7 +536,7 @@ const SettingsScreen = ({ onBack, onLogout }: any) => {
 };
 
 // 일정 관리 화면
-const ScheduleScreen = ({ onBack }: any) => {
+const ScheduleScreen = ({ onBack }: BasicScreenProps) => {
   const dates = [
     { d: '월', v: 18 }, { d: '화', v: 19 }, { d: '수', v: 20, today: true },
     { d: '목', v: 21 }, { d: '금', v: 22 }, { d: '토', v: 23 }, { d: '일', v: 24 }
@@ -647,7 +622,7 @@ const ScheduleScreen = ({ onBack }: any) => {
             </div>
           </Card>
         </div>
-        <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
+        <Button fullWidth variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
           <Plus size={18} className="mr-2" /> 일정 추가
         </Button>
       </div>
@@ -656,7 +631,7 @@ const ScheduleScreen = ({ onBack }: any) => {
 };
 
 // 로봇 제어 화면
-const RobotControlScreen = ({ onBack, onLcd }: any) => (
+const RobotControlScreen = ({ onBack, onLcd }: RobotControlScreenProps) => (
   <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
     <Header leftIcon={<ChevronLeft size={24} />} leftLabel="뒤로" onLeftClick={onBack} title="로봇 제어" />
     <div className="p-5 space-y-6">
@@ -705,7 +680,7 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
             ))}
           </div>
         </Card>
-        <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
+        <Button fullWidth variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
           <Camera size={20} className="mr-2" /> 즉시 순찰 시작
         </Button>
       </section>
@@ -731,7 +706,7 @@ const RobotControlScreen = ({ onBack, onLcd }: any) => (
 );
 
 // 약 관리 화면
-const MedicationScreen = ({ onBack }: any) => (
+const MedicationScreen = ({ onBack }: BasicScreenProps) => (
   <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
     <Header leftIcon={<ChevronLeft size={24} />} leftLabel="뒤로" onLeftClick={onBack} title="약 관리" />
     <div className="p-5 space-y-6">
@@ -793,7 +768,7 @@ const MedicationScreen = ({ onBack }: any) => (
             </button>
           </Card>
         </div>
-        <Button variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
+        <Button fullWidth variant="primary" className="mt-4 shadow-[0_4px_14px_rgba(30,58,95,0.25)]">
           <Plus size={18} className="mr-2" /> 약 추가하기
         </Button>
       </section>
@@ -820,7 +795,7 @@ const MedicationScreen = ({ onBack }: any) => (
 );
 
 // 기록/리포트 화면
-const HistoryScreen = ({ onBack }: any) => {
+const HistoryScreen = ({ onBack }: BasicScreenProps) => {
   const [tab, setTab] = useState('report');
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
@@ -897,7 +872,7 @@ const HistoryScreen = ({ onBack }: any) => {
 };
 
 // 알림 화면
-const NotificationScreen = ({ onBack }: any) => {
+const NotificationScreen = ({ onBack }: BasicScreenProps) => {
   const notifications = [
     { id: 1, type: 'danger', title: '낙상 감지', msg: '거실에서 낙상 감지됨. 즉시 확인이 필요합니다.', time: '방금 전', read: false },
     { id: 2, type: 'success', title: '약 복용 완료', msg: '아침 약(고혈압약) 복용을 완료했습니다.', time: '2시간 전', read: false },
@@ -943,7 +918,7 @@ const NotificationScreen = ({ onBack }: any) => {
 };
 
 // 긴급 상황 화면
-const EmergencyScreen = ({ onBack }: any) => (
+const EmergencyScreen = ({ onBack }: BasicScreenProps) => (
   <div className="min-h-screen relative flex flex-col items-center justify-center p-6 text-center overflow-hidden bg-gray-900">
     <div className="absolute inset-0 animate-pulse bg-danger/20"></div>
     <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-danger/40"></div>
@@ -971,10 +946,10 @@ const EmergencyScreen = ({ onBack }: any) => (
         </div>
       </div>
       <div className="space-y-3 w-full">
-        <Button className="py-4 text-lg shadow-[0_4px_20px_rgba(239,68,68,0.3)] animate-pulse bg-danger hover:bg-danger/90">
+        <Button fullWidth className="py-4 text-lg shadow-[0_4px_20px_rgba(239,68,68,0.3)] animate-pulse bg-danger hover:bg-danger/90">
           <Phone className="mr-2" /> 119 신고하기
         </Button>
-        <Button variant="white" onClick={onBack} className="bg-white/10 hover:bg-white/20 text-white border-transparent backdrop-blur-md">
+        <Button fullWidth variant="white" onClick={onBack} className="bg-white/10 hover:bg-white/20 text-white border-transparent backdrop-blur-md">
           보호자 직접 통화
         </Button>
       </div>
@@ -984,7 +959,7 @@ const EmergencyScreen = ({ onBack }: any) => (
 );
 
 // LCD 미러링 전체화면
-const RobotLCDScreen = ({ onBack }: any) => (
+const RobotLCDScreen = ({ onBack }: BasicScreenProps) => (
   <div className="min-h-screen bg-gray-900 flex flex-col">
     <Header leftIcon={<X size={24} />} leftLabel="닫기" onLeftClick={onBack} title="로봇 화면 미러링" transparent />
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
@@ -1003,17 +978,17 @@ const RobotLCDScreen = ({ onBack }: any) => (
   </div>
 );
 
-const GuardianAppContainer = ({ onLogout }: any) => {
-  const [currentScreen, setCurrentScreen] = useState('elders');
-  const [selectedElder, setSelectedElder] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('home');
+const GuardianAppContainer = ({ onLogout }: GuardianAppContainerProps) => {
+  const [currentScreen, setCurrentScreen] = useState<PlaygroundScreen>('elders');
+  const [selectedElder, setSelectedElder] = useState<ElderSummary | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
 
   const goBack = () => {
     if (['dashboard', 'elders'].includes(currentScreen)) setCurrentScreen('elders');
     else setCurrentScreen('dashboard');
   };
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: ActiveTab) => {
     setActiveTab(tabId);
     if (tabId === 'home') setCurrentScreen('dashboard');
     if (tabId === 'robot') setCurrentScreen('robot');
@@ -1025,7 +1000,7 @@ const GuardianAppContainer = ({ onLogout }: any) => {
   if (currentScreen === 'elders') {
     return (
       <ElderSelectScreen
-        onSelect={(elder: any) => { setSelectedElder(elder); setCurrentScreen('dashboard'); }}
+        onSelect={(elder: ElderSummary) => { setSelectedElder(elder); setCurrentScreen('dashboard'); }}
         onSettings={() => setCurrentScreen('settings')}
         onEmergency={() => setCurrentScreen('emergency')}
       />
@@ -1096,7 +1071,7 @@ export default function Playground() {
     updateResolvedTheme();
   }, []);
 
-  const handleLogin = (role: 'guardian' | 'robot') => {
+  const handleLogin = (role: AuthRole) => {
     setAuthMode(role);
   };
 
