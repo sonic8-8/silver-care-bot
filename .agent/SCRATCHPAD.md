@@ -478,3 +478,25 @@
 ### 결과
 - Phase 0.1/0.2 및 0.4.1/0.4.2/0.4.3/0.4.5 체크 완료
 - 0.3 공통 설정, 0.4.4 LCD 분리 항목은 미완료로 유지
+
+---
+
+## 2026-02-04: Phase 0.4.4 LCD 컴포넌트 분리 (Agent 3)
+
+### 문제
+- `frontend/src/pages/Playground/RobotLCD.tsx`에 Eye/InfoChip/SimControls/메인 로직이 단일 파일로 결합됨
+- 요청 범위는 `features/robot-lcd`로 파일 분리이며 기존 Playground 파일은 수정 금지
+
+### 판단
+- 페이지/공유 디렉토리 수정 금지 조건을 지키기 위해 신규 디렉토리와 신규 파일만 생성
+- 기존 로직을 그대로 유지하되 `any` 타입만 제거하고 명시적 타입으로 대체
+
+### 실행
+- `frontend/src/features/robot-lcd/` 생성
+- `Eye.tsx`, `InfoChip.tsx`, `SimControls.tsx`, `RobotLCD.tsx` 분리 생성
+- `index.ts`에서 export 정리
+- `rg "\\bany\\b" frontend/src/features/robot-lcd -n`로 `any` 미사용 확인
+
+### 결과
+- LCD 관련 컴포넌트 분할 완료
+- 기존 `frontend/src/pages/Playground/RobotLCD.tsx` 미수정 상태 유지
