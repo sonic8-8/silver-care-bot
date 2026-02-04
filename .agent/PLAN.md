@@ -41,18 +41,18 @@
 - [x] Spring Security 기본 설정
 - [x] Spring REST Docs 설정
 - [x] Docker Compose (PostgreSQL + App)
-- [ ] 공통 응답 형식 정의 (ApiResponse, ErrorResponse)
-- [ ] 글로벌 예외 처리 (GlobalExceptionHandler)
+- [x] 공통 응답 형식 정의 (ApiResponse, ErrorResponse)
+- [x] 글로벌 예외 처리 (GlobalExceptionHandler)
 
 #### 0.2 Frontend 초기 설정
-- [ ] Vite + React + TypeScript 프로젝트 생성
-- [ ] Tailwind CSS + cva + tailwind-merge 설정
-- [ ] Framer Motion 설치
-- [ ] React Router 설정
-- [ ] TanStack Query + Axios 설정
-- [ ] Zustand 스토어 구조 설정
-- [ ] MSW 설정 (API Mock)
-- [ ] Vitest + RTL 설정
+- [x] Vite + React + TypeScript 프로젝트 생성
+- [x] Tailwind CSS + cva + tailwind-merge 설정
+- [x] Framer Motion 설치
+- [x] React Router 설정
+- [x] TanStack Query + Axios 설정
+- [x] Zustand 스토어 구조 설정
+- [x] MSW 설정 (API Mock)
+- [x] Vitest + RTL 설정
 
 #### 0.3 공통 설정
 - [ ] ESLint + Prettier 설정
@@ -63,30 +63,30 @@
 > Playground 프로토타입 코드를 실제 컴포넌트로 분리
 
 ##### 0.4.1 공유 UI 컴포넌트 (`/frontend/src/shared/ui/`)
-- [ ] `Button.tsx` - 공통 버튼 (variants: primary, secondary, danger, white, dark)
-- [ ] `Card.tsx` - 카드 컨테이너
-- [ ] `Header.tsx` - 페이지 헤더 (뒤로가기, 타이틀, 액션 버튼)
-- [ ] `Badge.tsx` - 상태 뱃지 (safe, warning, danger, neutral)
-- [ ] `Input.tsx` - 입력 필드 (라벨, 아이콘 지원)
-- [ ] `SectionHeader.tsx` - 섹션 제목 + 액션 버튼
+- [x] `Button.tsx` - 공통 버튼 (variants: primary, secondary, danger, white, dark)
+- [x] `Card.tsx` - 카드 컨테이너
+- [x] `Header.tsx` - 페이지 헤더 (뒤로가기, 타이틀, 액션 버튼)
+- [x] `Badge.tsx` - 상태 뱃지 (safe, warning, danger, neutral)
+- [x] `Input.tsx` - 입력 필드 (라벨, 아이콘 지원)
+- [x] `SectionHeader.tsx` - 섹션 제목 + 액션 버튼
 
 ##### 0.4.2 페이지 컴포넌트 분리 (`/frontend/src/pages/`)
-- [ ] `Login/LoginScreen.tsx` - 로그인 (보호자/로봇 탭)
-- [ ] `Signup/SignupScreen.tsx` - 회원가입
-- [ ] `Elders/ElderSelectScreen.tsx` - 노인 선택 (복지사 전용)
-- [ ] `Dashboard/DashboardScreen.tsx` - 홈 대시보드
-- [ ] `Settings/SettingsScreen.tsx` - 설정 (테마, 알림, 로봇 설정)
-- [ ] `Schedule/ScheduleScreen.tsx` - 일정 관리
-- [ ] `Robot/RobotControlScreen.tsx` - 로봇 제어
-- [ ] `Robot/RobotLCDScreen.tsx` - LCD 미러링 전체화면
-- [ ] `Medication/MedicationScreen.tsx` - 약 관리
-- [ ] `History/HistoryScreen.tsx` - 기록/AI 리포트
-- [ ] `Notification/NotificationScreen.tsx` - 알림 목록
-- [ ] `Emergency/EmergencyScreen.tsx` - 긴급 상황 풀스크린
+- [x] `Login/LoginScreen.tsx` - 로그인 (보호자/로봇 탭)
+- [x] `Signup/SignupScreen.tsx` - 회원가입
+- [x] `Elders/ElderSelectScreen.tsx` - 노인 선택 (복지사 전용)
+- [x] `Dashboard/DashboardScreen.tsx` - 홈 대시보드
+- [x] `Settings/SettingsScreen.tsx` - 설정 (테마, 알림, 로봇 설정)
+- [x] `Schedule/ScheduleScreen.tsx` - 일정 관리
+- [x] `Robot/RobotControlScreen.tsx` - 로봇 제어
+- [x] `Robot/RobotLCDScreen.tsx` - LCD 미러링 전체화면
+- [x] `Medication/MedicationScreen.tsx` - 약 관리
+- [x] `History/HistoryScreen.tsx` - 기록/AI 리포트
+- [x] `Notification/NotificationScreen.tsx` - 알림 목록
+- [x] `Emergency/EmergencyScreen.tsx` - 긴급 상황 풀스크린
 
 ##### 0.4.3 컨테이너 및 네비게이션
-- [ ] `GuardianAppContainer.tsx` - 메인 앱 컨테이너 (탭 네비게이션 포함)
-- [ ] `BottomNavigation.tsx` - 하단 탭바 컴포넌트
+- [x] `GuardianAppContainer.tsx` - 메인 앱 컨테이너 (탭 네비게이션 포함)
+- [x] `BottomNavigation.tsx` - 하단 탭바 컴포넌트
 
 ##### 0.4.4 LCD 컴포넌트 (`/frontend/src/features/robot-lcd/` 또는 `/frontend-lcd/`)
 - [ ] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
@@ -95,8 +95,8 @@
 - [ ] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
 
 ##### 0.4.5 타입 정의 (`/frontend/src/shared/types/`)
-- [ ] `ui.types.ts` - UI 컴포넌트 공통 타입 (ButtonVariant, BadgeStatus 등)
-- [ ] `screen.types.ts` - 화면별 Props 타입
+- [x] `ui.types.ts` - UI 컴포넌트 공통 타입 (ButtonVariant, BadgeStatus 등)
+- [x] `screen.types.ts` - 화면별 Props 타입
 
 > ⚠️ **분리 원칙**:
 > - 파일당 하나의 컴포넌트 원칙 준수

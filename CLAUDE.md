@@ -288,7 +288,21 @@ feat(auth): 로그인 폼 컴포넌트 구현
 Closes #123
 ```
 
----
+### ⚠️ Git Worktree Push 주의
+
+> 병렬 작업 시 모든 워크트리(agent-0~4)는 **같은 `.git` 저장소를 공유**합니다.
+> `git push`만 실행하면 **모든 브랜치가 Push**될 수 있으므로 주의!
+
+```bash
+# ✅ 올바른 방법: 자기 브랜치만 Push
+git push origin feature/phase0-be-infra
+
+# ❌ 위험한 방법
+git push origin --all  # 모든 브랜치 Push
+git push               # 설정에 따라 여러 브랜치 Push 가능
+```
+
+**권장 설정**: `git config push.default current`
 
 ## 🏗️ AI Agent Workflow
 
