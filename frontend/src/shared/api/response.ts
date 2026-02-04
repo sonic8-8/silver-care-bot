@@ -34,7 +34,7 @@ export const isApiResult = (response: unknown): response is ApiResult<unknown> =
     }
 
     if (response.success === true) {
-        return 'data' in response;
+        return true;
     }
 
     return isErrorPayload(response.error);
@@ -50,7 +50,7 @@ export const isErrorResponse = <T>(response: ApiResult<T>): response is ErrorRes
 
 export const unwrapApiResponse = <T>(response: ApiResult<T>): T | null => {
     if (isApiResponse(response)) {
-        return response.data;
+        return response.data ?? null;
     }
     throw new ApiError(response.error);
 };

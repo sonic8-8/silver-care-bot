@@ -48,6 +48,15 @@ describe('api response helpers', () => {
         expect(unwrapApiResponse(response)).toBeNull();
     });
 
+    it('unwraps missing payload from success responses as null', () => {
+        const response: ApiResponse<{ id: number }> = {
+            success: true,
+            timestamp: '2026-02-03T09:00:00+09:00',
+        };
+
+        expect(unwrapApiResponse(response)).toBeNull();
+    });
+
     it('throws ApiError for error responses', () => {
         const response: ErrorResponse = {
             success: false,
@@ -74,6 +83,12 @@ describe('api response helpers', () => {
             isApiResult({
                 success: true,
                 data: { id: 1 },
+                timestamp: '2026-02-03T09:00:00+09:00',
+            })
+        ).toBe(true);
+        expect(
+            isApiResult({
+                success: true,
                 timestamp: '2026-02-03T09:00:00+09:00',
             })
         ).toBe(true);

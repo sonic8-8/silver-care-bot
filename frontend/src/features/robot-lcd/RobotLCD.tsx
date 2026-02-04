@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import {
     Battery, Wifi, Pill, Phone, Clock, Activity, Smile, CloudSun, Siren, Calendar
 } from 'lucide-react';
@@ -19,6 +20,16 @@ interface RobotState {
     emotion: 'neutral' | 'happy' | 'angry' | 'surprised' | 'sleep' | 'suspicious';
     message?: string;
     subMessage?: string;
+}
+
+type EyeVariant = RobotState['emotion'] | 'blink';
+
+interface EyeProps {
+    variant: EyeVariant;
+    variants: Variants;
+    side: 'left' | 'right';
+    mousePos: { x: number; y: number };
+    emotion: RobotState['emotion'];
 }
 
 const IDLE_SCHEDULE_THRESHOLD_MINUTES = 90;
@@ -43,7 +54,7 @@ const CHIP_STYLES: Record<ChipVariant, string> = {
 };
 
 // --- Eye 컴포넌트 ---
-const Eye = ({ variant, variants, side, mousePos, emotion }: any) => {
+const Eye = ({ variant, variants, side, mousePos, emotion }: EyeProps) => {
     const shouldTrack = variant !== 'sleep' && variant !== 'blink' && emotion !== 'suspicious';
     const moveX = shouldTrack ? mousePos.x * 20 : 0;
     const moveY = shouldTrack ? mousePos.y * 20 : 0;
