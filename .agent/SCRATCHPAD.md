@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
+
+### 문제
+- 루트 `docker-compose.yml`에서 PostgreSQL 서비스가 없어 `PostgreSQL + App` 구성이 완결되지 않음
+- Backend에 DB 접속 환경변수 주입이 필요함
+
+### 판단
+- Agent 1 소유 범위(인프라) 내에서 루트 `docker-compose.yml`만 수정
+- 기존 포트 매핑(`backend 8082`, `frontend 8081`)은 유지
+- DB 값은 `application.yml` 기본값과 일치하도록 `silverbot/postgres/postgres` 사용
+
+### 실행
+- `sh/main`에서 `git worktree add ../agent-1 -b feature/phase0-be-infra`로 Agent 1 worktree 생성
+- `sh/agent-1`에서 `docker-compose.yml` 수정:
+  - `postgres` 서비스 추가 (`postgres:15`)
+  - `backend` 환경변수 추가 (`DB_HOST/PORT/NAME/USERNAME/PASSWORD`)
+  - `backend` → `postgres` `depends_on`(healthcheck 기반) 추가
+  - `app-net` 네트워크 연결 및 `postgres-data` 볼륨 추가
+
+### 결과
+- 루트 Compose 기준으로 PostgreSQL + Backend + Frontend 구성 완료
+- 인프라 범위 외 파일 수정 없음
+
+### 코드리뷰 반영 (2026-02-04)
+- 리뷰 의견: `postgres`의 `5432:5432` 고정 노출은 로컬 DB와 충돌 위험
+- 판단: Backend는 내부 네트워크(`postgres:5432`)로 접속하므로 호스트 포트 노출 불필요
+- 실행: `docker-compose.yml`에서 `postgres` `ports` 제거
+- 결과: 포트 충돌 리스크 제거, 서비스 간 통신 영향 없음
+
+---
+
 ## 2026-02-03: 세션 시작 (Agent 2)
 
 ### 현재 상태 확인
