@@ -982,6 +982,13 @@ const GuardianAppContainer = ({ onLogout }: GuardianAppContainerProps) => {
   const [currentScreen, setCurrentScreen] = useState<PlaygroundScreen>('elders');
   const [selectedElder, setSelectedElder] = useState<ElderSummary | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const tabs = [
+    { id: 'home', icon: Home, label: '홈' },
+    { id: 'robot', icon: Bot, label: '로봇' },
+    { id: 'pill', icon: Pill, label: '약' },
+    { id: 'cal', icon: Calendar, label: '일정' },
+    { id: 'settings', icon: Settings, label: '설정' }
+  ] as const satisfies ReadonlyArray<{ id: ActiveTab; icon: typeof Home; label: string }>;
 
   const goBack = () => {
     if (['dashboard', 'elders'].includes(currentScreen)) setCurrentScreen('elders');
@@ -1029,13 +1036,7 @@ const GuardianAppContainer = ({ onLogout }: GuardianAppContainerProps) => {
       {selectedElder && (
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 px-6 pt-2 pb-safe min-h-[72px] z-50 rounded-t-[20px] shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
           <div className="flex justify-between items-center h-[56px]">
-            {[
-              { id: 'home', icon: Home, label: '홈' },
-              { id: 'robot', icon: Bot, label: '로봇' },
-              { id: 'pill', icon: Pill, label: '약' },
-              { id: 'cal', icon: Calendar, label: '일정' },
-              { id: 'settings', icon: Settings, label: '설정' }
-            ].map((item) => {
+            {tabs.map((item) => {
               const isActive = activeTab === item.id;
               const Icon = item.icon;
               return (
