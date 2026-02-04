@@ -8,7 +8,7 @@ export type ErrorCode =
 
 export interface ApiResponse<T> {
     success: true;
-    data: T;
+    data: T | null;
     timestamp: string;
 }
 

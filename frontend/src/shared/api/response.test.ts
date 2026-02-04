@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, isApiResponse, isErrorResponse, unwrapApiResponse } from './response';
+import { ApiError, isApiResult, isApiResponse, isErrorResponse, unwrapApiResponse } from './response';
 import type { ApiResponse, ErrorResponse } from '@/shared/types';
 
 describe('api response helpers', () => {
@@ -38,6 +38,16 @@ describe('api response helpers', () => {
         expect(unwrapApiResponse(response)).toEqual({ name: 'silver' });
     });
 
+    it('unwraps null payload from success responses', () => {
+        const response: ApiResponse<null> = {
+            success: true,
+            data: null,
+            timestamp: '2026-02-03T09:00:00+09:00',
+        };
+
+        expect(unwrapApiResponse(response)).toBeNull();
+    });
+
     it('throws ApiError for error responses', () => {
         const response: ErrorResponse = {
             success: false,
@@ -57,5 +67,29 @@ describe('api response helpers', () => {
             expect(apiError.code).toBe('FORBIDDEN');
             expect(apiError.details).toEqual({ reason: 'role' });
         }
+    });
+
+    it('validates api response envelope shape', () => {
+        expect(
+            isApiResult({
+                success: true,
+                data: { id: 1 },
+                timestamp: '2026-02-03T09:00:00+09:00',
+            })
+        ).toBe(true);
+        expect(
+            isApiResult({
+                success: false,
+                error: { code: 'INVALID_REQUEST', message: 'oops' },
+                timestamp: '2026-02-03T09:00:00+09:00',
+            })
+        ).toBe(true);
+        expect(
+            isApiResult({
+                success: false,
+                timestamp: '2026-02-03T09:00:00+09:00',
+            })
+        ).toBe(false);
+        expect(isApiResult({ data: {}, timestamp: '2026-02-03T09:00:00+09:00' })).toBe(false);
     });
 });

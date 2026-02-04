@@ -1,6 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, ErrorResponse } from '@/shared/types';
-import { ApiError } from './response';
+import { ApiError, isApiResult, isErrorResponse } from './response';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -21,7 +20,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => {
         const payload = response.data as unknown;
-        if (isWrappedResponse(payload) && payload.success === false) {
+        if (isApiResult(payload) && isErrorResponse(payload)) {
             throw new ApiError(payload.error);
         }
         return response;
@@ -33,7 +32,3 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
-const isWrappedResponse = (data: unknown): data is ApiResponse<unknown> | ErrorResponse => {
-    return typeof data === 'object' && data !== null && 'success' in data;
-};

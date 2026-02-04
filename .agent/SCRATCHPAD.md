@@ -464,3 +464,59 @@
 - 승인 후 → Phase 0 구현 시작 (4 Agent 병렬)
 
 ---
+
+---
+
+## 2026-02-04: Agent 4 - 공통 응답 규격 최종 점검
+
+### 문제
+- MSW 응답, frontend 공통 타입, response 유틸이 backend `ApiResponse/ErrorResponse` 규격과 완전히 맞는지 최종 검증 필요
+
+### 판단
+- backend `ApiResponse.success()`는 `data: null` 가능하므로 frontend `ApiResponse<T>`의 `data`를 nullable로 맞추는 것이 안전
+- 런타임에서 응답 envelope 검증 범위를 `success`만이 아니라 `timestamp`, `error(code/message)`까지 확인하도록 강화
+- MSW 핸들러는 기존에 `{ success, data, timestamp }`(성공) / `{ success, error, timestamp }`(실패) 형식으로 이미 정렬되어 있어 유지
+
+### 실행
+1. `git worktree add ../agent-4 -b feature/phase0-contracts`로 Agent 4 worktree 생성
+2. `pwd` 확인: `/mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-4`
+3. 점검 파일 확인
+   - `frontend/src/mocks/handlers/*.ts`
+   - `frontend/src/shared/types/api.types.ts`
+   - `frontend/src/shared/api/response.ts`
+   - `backend/src/main/java/site/silverbot/api/common/*`
+4. 수정
+   - `ApiResponse<T>.data`를 `T | null`로 변경
+   - `response.ts`에 `isApiResult` 추가 및 envelope 검사 강화
+   - `axios.ts`에서 로컬 검사 함수 제거 후 `isApiResult/isErrorResponse` 재사용
+   - `response.test.ts`에 null payload 케이스/shape validation 케이스 추가
+
+### 테스트
+- 실행: `npm run test:run -- src/shared/api/response.test.ts`
+- 결과: 실패 (`vitest: not found`)
+- 원인: 로컬 의존성 미설치 상태(node_modules 내 vitest 부재)
+
+### 결과
+- 공통 응답 타입과 유틸을 backend 계약에 맞게 정렬 완료
+- MSW 핸들러 응답 형식 점검 완료 (추가 수정 불필요)
+
+## 2026-02-04: Agent 4 - 코드리뷰 반영 (RobotLCD 중복 정리)
+
+### 문제
+- 코드리뷰 지적: `frontend/src/pages/Playground/RobotLCD.tsx`가 중복 로직 정리 미반영
+- 코드리뷰 지적: `.agent/PLAN.md` 0.4.4 체크박스 현행화 필요
+
+### 판단
+- 기존 `pages/Playground/RobotLCD.tsx`를 직접 로직 보관 파일로 두면 역할/위치가 모호하므로
+  `features/robot-lcd`로 본체 이동 + Playground에서는 thin wrapper만 유지
+- PLAN은 실제 분리 완료 상태를 반영해 `RobotLCD.tsx`만 체크 처리
+
+### 실행
+1. `frontend/src/features/robot-lcd/RobotLCD.tsx`로 본체 파일 이동
+2. `frontend/src/pages/Playground/RobotLCD.tsx`를 thin wrapper로 교체
+3. `.agent/PLAN.md` 0.4.4에서 `RobotLCD.tsx` 체크박스 `[x]` 반영
+
+### 결과
+- Playground 경로에는 중복 로직이 아닌 wrapper만 남음
+- LCD 메인 컴포넌트 위치가 PLAN 구조와 일치
+- PLAN 0.4.4 진행상태가 최신화됨
