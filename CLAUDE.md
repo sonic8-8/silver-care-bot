@@ -563,14 +563,43 @@ Closes #123
 > 4개의 AI 에이전트가 동시에 작업할 때 적용되는 규칙
 > 상세 분배 내용: `.agent/PARALLEL-WORK.md` 참조
 
-### Agent 식별자
+### Git Worktree 기반 물리적 격리 (v2.0)
 
-| Agent | 역할 | Phase 0 담당 | Phase 1+ 담당 |
-|-------|------|-------------|---------------|
-| **Agent 1** | BE-INFRA / AUTH | Spring Boot, Security, Docker | 인증 도메인 |
-| **Agent 2** | FE-INFRA / ELDER | Vite, Tailwind, Router | 노인+긴급 도메인 |
-| **Agent 3** | DB-SCHEMA / ROBOT | Flyway, Entity, Repository | 로봇 도메인 |
-| **Agent 4** | CONTRACTS / WEBSOCKET | ApiResponse, Axios, MSW | WebSocket 도메인 |
+> **핵심**: 각 Agent는 독립된 Worktree 폴더에서 작업하여 브랜치 충돌 방지
+
+```
+S14P11C104/                    # Team Repo Root
+├── web/                       # Team GitLab Sync Target
+├── sync.sh                    # Sync Script
+└── sh/                        # Personal GitHub Container
+    ├── main/                  # DO NOT WORK HERE (Worktree 생성용)
+    ├── agent-1/               # Agent 1 전용 Worktree
+    ├── agent-2/               # Agent 2 전용 Worktree
+    ├── agent-3/               # Agent 3 전용 Worktree
+    └── agent-4/               # Agent 4 전용 Worktree
+```
+
+### Agent 식별자 및 물리적 폴더
+
+| Agent | 역할 | 물리적 폴더 | Phase 0 담당 | Phase 1+ 담당 |
+|-------|------|------------|-------------|---------------|
+| **Agent 1** | BE-INFRA / AUTH | `sh/agent-1/` | Spring Boot, Security, Docker | 인증 도메인 |
+| **Agent 2** | FE-INFRA / ELDER | `sh/agent-2/` | Vite, Tailwind, Router | 노인+긴급 도메인 |
+| **Agent 3** | DB-SCHEMA / ROBOT | `sh/agent-3/` | Flyway, Entity, Repository | 로봇 도메인 |
+| **Agent 4** | CONTRACTS / WEBSOCKET | `sh/agent-4/` | ApiResponse, Axios, MSW | WebSocket 도메인 |
+
+### Git Worktree 규칙
+
+```
+⚠️ 핵심 규칙:
+
+1. sh/main/ 에서 직접 작업 금지 (Worktree 생성/관리용)
+2. 각 Agent는 자신의 폴더(sh/agent-N/)에서만 커밋/푸시
+3. 동일 브랜치를 여러 Worktree에서 동시 체크아웃 금지 (Git 제약)
+4. 작업 완료 후 sync.sh로 Team Repo 동기화
+5. **경로 확인 의무화**: 
+   모든 터미널 명령어 실행 전 `pwd`를 통해 자신이 할당된 `sh/agent-N/` 폴더에 있는지 확인해야 합니다.
+```
 
 ### 파일 소유권 규칙
 
@@ -644,17 +673,20 @@ feat(ws): WebSocket 토픽 설정 [Agent 4]
 ### 싱크 포인트 (동기화 시점)
 
 #### Phase 0 완료 체크리스트
+- [ ] 각 Agent Worktree에서 정상 커밋/푸시 완료
 - [ ] `docker-compose up` → PostgreSQL + App 정상 실행
 - [ ] Flyway 마이그레이션 성공
 - [ ] `npm run dev` → Frontend 정상 실행
 - [ ] 모든 Entity Repository 테스트 통과
 - [ ] MSW Mock API 응답 확인
+- [ ] develop 머지 후 sync.sh 실행
 
 #### Phase 1 완료 체크리스트
 - [ ] 회원가입 → 로그인 → 보호된 API 호출 E2E
 - [ ] 긴급 상황 → WebSocket 알림 → 해제 E2E
 - [ ] WORKER/FAMILY 역할별 라우팅 정상
 - [ ] 오프라인 판정 스케줄러 동작
+- [ ] sync.sh 실행하여 Team Repo 동기화
 
 ### 의존성 우회 (Mock 전략)
 
