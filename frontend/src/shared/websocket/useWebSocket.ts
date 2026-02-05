@@ -39,6 +39,7 @@ export const useWebSocket = ({
     const reconnectTimerRef = useRef<number | null>(null);
     const manualDisconnectRef = useRef(false);
     const previousTokenRef = useRef<string | null | undefined>(token);
+    const tokenVersionRef = useRef(0);
 
     const clearReconnectTimer = useCallback(() => {
         if (reconnectTimerRef.current !== null) {
@@ -139,6 +140,7 @@ export const useWebSocket = ({
             return;
         }
         previousTokenRef.current = token;
+        const version = (tokenVersionRef.current += 1);
 
         clearReconnectTimer();
         reconnectAttemptsRef.current = 0;
@@ -152,6 +154,10 @@ export const useWebSocket = ({
                     // ignore cleanup errors
                 }
                 clientRef.current = null;
+            }
+
+            if (tokenVersionRef.current !== version) {
+                return;
             }
 
             if (!token) {

@@ -123,4 +123,91 @@ describe('useWebSocket', () => {
         expect(createStompClientMock).toHaveBeenCalledTimes(1);
         expect(mockClient.activate).toHaveBeenCalledTimes(1);
     });
+
+    it('reconnects when token changes while connected', async () => {
+        const { result, rerender } = renderHook(
+            ({ token }) => useWebSocket({ autoConnect: false, token }),
+            { initialProps: { token: 'token-a' } }
+        );
+
+        act(() => {
+            result.current.connect();
+        });
+
+        act(() => {
+            capturedOptions?.onConnect?.(mockClient);
+        });
+
+        await act(async () => {
+            rerender({ token: 'token-b' });
+            await Promise.resolve();
+        });
+
+        expect(mockClient.deactivate).toHaveBeenCalledTimes(1);
+        expect(createStompClientMock).toHaveBeenCalledTimes(2);
+        const tokens = createStompClientMock.mock.calls.map(([options]) => options.token);
+        expect(tokens).toEqual(['token-a', 'token-b']);
+    });
+
+    it('reconnects when token changes while connecting', async () => {
+        const { result, rerender } = renderHook(
+            ({ token }) => useWebSocket({ autoConnect: false, token }),
+            { initialProps: { token: 'token-a' } }
+        );
+
+        act(() => {
+            result.current.connect();
+        });
+
+        await act(async () => {
+            rerender({ token: 'token-b' });
+            await Promise.resolve();
+        });
+
+        expect(mockClient.deactivate).toHaveBeenCalledTimes(1);
+        expect(createStompClientMock).toHaveBeenCalledTimes(2);
+        const tokens = createStompClientMock.mock.calls.map(([options]) => options.token);
+        expect(tokens).toEqual(['token-a', 'token-b']);
+    });
+
+    it('uses the latest token after rapid changes', async () => {
+        const deactivateResolvers: Array<() => void> = [];
+        mockClient.deactivate = vi.fn().mockImplementation(
+            () =>
+                new Promise<void>((resolve) => {
+                    deactivateResolvers.push(resolve);
+                })
+        );
+
+        const { result, rerender } = renderHook(
+            ({ token }) => useWebSocket({ autoConnect: false, token }),
+            { initialProps: { token: 'token-a' } }
+        );
+
+        act(() => {
+            result.current.connect();
+        });
+
+        act(() => {
+            capturedOptions?.onConnect?.(mockClient);
+        });
+
+        await act(async () => {
+            rerender({ token: 'token-b' });
+        });
+
+        await act(async () => {
+            rerender({ token: 'token-c' });
+        });
+
+        expect(deactivateResolvers).toHaveLength(2);
+
+        await act(async () => {
+            deactivateResolvers.forEach((resolve) => resolve());
+            await Promise.resolve();
+        });
+
+        const tokens = createStompClientMock.mock.calls.map(([options]) => options.token);
+        expect(tokens).toEqual(['token-a', 'token-c']);
+    });
 });
