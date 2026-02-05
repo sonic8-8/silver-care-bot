@@ -67,8 +67,9 @@ cd frontend && npm run test
 ```
 
 ## 테스트 실행 결과
-- `./gradlew test --tests site.silverbot.api.robot.service.RobotCommandServiceTest`
-  - 실패: `JAVA_HOME is not set` (로컬 JDK 미설정)
+- `GRADLE_USER_HOME=/tmp/gradle JAVA_HOME=<auto> ./gradlew test --tests site.silverbot.api.robot.service.RobotCommandServiceTest`
+  - 실패: `backend/src/main/java/site/silverbot/api/common/ApiResponse.java:16` 컴파일 에러
+  - 참고: common 영역(Agent 4 소유) record accessor 충돌 이슈로 보임
 
 ## 우려 사항 / 특별 검토 요청
 - MSW elder 상세 응답에 `robot.id` 누락 시 로봇 제어 화면이 비활성화될 수 있음
