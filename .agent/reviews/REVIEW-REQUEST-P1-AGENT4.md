@@ -35,7 +35,7 @@ cd frontend && npm run test
 ```
 
 ## 테스트 실행 결과
-- Backend: `./gradlew test` 실패 → `JAVA_HOME` 미설정으로 실행 불가
+- Backend: `./gradlew test` 실패 → `Could not determine a usable wildcard IP for this machine` (Gradle 서비스 초기화 실패)
 - Frontend: `npm run test` 통과
 
 ## 우려 사항 / 특별 검토 요청
