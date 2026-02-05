@@ -19,8 +19,10 @@
 | `backend/src/main/resources/db/migration/V3__add_refresh_token_to_users.sql` | 신규 | users.refresh_token 컬럼 추가 |
 | `backend/src/test/java/site/silverbot/api/auth/**` | 수정/신규 | Auth/RobotAuth 테스트 및 REST Docs 갱신 |
 | `frontend/src/features/auth/**` | 신규/수정 | auth api/hook/store 및 JWT 파싱 보정 |
+| `frontend/src/features/auth/store/authStore.test.ts` | 수정 | accessToken만 localStorage에 저장하도록 테스트 기대값 수정 |
 | `frontend/src/pages/Login/LoginScreen.tsx` | 수정 | 로그인 연동 + 회원가입 링크 |
 | `frontend/src/pages/Signup/SignupScreen.tsx` | 수정 | 회원가입 연동 + 로그인 링크 |
+| `backend/src/main/resources/application.yml` | 수정 | 프록시 환경 `request.isSecure()` 보정용 forward headers 설정 |
 
 ### 주요 변경 사항
 1. 로그인/회원가입/리프레시에서 refreshToken은 **HttpOnly 쿠키**로 발급하고, 응답 바디에서는 제거
@@ -31,6 +33,8 @@
 6. refresh 쿠키 `secure`는 요청 스킴 기반으로 동적 결정
 7. AuthController REST Docs에 `Set-Cookie` 헤더 문서화 추가
 8. authStore에서 refreshToken 로컬 저장/복원 제거
+9. forward headers 적용으로 프록시 환경에서 secure 판정 개선
+10. authStore 테스트에서 refreshToken localStorage 기대값 제거
 
 ### 검증 포인트 (리뷰어 확인 사항)
 - [ ] refreshToken이 응답 body에 노출되지 않는지
@@ -49,6 +53,10 @@ cd backend && ./gradlew test
 # Frontend
 cd frontend && npm run test
 ```
+
+### 테스트 결과
+- Frontend: `npm run test` ✅ PASS (Test Files 3 passed, Tests 11 passed)
+- Backend: 미실행
 
 ### 우려 사항 / 특별 검토 요청
 - `frontend/src/shared/api/axios.ts`는 Agent-4 소유라 본 브랜치에서 원본으로 복원함. HttpOnly 쿠키 기반 refresh/로그아웃 동기화는 Agent-4 통합 필요.

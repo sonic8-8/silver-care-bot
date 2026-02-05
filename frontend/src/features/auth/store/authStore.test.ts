@@ -18,9 +18,9 @@ beforeEach(() => {
 });
 
 describe('authStore', () => {
-    it('persists tokens and derives user from access token', () => {
+    it('persists access token and derives user from access token', () => {
         const accessToken = createToken({ sub: '10', role: 'WORKER', email: 'worker@test.com' });
-        const tokens: AuthTokens = { accessToken, refreshToken: 'refresh' };
+        const tokens: AuthTokens = { accessToken };
 
         useAuthStore.getState().setTokens(tokens);
 
@@ -28,12 +28,12 @@ describe('authStore', () => {
         expect(state.tokens?.accessToken).toBe(accessToken);
         expect(state.user?.role).toBe('WORKER');
         expect(localStorage.getItem('accessToken')).toBe(accessToken);
-        expect(localStorage.getItem('refreshToken')).toBe('refresh');
+        expect(localStorage.getItem('refreshToken')).toBeNull();
     });
 
     it('clears tokens on logout', () => {
         const accessToken = createToken({ sub: '11', role: 'WORKER' });
-        useAuthStore.getState().setTokens({ accessToken, refreshToken: 'refresh' });
+        useAuthStore.getState().setTokens({ accessToken });
 
         useAuthStore.getState().logout();
 

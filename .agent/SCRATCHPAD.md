@@ -24,6 +24,30 @@
 ### 결과
 - 컴파일 이슈 해소 및 쿠키 동작/문서화 정합성 개선
 
+### 추가 수정 (리뷰 v4 반영)
+**문제**:
+- authStore 테스트가 refreshToken localStorage 저장을 기대 (정책 불일치)
+- 프록시 환경에서 `request.isSecure()`가 false일 수 있음
+
+**판단**:
+- 테스트는 accessToken만 저장하는 현재 정책에 맞춤
+- 프록시 환경 대응을 위해 forward header 전략 추가
+
+**실행**:
+- `authStore.test.ts`에서 refreshToken 기대값 제거
+- `application.yml`에 `server.forward-headers-strategy: framework` 추가
+
+**결과**:
+- 테스트 기대값이 정책과 정합, 프록시 환경 쿠키 secure 판정 개선
+
+**테스트 시도**:
+- `frontend`: `npm install` 및 `npm run test` 실행
+- 결과: npm registry DNS 실패(EAI_AGAIN)로 설치/테스트 불가
+
+**테스트 재시도 (사용자 설치 후)**:
+- `frontend`: `npm run test`
+- 결과: PASS (Test Files 3 passed, Tests 11 passed)
+
 ## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
 
 ### 문제
