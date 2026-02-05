@@ -35,7 +35,7 @@ cd frontend && npm run test
 ```
 
 ## 테스트 실행 결과
-- Backend: `GRADLE_USER_HOME=/tmp/gradle-agent4 ./gradlew test` 실패 → `Could not determine a usable wildcard IP for this machine` (Gradle 서비스 초기화 실패, `JAVA_TOOL_OPTIONS`로 IPv4 우선 적용해도 동일)
+- Backend: `GRADLE_USER_HOME=/tmp/gradle-agent1 ./gradlew test` 실패 → `Could not determine a usable wildcard IP for this machine` (Gradle 서비스 초기화 실패, `JAVA_TOOL_OPTIONS`로 IPv4 우선 적용해도 동일)
 - Frontend: `npm run test` 통과
 
 ## 우려 사항 / 특별 검토 요청
