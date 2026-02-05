@@ -109,4 +109,18 @@ describe('useWebSocket', () => {
         expect(mockClient.activate).toHaveBeenCalledTimes(1);
         expect(result.current.status).toBe('DISCONNECTED');
     });
+
+    it('reconnects when token changes while disconnected', () => {
+        const { rerender } = renderHook(
+            ({ token }) => useWebSocket({ autoConnect: false, token }),
+            { initialProps: { token: null as string | null } }
+        );
+
+        act(() => {
+            rerender({ token: 'new-token' });
+        });
+
+        expect(createStompClientMock).toHaveBeenCalledTimes(1);
+        expect(mockClient.activate).toHaveBeenCalledTimes(1);
+    });
 });

@@ -67,6 +67,40 @@ export const useWebSocket = ({
         }, reconnectDelayMs);
     }, [maxReconnectAttempts, reconnectDelayMs]);
 
+    const initializeClient = useCallback(
+        (nextToken?: string | null) => {
+            const clientOptions: StompClientOptions = {
+                url,
+                token: nextToken,
+                onConnect: (client) => {
+                    reconnectAttemptsRef.current = 0;
+                    setStatus('CONNECTED');
+                    onConnect?.(client);
+                },
+                onDisconnect: () => {
+                    onDisconnect?.();
+                    if (!manualDisconnectRef.current) {
+                        scheduleReconnect();
+                    }
+                },
+                onWebSocketClose: () => {
+                    if (!manualDisconnectRef.current) {
+                        scheduleReconnect();
+                    }
+                },
+                onStompError: () => {
+                    if (!manualDisconnectRef.current) {
+                        scheduleReconnect();
+                    }
+                },
+            };
+
+            clientRef.current = createStompClient(clientOptions);
+            clientRef.current.activate();
+        },
+        [onConnect, onDisconnect, scheduleReconnect, url]
+    );
+
     const connect = useCallback(() => {
         if (status === 'CONNECTED' || status === 'CONNECTING') {
             return;
@@ -75,36 +109,8 @@ export const useWebSocket = ({
         manualDisconnectRef.current = false;
         clearReconnectTimer();
         setStatus('CONNECTING');
-
-        const clientOptions: StompClientOptions = {
-            url,
-            token,
-            onConnect: (client) => {
-                reconnectAttemptsRef.current = 0;
-                setStatus('CONNECTED');
-                onConnect?.(client);
-            },
-            onDisconnect: () => {
-                onDisconnect?.();
-                if (!manualDisconnectRef.current) {
-                    scheduleReconnect();
-                }
-            },
-            onWebSocketClose: () => {
-                if (!manualDisconnectRef.current) {
-                    scheduleReconnect();
-                }
-            },
-            onStompError: () => {
-                if (!manualDisconnectRef.current) {
-                    scheduleReconnect();
-                }
-            },
-        };
-
-        clientRef.current = createStompClient(clientOptions);
-        clientRef.current.activate();
-    }, [clearReconnectTimer, onConnect, onDisconnect, scheduleReconnect, status, token, url]);
+        initializeClient(token);
+    }, [clearReconnectTimer, initializeClient, status, token]);
 
     const disconnect = useCallback(async () => {
         manualDisconnectRef.current = true;
@@ -134,20 +140,30 @@ export const useWebSocket = ({
         }
         previousTokenRef.current = token;
 
-        if (status !== 'CONNECTED') {
-            return;
-        }
-
-        if (!token) {
-            void disconnect();
-            return;
-        }
+        clearReconnectTimer();
+        reconnectAttemptsRef.current = 0;
 
         void (async () => {
-            await disconnect();
-            connect();
+            manualDisconnectRef.current = true;
+            if (clientRef.current) {
+                try {
+                    await clientRef.current.deactivate();
+                } catch {
+                    // ignore cleanup errors
+                }
+                clientRef.current = null;
+            }
+
+            if (!token) {
+                setStatus('DISCONNECTED');
+                return;
+            }
+
+            manualDisconnectRef.current = false;
+            setStatus('CONNECTING');
+            initializeClient(token);
         })();
-    }, [connect, disconnect, status, token]);
+    }, [clearReconnectTimer, initializeClient, token]);
 
     return {
         client: clientRef.current,

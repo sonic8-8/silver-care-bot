@@ -1,9 +1,9 @@
 package site.silverbot.config;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Arrays;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -14,8 +14,11 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     public static final String AUTH_TOKEN_ATTRIBUTE = "WS_AUTH_TOKEN";
 
-    @Value("${spring.profiles.active:prod}")
-    private String activeProfile;
+    private final Environment environment;
+
+    public WebSocketHandshakeInterceptor(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     public boolean beforeHandshake(
@@ -64,11 +67,6 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     private boolean isQueryTokenAllowed() {
-        if (!StringUtils.hasText(activeProfile)) {
-            return false;
-        }
-        return Arrays.stream(activeProfile.split(","))
-                .map(String::trim)
-                .anyMatch(profile -> "dev".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile));
+        return environment.acceptsProfiles(Profiles.of("dev", "local"));
     }
 }
