@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-02-06: Phase 1 AUTH minor 개선 반영 (Agent 1)
+
+### 문제
+- FIX-INSTRUCTIONS-P1-AGENT1.md 기준 Minor 3건 권장 사항 존재
+
+### 판단
+- 영향 범위가 작고 위험 낮아 선제 개선 수행
+- RefreshRequest 미사용 → 제거
+- CORS allowed-origins 공백 허용 문제 → trim 적용
+- signup 응답 accessToken 누락 시 에러 처리로 통일
+
+### 실행
+- `RefreshRequest.java` 삭제
+- `SecurityConfig.java` allowed-origins split 후 trim 추가
+- `authApi.signup` accessToken 누락 시 에러 throw로 변경
+
+### 결과
+- 불필요 DTO 제거, CORS 매칭 안정성 개선, signup 에러 처리 정합성 향상
+
 ## 2026-02-05: Phase 1 AUTH 리뷰 수정 반영 (Agent 1)
 
 ### 문제

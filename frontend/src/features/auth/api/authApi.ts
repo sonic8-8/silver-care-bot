@@ -26,7 +26,7 @@ export const authApi = {
         const response = await api.post<ApiResult<AuthTokens>>('/auth/signup', payload);
         const data = unwrapApiResponse(response.data);
         if (!data?.accessToken) {
-            return { accessToken: '' };
+            throw new Error('Invalid signup response');
         }
         return data;
     },
