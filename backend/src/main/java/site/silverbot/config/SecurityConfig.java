@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,15 +23,21 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 	private static final String[] PERMIT_ALL = {
 		"/api/auth/**",
+		"/ws/**",
 		"/docs/**",
 		"/swagger-ui/**",
 		"/v3/api-docs/**"
 	};
 
 	private final String allowedOrigins;
+	private final JwtTokenProvider jwtTokenProvider;
 
-	public SecurityConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
+	public SecurityConfig(
+		@Value("${app.cors.allowed-origins}") String allowedOrigins,
+		JwtTokenProvider jwtTokenProvider
+	) {
 		this.allowedOrigins = allowedOrigins;
+		this.jwtTokenProvider = jwtTokenProvider;
 	}
 
 	@Bean
@@ -41,11 +48,17 @@ public class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
+			.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(PERMIT_ALL).permitAll()
 				.anyRequest().authenticated()
 			)
 			.build();
+	}
+
+	@Bean
+	public JwtAuthenticationFilter jwtAuthenticationFilter() {
+		return new JwtAuthenticationFilter(jwtTokenProvider);
 	}
 
 	@Bean

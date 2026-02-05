@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-02-05: Phase 1 AUTH 리뷰 수정 반영 (Agent 1)
+
+### 문제
+- FIX-INSTRUCTIONS-P1-AGENT1.md 기준 Major 2, Minor 2 수정 필요
+
+### 판단
+- 컴파일 오류(변수명 중복) 우선 해결
+- refresh 쿠키 `secure`는 환경/요청 스킴 기반 분기
+- refreshToken은 HttpOnly 쿠키 운영으로 프론트 저장 제거
+- REST Docs에 `Set-Cookie` 헤더 문서화 추가
+
+### 실행
+- `AuthServiceTest.java` 변수명 충돌 수정
+- `AuthController.java` refresh 쿠키 secure 분기 적용
+- `authStore.ts` refreshToken 상태/저장 제거
+- `AuthControllerTest.java` responseHeaders에 `Set-Cookie` 문서화 추가
+
+### 결과
+- 컴파일 이슈 해소 및 쿠키 동작/문서화 정합성 개선
+
 ## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
 
 ### 문제

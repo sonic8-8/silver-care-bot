@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,6 +38,9 @@ public class User {
 
     @Column(nullable = false, length = 255)
     private String password;
+
+    @Column(name = "refresh_token", length = 500)
+    private String refreshToken;
 
     @Column(length = 20)
     private String phone;
@@ -66,6 +70,7 @@ public class User {
             String name,
             String email,
             String password,
+            String refreshToken,
             String phone,
             UserRole role,
             String notificationSettings,
@@ -74,9 +79,25 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.refreshToken = refreshToken;
         this.phone = phone;
         this.role = role;
         this.notificationSettings = notificationSettings == null ? "{}" : notificationSettings;
         this.theme = theme == null ? ThemeMode.SYSTEM : theme;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        if (refreshToken == null) {
+            this.refreshToken = null;
+            return;
+        }
+        this.refreshToken = BCrypt.hashpw(refreshToken, BCrypt.gensalt());
+    }
+
+    public boolean validateRefreshToken(String refreshToken) {
+        if (refreshToken == null || this.refreshToken == null) {
+            return false;
+        }
+        return BCrypt.checkpw(refreshToken, this.refreshToken);
     }
 }
