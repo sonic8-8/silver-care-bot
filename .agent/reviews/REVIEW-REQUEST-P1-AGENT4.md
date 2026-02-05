@@ -11,6 +11,8 @@
 | `frontend/src/shared/websocket/useWebSocket.ts` | 수정 | 토큰 변경 레이스 조건 방지 (version guard) |
 | `frontend/src/shared/websocket/useWebSocket.test.tsx` | 수정 | 토큰 변경 시 CONNECTED/CONNECTING/rapid change 테스트 추가 |
 | `backend/src/main/java/site/silverbot/api/common/ApiResponse.java` | 수정 | record accessor 충돌 해결 (`success()` → `ok()`) |
+| `frontend/package.json` | 수정 | WebSocket 클라이언트 의존성 추가 |
+| `frontend/package-lock.json` | 수정 | 의존성 잠금 갱신 |
 
 ## 주요 변경 사항
 1. 토큰 변경 시 비동기 `deactivate()` 경합을 version guard로 차단
@@ -34,7 +36,7 @@ cd frontend && npm run test
 
 ## 테스트 실행 결과
 - Backend: `./gradlew test` 실패 → `JAVA_HOME` 미설정으로 실행 불가
-- Frontend: `npm run test` 실패 → `@stomp/stompjs` import resolve 실패 (`src/shared/websocket/stompClient.ts`)
+- Frontend: `npm run test` 통과
 
 ## 우려 사항 / 특별 검토 요청
 - 없음
