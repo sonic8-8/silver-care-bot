@@ -198,6 +198,39 @@
 ### 판단
 - `application.yml` 추가 + 환경변수 기반 DB 설정
 - 테스트 프로파일(`application-test.yml`)로 H2 사용
+
+---
+
+## 2026-02-05: Phase 1 WebSocket 리뷰 수정 (Agent 4)
+
+### 문제
+- `StompChannelInterceptor`에서 `SecurityContextHolder`만 설정하고 해제/스레드 안전성이 보장되지 않음
+- `shared/api/axios.ts`가 `features/auth`에 직접 의존 → 순환 의존 위험
+- Handshake에서 `token` 쿼리 파라미터 허용 → 로그/히스토리 노출
+- `useWebSocket`에서 토큰 변경 시 재연결이 없어 만료 토큰 유지 가능
+
+### 판단
+- STOMP 인증은 `accessor.setUser()`만 사용하고 SecurityContext는 건드리지 않음
+- axios 인증 실패 핸들러는 setter 주입 방식으로 상위 레이어에서 연결
+- 쿼리 파라미터 토큰은 `dev/local` 프로파일에 한해 fallback 허용
+- 토큰 변경 시 `CONNECTED` 상태면 연결 재시작
+
+### 실행
+- `StompChannelInterceptor`: `SecurityContextHolder` 사용 제거
+- `shared/api/axios.ts`: `setAuthFailureHandler` 추가, refresh 실패 시 핸들러 호출
+- `app/providers.tsx`: authFailureHandler를 `useAuthStore.logout()`으로 주입
+- `WebSocketHandshakeInterceptor`: active profile 확인 후 쿼리 파라미터 제한
+- `useWebSocket`: 토큰 변경 감지 시 재연결 로직 추가
+
+### 결과
+- 인증 컨텍스트 누수 리스크 제거
+- axios 레이어 역전 해소
+- 쿼리 토큰 노출 최소화 (dev/local만 허용)
+- 토큰 갱신 시 WebSocket 재연결 보장
+
+### 테스트
+- Backend: `./gradlew test` 실패 → `JAVA_HOME` 미설정
+- Frontend: `npm run test -- --run` 장시간 무응답으로 중단 (vitest 종료 불가)
 - Security 기본 설정(Stateless, CORS, permitAll 경로) 우선 적용
 - REST Docs는 build.gradle + test base class로 최소 구성
 
