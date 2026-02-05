@@ -93,6 +93,7 @@ public class RobotService {
         return new RobotSyncResponse(robotCommandService.consumePendingCommands(robotId));
     }
 
+    @Transactional
     public boolean updateNetworkStatus(Long robotId, NetworkStatus status) {
         Robot robot = getRobot(robotId);
         boolean statusChanged = robot.updateNetworkStatus(status);

@@ -67,7 +67,7 @@ public class RobotCommandService {
     @Transactional
     public List<RobotSyncResponse.PendingCommandResponse> consumePendingCommands(Long robotId) {
         List<RobotCommand> pendingCommands = robotCommandRepository
-                .findAllByRobotIdAndStatusOrderByIssuedAtAsc(robotId, CommandStatus.PENDING);
+                .findAllByRobotIdAndStatusOrderByIssuedAtAscIdAsc(robotId, CommandStatus.PENDING);
         if (pendingCommands.isEmpty()) {
             return List.of();
         }
