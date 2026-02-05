@@ -60,8 +60,10 @@ cd frontend && npm run test
 ```
 
 ### 테스트 결과
-- Frontend: 미실행 (이전 PASS: Test Files 3 passed, Tests 11 passed)
-- Backend: 미실행
+- Frontend: `npm run test` ✅ PASS (Test Files 3 passed, Tests 11 passed)
+- Backend: `./gradlew test` ❌ FAIL (compile)
+  - `backend/src/main/java/site/silverbot/api/common/ApiResponse.java`: record accessor 충돌 (`success()` 이름 충돌)
+  - `backend/src/main/java/site/silverbot/config/JwtTokenProvider.java`: `verifyWith(Key)` 타입 불일치 (SecretKey/PublicKey 필요)
 
 ### 우려 사항 / 특별 검토 요청
 - `frontend/src/shared/api/axios.ts`는 Agent-4 소유라 본 브랜치에서 원본으로 복원함. HttpOnly 쿠키 기반 refresh/로그아웃 동기화는 Agent-4 통합 필요.

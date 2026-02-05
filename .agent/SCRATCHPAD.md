@@ -23,6 +23,18 @@
 ### 결과
 - 불필요 DTO 제거, CORS 매칭 안정성 개선, signup 에러 처리 정합성 향상
 
+## 2026-02-06: Phase 1 AUTH 테스트 실행 (Agent 1)
+
+### 실행
+- `backend`: `GRADLE_USER_HOME=/tmp/gradle-agent1 ./gradlew test`
+- `frontend`: `npm run test`
+
+### 결과
+- Backend: 컴파일 실패
+  - `ApiResponse.java` record accessor 충돌
+  - `JwtTokenProvider.java` verifyWith(Key) 타입 불일치
+- Frontend: PASS (Test Files 3, Tests 11)
+
 ## 2026-02-05: Phase 1 AUTH 리뷰 수정 반영 (Agent 1)
 
 ### 문제
