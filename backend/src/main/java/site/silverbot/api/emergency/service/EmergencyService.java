@@ -6,6 +6,7 @@ import java.util.List;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import site.silverbot.api.emergency.request.ReportEmergencyRequest;
 import site.silverbot.api.emergency.request.ResolveEmergencyRequest;
@@ -100,7 +102,7 @@ public class EmergencyService {
                 .orElseThrow(() -> new EntityNotFoundException("Emergency not found"));
         validateOwnership(emergency.getElder());
         if (request.resolution() == EmergencyResolution.PENDING) {
-            throw new IllegalArgumentException("PENDING은 해제 상태가 아닙니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PENDING은 해제 상태가 아닙니다.");
         }
         emergency.resolve(request.resolution(), request.note(), LocalDateTime.now());
         emergencyRepository.save(emergency);
