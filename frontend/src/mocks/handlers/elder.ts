@@ -56,4 +56,62 @@ export const elderHandlers = [
             timestamp,
         });
     }),
+    // GET /api/elders/:id/contacts - 긴급 연락처 목록
+    http.get('/api/elders/:id/contacts', () => {
+        const timestamp = new Date().toISOString();
+        return HttpResponse.json({
+            success: true,
+            data: [
+                {
+                    id: 1,
+                    name: '김자녀',
+                    phone: '010-1234-5678',
+                    relation: '자녀',
+                    priority: 1,
+                },
+            ],
+            timestamp,
+        });
+    }),
+    // POST /api/elders/:id/contacts - 긴급 연락처 추가
+    http.post('/api/elders/:id/contacts', async ({ request }) => {
+        const timestamp = new Date().toISOString();
+        const body = await request.json() as { name: string; phone: string; relation?: string; priority?: number };
+        return HttpResponse.json({
+            success: true,
+            data: {
+                id: 999,
+                name: body.name,
+                phone: body.phone,
+                relation: body.relation ?? null,
+                priority: body.priority ?? 1,
+            },
+            timestamp,
+        });
+    }),
+    // PUT /api/elders/:id/contacts/:contactId - 긴급 연락처 수정
+    http.put('/api/elders/:id/contacts/:contactId', async ({ request, params }) => {
+        const timestamp = new Date().toISOString();
+        const body = await request.json() as { name?: string; phone?: string; relation?: string; priority?: number };
+        return HttpResponse.json({
+            success: true,
+            data: {
+                id: Number(params.contactId),
+                name: body.name ?? '김자녀',
+                phone: body.phone ?? '010-1234-5678',
+                relation: body.relation ?? '자녀',
+                priority: body.priority ?? 1,
+            },
+            timestamp,
+        });
+    }),
+    // DELETE /api/elders/:id/contacts/:contactId - 긴급 연락처 삭제
+    http.delete('/api/elders/:id/contacts/:contactId', () => {
+        const timestamp = new Date().toISOString();
+        return HttpResponse.json({
+            success: true,
+            data: null,
+            timestamp,
+        });
+    }),
 ];

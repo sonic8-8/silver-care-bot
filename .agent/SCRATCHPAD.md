@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-02-05: Phase 1 리뷰 수정 (Agent 2 - Elder/Emergency)
+
+### 문제
+- Agent 0의 `FIX-INSTRUCTIONS-P1-AGENT2.md` 기준으로 빌드/로직/타입 이슈 수정 필요
+
+### 판단
+- Critical/ Major 먼저 적용 후 Minor는 범위 판단
+- 기존 변경사항 유지, 필요한 파일만 최소 수정
+
+### 실행
+1. `ElderService.java`에 `HttpStatus`, `ResponseStatusException` import 추가
+2. `EmergencyService.java`에서 resolve 후 다른 `PENDING` 존재 시 SAFE 전환 방지
+   - `resolution`이 `null`이 아닌 구조라 `existsByElderIdAndResolution(...PENDING)`로 구현
+3. `EmergencyRepository`에 `existsByElderIdAndResolution` 추가
+4. `elder.types.ts`의 `ElderDetail` 타입 보강 (birthDate/gender/address/contacts 추가)
+
+### 결과
+- Critical import 누락 해결
+- Major 로직 수정 반영
+- Minor 타입 확장 완료
+- N+1 개선은 범위/리스크 고려하여 보류
+
 ## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
 
 ### 문제
