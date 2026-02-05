@@ -4,6 +4,34 @@
 
 ---
 
+## 2026-02-05: Phase 1 Minor 개선 반영 (Agent 2 - Elder/Emergency)
+
+### 문제
+- 리뷰 지시서의 Minor 항목 3건 처리 필요 (N+1 가능성, PENDING 해제 방어, 타입 중복)
+
+### 판단
+- 목록 조회 성능 이슈는 배치 조회로 선제 완화
+- `PENDING` 해제는 서비스 레벨에서 방어 (GlobalExceptionHandler에서 400 처리)
+- FE 타입 중복은 shared 타입 단일화로 정리
+
+### 실행
+1. `ElderService.java`에서 elderIds 기준 로봇/긴급 배치 조회 맵 구성
+2. `RobotRepository`, `EmergencyRepository`에 배치 조회 메서드 추가
+3. `EmergencyService.java`에 `PENDING` 해제 방어 체크 추가
+4. `elderApi.ts`에서 `EmergencyContact` 타입을 `shared/types`로 통일
+
+### 결과
+- 목록 조회 시 N+1 가능성 완화
+- 해제 API의 비정상 상태 방어 로직 추가
+- FE 타입 중복 제거로 유지보수성 개선
+
+### 테스트
+- Backend: `./gradlew test` 실패
+  - Gradle wrapper 다운로드 필요로 `GRADLE_USER_HOME=/tmp/gradle` 사용
+  - 실패 원인: `ApiResponse` record accessor 충돌
+  - 에러: `backend/src/main/java/site/silverbot/api/common/ApiResponse.java:16`
+- Frontend: `npm install` 후 `npm run test` 통과 (9 tests)
+
 ## 2026-02-05: Phase 1 리뷰 수정 (Agent 2 - Elder/Emergency)
 
 ### 문제

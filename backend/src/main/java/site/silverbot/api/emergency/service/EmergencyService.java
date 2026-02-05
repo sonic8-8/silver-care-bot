@@ -99,6 +99,9 @@ public class EmergencyService {
         Emergency emergency = emergencyRepository.findById(emergencyId)
                 .orElseThrow(() -> new EntityNotFoundException("Emergency not found"));
         validateOwnership(emergency.getElder());
+        if (request.resolution() == EmergencyResolution.PENDING) {
+            throw new IllegalArgumentException("PENDING은 해제 상태가 아닙니다.");
+        }
         emergency.resolve(request.resolution(), request.note(), LocalDateTime.now());
         emergencyRepository.save(emergency);
 

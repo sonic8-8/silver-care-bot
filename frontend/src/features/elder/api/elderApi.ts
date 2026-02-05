@@ -1,14 +1,6 @@
 import { api } from '@/shared/api/axios';
 import { unwrapApiResponse } from '@/shared/api/response';
-import type { ApiResult, ElderDetail, ElderListPayload } from '@/shared/types';
-
-export type EmergencyContact = {
-    id: number;
-    name: string;
-    phone: string;
-    relation?: string;
-    priority?: number;
-};
+import type { ApiResult, ElderDetail, ElderListPayload, EmergencyContact } from '@/shared/types';
 
 export type CreateEmergencyContactPayload = {
     name: string;

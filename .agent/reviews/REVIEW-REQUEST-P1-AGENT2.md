@@ -10,14 +10,15 @@
 |------|----------|------|
 | `backend/src/main/java/site/silverbot/api/elder/controller/ElderController.java` | 신규 | Elder CRUD API 컨트롤러 |
 | `backend/src/main/java/site/silverbot/api/elder/controller/EmergencyContactController.java` | 신규 | 긴급 연락처 CRUD 컨트롤러 |
-| `backend/src/main/java/site/silverbot/api/elder/service/ElderService.java` | 신규/수정 | Elder 비즈니스 로직, 소유권/인증 강화 |
+| `backend/src/main/java/site/silverbot/api/elder/service/ElderService.java` | 신규/수정 | Elder 비즈니스 로직, 소유권/인증 강화 + 목록 N+1 완화 |
 | `backend/src/main/java/site/silverbot/api/elder/service/EmergencyContactService.java` | 신규 | 긴급 연락처 서비스, 소유권/인증 강화 |
 | `backend/src/main/java/site/silverbot/api/emergency/controller/EmergencyController.java` | 신규 | Emergency API 컨트롤러 |
-| `backend/src/main/java/site/silverbot/api/emergency/service/EmergencyService.java` | 신규/수정 | Emergency 로직, 소유권 검증/해제 처리 |
+| `backend/src/main/java/site/silverbot/api/emergency/service/EmergencyService.java` | 신규/수정 | Emergency 로직, 소유권 검증/해제 처리 + PENDING 해제 방어 |
 | `backend/src/main/java/site/silverbot/domain/elder/Elder.java` | 수정 | update 메서드 추가 |
 | `backend/src/main/java/site/silverbot/domain/elder/EmergencyContact.java` | 수정 | update 메서드 추가 |
 | `backend/src/main/java/site/silverbot/domain/emergency/Emergency.java` | 수정 | resolve 메서드 추가 |
-| `backend/src/main/java/site/silverbot/domain/emergency/EmergencyRepository.java` | 수정 | 조회 메서드 추가 |
+| `backend/src/main/java/site/silverbot/domain/emergency/EmergencyRepository.java` | 수정 | 조회 메서드 추가 (PENDING 배치 조회) |
+| `backend/src/main/java/site/silverbot/domain/robot/RobotRepository.java` | 수정 | elderIds 배치 조회 메서드 추가 |
 | `backend/src/test/java/site/silverbot/api/elder/controller/ElderControllerTest.java` | 신규 | REST Docs 포함 컨트롤러 테스트 |
 | `backend/src/test/java/site/silverbot/api/elder/controller/EmergencyContactControllerTest.java` | 신규 | REST Docs 포함 컨트롤러 테스트 |
 | `backend/src/test/java/site/silverbot/api/emergency/controller/EmergencyControllerTest.java` | 신규 | REST Docs 포함 컨트롤러 테스트 |
@@ -33,13 +34,14 @@
 | `frontend/src/shared/types/elder.types.ts` | 수정 | ElderDetail 타입 보강 |
 | `frontend/src/shared/types/emergency.types.ts` | 신규 | Emergency 타입 추가 |
 | `frontend/src/shared/types/index.ts` | 수정 | 타입 export 추가 |
-| `frontend/src/features/elder/api/elderApi.ts` | 수정 | UpdateElderPayload에서 status 제거 |
+| `frontend/src/features/elder/api/elderApi.ts` | 수정 | UpdateElderPayload에서 status 제거 + EmergencyContact 타입 통합 |
 | `frontend/package.json` | 수정 | WebSocket 의존성 추가 |
 
 ## 주요 변경 사항
 1. Elder/Contact/Emergency CRUD API 및 서비스 구현 (소유권/인증 강화 포함)
 2. Emergency 해제 시 다른 PENDING 존재 여부 확인 후 Elder 상태 SAFE 전환
 3. 프론트 Elder/Emergency 연동 및 MSW 응답 계약 보강 + 타입 확장
+4. Elder 목록 조회 시 배치 조회로 N+1 완화 + PENDING 해제 방어 로직 추가
 
 ## 검증 포인트 (리뷰어가 확인해야 할 것)
 - [ ] 소유권/권한 체크 누락 여부 (robot/elder/emergency)
@@ -62,4 +64,8 @@ cd frontend && npm run test
 - Elder 삭제 시 Robot 연결 존재 시 CONFLICT 반환 추가했는데, 정책적으로 맞는지 확인 필요합니다.
 
 ## 테스트 실행 여부
-- 현재 세션에서는 테스트 미실행
+- Backend: `./gradlew test` 실패
+  - 컴파일 에러: `ApiResponse` record accessor 충돌
+  - 위치: `backend/src/main/java/site/silverbot/api/common/ApiResponse.java:16`
+- Frontend: `npm run test` 통과 (Test Files 3, Tests 9)
+  - 실행 시각: 2026-02-05 17:39 (KST)

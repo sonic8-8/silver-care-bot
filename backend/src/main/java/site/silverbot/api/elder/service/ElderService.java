@@ -4,8 +4,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +72,33 @@ public class ElderService {
     public ElderListResponse getElders() {
         User user = getCurrentUser();
         List<Elder> elders = elderRepository.findAllByUserId(user.getId());
+        if (elders.isEmpty()) {
+            return new ElderListResponse(
+                    List.of(),
+                    new ElderListResponse.ElderSummary(0, 0, 0, 0)
+            );
+        }
+        List<Long> elderIds = elders.stream()
+                .map(Elder::getId)
+                .toList();
+        Map<Long, Boolean> robotConnectedMap = robotRepository.findAllByElderIdIn(elderIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        robot -> robot.getElder().getId(),
+                        robot -> robot.getNetworkStatus() == NetworkStatus.CONNECTED
+                ));
+        Map<Long, EmergencyType> pendingEmergencyMap = new HashMap<>();
+        List<Emergency> pendingEmergencies = emergencyRepository
+                .findAllByElderIdInAndResolutionOrderByDetectedAtDesc(elderIds, EmergencyResolution.PENDING);
+        for (Emergency emergency : pendingEmergencies) {
+            pendingEmergencyMap.putIfAbsent(emergency.getElder().getId(), emergency.getType());
+        }
         List<ElderSummaryResponse> summaries = elders.stream()
-                .map(this::toSummaryResponse)
+                .map(elder -> toSummaryResponse(
+                        elder,
+                        robotConnectedMap.get(elder.getId()),
+                        pendingEmergencyMap.get(elder.getId())
+                ))
                 .toList();
 
         int safe = (int) elders.stream().filter(elder -> elder.getStatus() == ElderStatus.SAFE).count();
@@ -142,7 +170,11 @@ public class ElderService {
         );
     }
 
-    private ElderSummaryResponse toSummaryResponse(Elder elder) {
+    private ElderSummaryResponse toSummaryResponse(
+            Elder elder,
+            Boolean robotConnected,
+            EmergencyType pendingEmergencyType
+    ) {
         return new ElderSummaryResponse(
                 elder.getId(),
                 elder.getName(),
@@ -150,8 +182,8 @@ public class ElderService {
                 elder.getStatus(),
                 resolveLastActivity(elder),
                 elder.getLastLocation(),
-                isRobotConnected(elder.getId()),
-                getPendingEmergencyType(elder.getId())
+                robotConnected,
+                pendingEmergencyType
         );
     }
 
