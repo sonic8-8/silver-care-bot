@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-02-05: Phase 1 Robot 리뷰 수정 (Agent 3)
+
+### 문제
+- FIX-INSTRUCTIONS-P1-AGENT3.md 지시사항 반영 필요
+  - Pending 명령 FIFO 정렬 보장
+  - sync 요청 빈 바디 처리 불일치
+  - 로봇 미등록 상태 UX 개선
+
+### 판단
+- Repository에 `OrderByIssuedAtAsc` 적용, Service 호출부도 변경
+- Controller는 `@RequestBody(required = false)`로 서비스의 null 허용과 일치
+- `robotId` 미존재 시 명확한 안내 카드 표시
+- 기존 테스트 구조 확인 후 FIFO 정렬 테스트 추가 가능하면 반영
+
+### 실행
+- `RobotCommandRepository` 메서드에 정렬 조건 추가 및 서비스 호출부 수정
+- `RobotController` sync 요청에 `@RequestBody(required = false)` 적용
+- `RobotControlScreen`에 로봇 미등록 상태 안내 카드 추가
+- `RobotCommandServiceTest`에 FIFO 정렬 검증 테스트 추가
+
+### 결과
+- Pending 명령 FIFO 보장/ sync 빈 바디 허용/ 로봇 미등록 UX 개선 반영 완료
+- 테스트 실행 시도: `./gradlew test --tests site.silverbot.api.robot.service.RobotCommandServiceTest`
+  - 실패: `JAVA_HOME is not set` (로컬 JDK 미설정)
+
+---
+
 ## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
 
 ### 문제

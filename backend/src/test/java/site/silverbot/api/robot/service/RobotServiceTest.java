@@ -1,0 +1,96 @@
+package site.silverbot.api.robot.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.response.RobotStatusResponse;
+import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.domain.robot.CommandType;
+import site.silverbot.domain.robot.LcdEmotion;
+import site.silverbot.domain.robot.LcdMode;
+import site.silverbot.domain.robot.NetworkStatus;
+import site.silverbot.domain.robot.Robot;
+import site.silverbot.domain.robot.RobotCommand;
+import site.silverbot.domain.robot.RobotCommandRepository;
+import site.silverbot.domain.robot.RobotRepository;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class RobotServiceTest {
+
+    @Autowired
+    private RobotService robotService;
+
+    @Autowired
+    private RobotRepository robotRepository;
+
+    @Autowired
+    private RobotCommandRepository robotCommandRepository;
+
+    private Robot robot;
+
+    @BeforeEach
+    void setUp() {
+        robotCommandRepository.deleteAll();
+        robotRepository.deleteAll();
+
+        robot = robotRepository.save(Robot.builder()
+                .serialNumber("ROBOT-2026-X82")
+                .authCode("A1B2C3")
+                .batteryLevel(90)
+                .isCharging(false)
+                .networkStatus(NetworkStatus.DISCONNECTED)
+                .lcdMode(LcdMode.IDLE)
+                .lcdEmotion(LcdEmotion.NEUTRAL)
+                .build());
+    }
+
+    @Test
+    void getStatusReturnsRobotSnapshot() {
+        RobotStatusResponse response = robotService.getStatus(robot.getId());
+
+        assertThat(response.id()).isEqualTo(robot.getId());
+        assertThat(response.serialNumber()).isEqualTo("ROBOT-2026-X82");
+        assertThat(response.settings()).isNotNull();
+        assertThat(response.dispenser()).isNotNull();
+    }
+
+    @Test
+    void syncUpdatesStatusAndReturnsPendingCommands() {
+        RobotCommand pending = robotCommandRepository.save(RobotCommand.builder()
+                .robot(robot)
+                .commandId("cmd-123")
+                .command(CommandType.START_PATROL)
+                .issuedAt(LocalDateTime.now())
+                .build());
+
+        RobotSyncRequest request = new RobotSyncRequest(
+                80,
+                true,
+                null,
+                new RobotSyncRequest.CurrentLocation("KITCHEN", 10.5f, 20.1f, 90),
+                new RobotSyncRequest.LcdState("IDLE", "neutral", "", ""),
+                new RobotSyncRequest.Dispenser(3),
+                null
+        );
+
+        RobotSyncResponse response = robotService.sync(robot.getId(), request);
+
+        Robot updated = robotRepository.findById(robot.getId()).orElseThrow();
+        assertThat(updated.getNetworkStatus()).isEqualTo(NetworkStatus.CONNECTED);
+        assertThat(updated.getBatteryLevel()).isEqualTo(80);
+        assertThat(updated.getDispenserRemaining()).isEqualTo(3);
+        assertThat(updated.getLastSyncAt()).isNotNull();
+
+        assertThat(response.pendingCommands()).hasSize(1);
+        assertThat(response.pendingCommands().get(0).commandId()).isEqualTo(pending.getCommandId());
+    }
+}
