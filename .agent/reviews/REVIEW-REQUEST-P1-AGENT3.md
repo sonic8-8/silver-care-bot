@@ -77,7 +77,7 @@ cd frontend && npm run test
 
 ## 우려 사항 / 특별 검토 요청
 - `/elders/{id}` 응답의 `robot.id` 계약이 없는 경우 FE에서 미등록 처리됨 (Agent 2/4와 계약 합의 필요)
-- 현재 브랜치는 원격 대비 `ahead 5` 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
+- 현재 브랜치는 원격 대비 `ahead 6` 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
 
 ## Agent 0 추가 전달 사항 (리뷰 결과 반영)
 - v8 Major 이슈(REST Docs `params.location` 누락) 수정 완료.
