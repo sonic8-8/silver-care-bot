@@ -1,7 +1,8 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.1
+> **버전**: v1.3
 > **작성일**: 2026-02-02
+> **최종 수정일**: 2026-02-06
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
 
 ---
@@ -236,6 +237,15 @@
 
 ### Phase 2: 주요 기능 (High)
 > 서비스 가치를 높이는 핵심 기능
+
+#### 2.0 Phase 2 병렬 작업 분배 (2026-02-06)
+
+| Agent | 브랜치 | 담당 범위 |
+|-------|--------|-----------|
+| Agent 1 | `feature/phase2-medication-dashboard-be` | Medication Backend + Dashboard Backend |
+| Agent 2 | `feature/phase2-medication-dashboard-fe` | Medication Frontend + Dashboard Frontend |
+| Agent 3 | `feature/phase2-db-schedule` | DB 확장(Flyway/Entity) + Schedule Backend |
+| Agent 4 | `feature/phase2-notification-realtime` | Notification Backend/Frontend + WebSocket 실시간 연동 |
 
 #### 2.1 데이터베이스 확장
 - [ ] MEDICATION 테이블 + Entity
@@ -513,9 +523,9 @@
 
 | Phase | 상태 | 진행률 |
 |-------|------|--------|
-| Phase 0 | ⏳ 대기 | 0% |
-| Phase 1 | ⏳ 대기 | 0% |
-| Phase 2 | ⏳ 대기 | 0% |
+| Phase 0 | 🔄 진행 중 | 90% |
+| Phase 1 | ✅ 완료 (머지 기준) | 100% |
+| Phase 2 | 🚧 시작 | 0% |
 | Phase 3 | ⏳ 대기 | 0% |
 | Phase 4 | ⏳ 대기 | 0% |
 | Phase 5 | ⏳ 대기 | 0% |
@@ -529,3 +539,4 @@
 | v1.0 | 2026-02-02 | 초안 작성. PRD v2.0 기반 6 Phase 구현 계획 |
 | v1.1 | 2026-02-02 | PRD 대비 누락 항목 보완: WebSocket 토픽 5개 명시, Framer Motion 추가, 오프라인 판정/알림 로직, 긴급연락처 API 상세화, 접근성 검증 계획, Flyway 명시, 역할별 라우팅 상세화, 대시보드 Backend API 추가 |
 | v1.2 | 2026-02-03 | Phase 0.4 추가: Playground 컴포넌트 분리 계획 (공유 UI 6개, 페이지 12개, LCD 4개, 타입 정의) |
+| v1.3 | 2026-02-06 | Phase 1 브랜치 정리 및 Phase 2 병렬 분배/브랜치 전략 반영 |

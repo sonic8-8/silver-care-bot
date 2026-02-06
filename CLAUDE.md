@@ -246,7 +246,12 @@ main (production)
         ├── feature/phase1-auth          # Agent 1
         ├── feature/phase1-elder         # Agent 2
         ├── feature/phase1-robot         # Agent 3
-        └── feature/phase1-websocket     # Agent 4
+        ├── feature/phase1-websocket     # Agent 4
+        │
+        ├── feature/phase2-medication-dashboard-be   # Agent 1
+        ├── feature/phase2-medication-dashboard-fe   # Agent 2
+        ├── feature/phase2-db-schedule               # Agent 3
+        └── feature/phase2-notification-realtime     # Agent 4
 ```
 
 ### Branch Naming
@@ -619,12 +624,12 @@ S14P11C104/                    # Team Repo Root
 
 ### Agent 식별자 및 물리적 폴더
 
-| Agent | 역할 | 물리적 폴더 | Phase 0 담당 | Phase 1+ 담당 |
-|-------|------|------------|-------------|---------------|
-| **Agent 1** | BE-INFRA / AUTH | `sh/agent-1/` | Spring Boot, Security, Docker | 인증 도메인 |
-| **Agent 2** | FE-INFRA / ELDER | `sh/agent-2/` | Vite, Tailwind, Router | 노인+긴급 도메인 |
-| **Agent 3** | DB-SCHEMA / ROBOT | `sh/agent-3/` | Flyway, Entity, Repository | 로봇 도메인 |
-| **Agent 4** | CONTRACTS / WEBSOCKET | `sh/agent-4/` | ApiResponse, Axios, MSW | WebSocket 도메인 |
+| Agent | 역할 | 물리적 폴더 | Phase 0 담당 | Phase 1 담당 | Phase 2 담당 | 현재 브랜치 |
+|-------|------|------------|-------------|-------------|-------------|-------------|
+| **Agent 1** | BE-INFRA / AUTH | `sh/agent-1/` | Spring Boot, Security, Docker | 인증 도메인 | Medication BE + Dashboard BE | `feature/phase2-medication-dashboard-be` |
+| **Agent 2** | FE-INFRA / ELDER | `sh/agent-2/` | Vite, Tailwind, Router | 노인+긴급 도메인 | Medication FE + Dashboard FE | `feature/phase2-medication-dashboard-fe` |
+| **Agent 3** | DB-SCHEMA / ROBOT | `sh/agent-3/` | Flyway, Entity, Repository | 로봇 도메인 | DB 확장 + Schedule BE | `feature/phase2-db-schedule` |
+| **Agent 4** | CONTRACTS / WEBSOCKET | `sh/agent-4/` | ApiResponse, Axios, MSW | WebSocket 도메인 | Notification + Realtime | `feature/phase2-notification-realtime` |
 
 ### Git Worktree 규칙
 
@@ -708,6 +713,14 @@ feat(ws): WebSocket 토픽 설정 [Agent 4]
 3. Agent 2, 3 → develop           # 순서 무관
 ```
 
+#### Phase 2 (순서 중요)
+```
+1. Agent 3 (DB + SCHEDULE-BE) → develop          # 스키마/엔티티 기반
+2. Agent 1 (MEDICATION-BE + DASHBOARD-BE) → develop
+3. Agent 4 (NOTIFICATION + REALTIME) → develop
+4. Agent 2 (MEDICATION-FE + DASHBOARD-FE) → develop
+```
+
 ### 싱크 포인트 (동기화 시점)
 
 #### Phase 0 완료 체크리스트
@@ -724,6 +737,13 @@ feat(ws): WebSocket 토픽 설정 [Agent 4]
 - [ ] 긴급 상황 → WebSocket 알림 → 해제 E2E
 - [ ] WORKER/FAMILY 역할별 라우팅 정상
 - [ ] 오프라인 판정 스케줄러 동작
+- [ ] sync.sh 실행하여 Team Repo 동기화
+
+#### Phase 2 완료 체크리스트
+- [ ] MEDICATION/MEDICATION_RECORD/SCHEDULE/NOTIFICATION 마이그레이션 성공
+- [ ] 복약/일정/알림 API 통합 테스트 통과
+- [ ] 대시보드 API + FE 위젯 연동 완료
+- [ ] 실시간 알림 WebSocket 구독/갱신 검증 완료
 - [ ] sync.sh 실행하여 Team Repo 동기화
 
 ### 의존성 우회 (Mock 전략)
