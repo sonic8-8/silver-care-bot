@@ -78,7 +78,7 @@ cd frontend && npm run test
 
 ## 우려 사항 / 특별 검토 요청
 - `/elders/{id}` 응답의 `robot.id` 계약이 없는 경우 FE에서 미등록 처리됨 (Agent 2/4와 계약 합의 필요)
-- `feature/phase1-robot` 브랜치 push 완료 (`dd090b9`까지 원격 반영 완료)
+- `feature/phase1-robot` 브랜치 push 완료 (원격 최신 커밋 반영 완료)
 
 ## Agent 0 추가 전달 사항 (리뷰 결과 반영)
 - v8 Major 이슈(REST Docs `params.location` 누락) 수정 완료.
