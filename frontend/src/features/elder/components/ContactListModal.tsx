@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { CreateEmergencyContactPayload, EmergencyContact } from '../api/elderApi';
+import type { CreateEmergencyContactPayload } from '../api/elderApi';
+import type { EmergencyContact } from '@/shared/types';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 

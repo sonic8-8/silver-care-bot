@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,6 +19,8 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class StompChannelInterceptor implements org.springframework.messaging.support.ChannelInterceptor {
     private static final String JWT_TOKEN_PROVIDER_BEAN = "jwtTokenProvider";
+    private static final String USER_NOTIFICATION_PREFIX = "/topic/user/";
+    private static final String USER_NOTIFICATION_SUFFIX = "/notifications";
 
     private final ApplicationContext applicationContext;
 
@@ -35,6 +38,11 @@ public class StompChannelInterceptor implements org.springframework.messaging.su
             }
             Authentication authentication = authenticate(token);
             accessor.setUser(authentication);
+        }
+
+        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+            Authentication authentication = resolveAuthentication(accessor);
+            validateSubscriptionDestination(accessor, authentication);
         }
 
         return message;
@@ -86,6 +94,34 @@ public class StompChannelInterceptor implements org.springframework.messaging.su
             throw exception;
         } catch (ReflectiveOperationException exception) {
             throw new AuthenticationCredentialsNotFoundException("WebSocket token validation failed", exception);
+        }
+    }
+
+    private Authentication resolveAuthentication(StompHeaderAccessor accessor) {
+        if (accessor.getUser() instanceof Authentication authentication) {
+            return authentication;
+        }
+        throw new AuthenticationCredentialsNotFoundException("WebSocket user is not authenticated");
+    }
+
+    private void validateSubscriptionDestination(StompHeaderAccessor accessor, Authentication authentication) {
+        String destination = accessor.getDestination();
+        if (!StringUtils.hasText(destination)) {
+            return;
+        }
+        if (!destination.startsWith(USER_NOTIFICATION_PREFIX) || !destination.endsWith(USER_NOTIFICATION_SUFFIX)) {
+            return;
+        }
+
+        String requestedUserId = destination.substring(
+                USER_NOTIFICATION_PREFIX.length(),
+                destination.length() - USER_NOTIFICATION_SUFFIX.length()
+        );
+        if (!StringUtils.hasText(requestedUserId)) {
+            throw new AccessDeniedException("Invalid notification topic");
+        }
+        if (!requestedUserId.equals(authentication.getName())) {
+            throw new AccessDeniedException("Not allowed to subscribe to other user's notification topic");
         }
     }
 

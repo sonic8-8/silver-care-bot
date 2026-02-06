@@ -8,18 +8,16 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.emergency.request.ReportEmergencyRequest;
 import site.silverbot.api.emergency.request.ResolveEmergencyRequest;
 import site.silverbot.api.emergency.response.EmergencyListResponse;
 import site.silverbot.api.emergency.response.EmergencyResponse;
+import site.silverbot.api.notification.service.NotificationService;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.ElderStatus;
@@ -29,7 +27,6 @@ import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
-import site.silverbot.domain.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +35,8 @@ public class EmergencyService {
     private final EmergencyRepository emergencyRepository;
     private final RobotRepository robotRepository;
     private final ElderRepository elderRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     public EmergencyResponse reportEmergency(Long robotId, ReportEmergencyRequest request) {
         Robot robot = robotRepository.findById(robotId)
@@ -47,7 +45,7 @@ public class EmergencyService {
         if (elder == null) {
             throw new EntityNotFoundException("Elder not found for robot");
         }
-        User currentUser = getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         if (!elder.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Not authorized to report emergency for this robot");
         }
@@ -68,13 +66,20 @@ public class EmergencyService {
         Emergency saved = emergencyRepository.save(emergency);
         elder.updateStatus(ElderStatus.DANGER);
         elder.updateLastActivity(detectedAt, request.location());
+        notificationService.createEmergencyNotification(
+                currentUser.getId(),
+                elder.getId(),
+                "긴급 상황이 감지되었습니다",
+                elder.getName() + " 어르신에게 긴급 이벤트가 발생했습니다.",
+                "/emergency/" + saved.getId()
+        );
 
         return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public EmergencyListResponse getEmergencies() {
-        User user = getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         List<Long> elderIds = elderRepository.findAllByUserId(user.getId())
                 .stream()
                 .map(Elder::getId)
@@ -121,7 +126,7 @@ public class EmergencyService {
     }
 
     private void validateOwnership(Elder elder) {
-        User user = getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         if (!elder.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("Emergency access denied");
         }
@@ -147,17 +152,5 @@ public class EmergencyService {
             return LocalDateTime.now();
         }
         return detectedAt.toLocalDateTime();
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
-        }
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 }

@@ -1,6 +1,7 @@
 import { authHandlers } from './auth';
 import { elderHandlers } from './elder';
 import { emergencyHandlers } from './emergency';
+import { notificationHandlers } from './notification';
 import { robotHandlers } from './robot';
 
 export const handlers = [
@@ -8,4 +9,5 @@ export const handlers = [
     ...elderHandlers,
     ...robotHandlers,
     ...emergencyHandlers,
+    ...notificationHandlers,
 ];

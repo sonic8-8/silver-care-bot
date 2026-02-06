@@ -99,7 +99,8 @@ class WebSocketMessageServiceTest {
                 "MEDICATION",
                 "복약 완료",
                 "아침 약 복용이 완료되었습니다.",
-                10L
+                10L,
+                "/elders/10/medications"
         );
 
         webSocketMessageService.sendNotification(7L, payload);
