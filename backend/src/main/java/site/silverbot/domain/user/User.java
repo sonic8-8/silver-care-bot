@@ -1,6 +1,10 @@
 package site.silverbot.domain.user;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -19,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,6 +42,9 @@ public class User {
 
     @Column(nullable = false, length = 255)
     private String password;
+
+    @Column(name = "refresh_token", length = 500)
+    private String refreshToken;
 
     @Column(length = 20)
     private String phone;
@@ -66,6 +74,7 @@ public class User {
             String name,
             String email,
             String password,
+            String refreshToken,
             String phone,
             UserRole role,
             String notificationSettings,
@@ -74,9 +83,35 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.refreshToken = refreshToken;
         this.phone = phone;
         this.role = role;
         this.notificationSettings = notificationSettings == null ? "{}" : notificationSettings;
         this.theme = theme == null ? ThemeMode.SYSTEM : theme;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        if (refreshToken == null) {
+            this.refreshToken = null;
+            return;
+        }
+        this.refreshToken = BCrypt.hashpw(normalizeForBcrypt(refreshToken), BCrypt.gensalt());
+    }
+
+    public boolean validateRefreshToken(String refreshToken) {
+        if (refreshToken == null || this.refreshToken == null) {
+            return false;
+        }
+        return BCrypt.checkpw(normalizeForBcrypt(refreshToken), this.refreshToken);
+    }
+
+    private String normalizeForBcrypt(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashed);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("Unable to hash refresh token", ex);
+        }
     }
 }

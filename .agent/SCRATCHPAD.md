@@ -4,6 +4,50 @@
 
 ---
 
+## 2026-02-05: Phase 1 AUTH 리뷰 수정 반영 (Agent 1)
+
+### 문제
+- FIX-INSTRUCTIONS-P1-AGENT1.md 기준 Major 2, Minor 2 수정 필요
+
+### 판단
+- 컴파일 오류(변수명 중복) 우선 해결
+- refresh 쿠키 `secure`는 환경/요청 스킴 기반 분기
+- refreshToken은 HttpOnly 쿠키 운영으로 프론트 저장 제거
+- REST Docs에 `Set-Cookie` 헤더 문서화 추가
+
+### 실행
+- `AuthServiceTest.java` 변수명 충돌 수정
+- `AuthController.java` refresh 쿠키 secure 분기 적용
+- `authStore.ts` refreshToken 상태/저장 제거
+- `AuthControllerTest.java` responseHeaders에 `Set-Cookie` 문서화 추가
+
+### 결과
+- 컴파일 이슈 해소 및 쿠키 동작/문서화 정합성 개선
+
+### 추가 수정 (리뷰 v4 반영)
+**문제**:
+- authStore 테스트가 refreshToken localStorage 저장을 기대 (정책 불일치)
+- 프록시 환경에서 `request.isSecure()`가 false일 수 있음
+
+**판단**:
+- 테스트는 accessToken만 저장하는 현재 정책에 맞춤
+- 프록시 환경 대응을 위해 forward header 전략 추가
+
+**실행**:
+- `authStore.test.ts`에서 refreshToken 기대값 제거
+- `application.yml`에 `server.forward-headers-strategy: framework` 추가
+
+**결과**:
+- 테스트 기대값이 정책과 정합, 프록시 환경 쿠키 secure 판정 개선
+
+**테스트 시도**:
+- `frontend`: `npm install` 및 `npm run test` 실행
+- 결과: npm registry DNS 실패(EAI_AGAIN)로 설치/테스트 불가
+
+**테스트 재시도 (사용자 설치 후)**:
+- `frontend`: `npm run test`
+- 결과: PASS (Test Files 3 passed, Tests 11 passed)
+
 ## 2026-02-04: Agent 1 - docker-compose PostgreSQL + App 구성
 
 ### 문제
@@ -564,3 +608,68 @@
 ### 결과
 - LCD 관련 컴포넌트 분할 완료
 - 기존 `frontend/src/pages/Playground/RobotLCD.tsx` 미수정 상태 유지
+
+## 2026-02-06: Phase 1 AUTH 리뷰 반영 (FIX-INSTRUCTIONS-P1-AGENT1)
+
+### 문제
+- refresh 쿠키 `maxAge`가 `Duration.ofDays(7)` 하드코딩
+- `JwtTokenProvider`의 `key` 타입이 `Key`여서 `verifyWith(...)` 타입 불일치 가능
+
+### 판단
+- Major 2건을 우선 반영
+- Minor(PasswordEncoder 분리)는 구조 변경 범위가 커서 이번 수정에서는 제외
+
+### 실행
+- `AuthController`에 `JwtTokenProvider` 주입 추가
+- refresh 쿠키 maxAge를 `Duration.ofMillis(jwtTokenProvider.getRefreshTokenExpiration())`로 변경
+- `JwtTokenProvider`의 key 타입을 `SecretKey`로 변경
+- `getRefreshTokenExpiration()` getter 추가
+
+### 검증
+- `GRADLE_USER_HOME=/tmp/.gradle-agent1 ./gradlew test` 실행
+- 실패: `ApiResponse` record accessor 충돌 (`success()` static 메서드)로 컴파일 중단
+- 조율 문서 기준 Agent 4 선행 머지 이슈와 일치
+
+### 결과
+- Agent 1 지시서 Major 2건 코드 반영 완료
+- 전체 테스트는 Agent 4의 ApiResponse 수정 반영 후 재실행 필요
+
+### 추가 이슈 발견 및 조치 (2026-02-06)
+- Agent 4 의존(ApiResponse `ok()`)을 임시 반영한 통합 테스트에서 `AuthServiceTest` 3건 실패 확인
+- 원인: BCrypt 해시 입력 길이 제한(72 bytes) 초과
+- 조치: `User` refresh 토큰 해시 전 SHA-256 정규화 적용
+  - `updateRefreshToken`: `BCrypt.hashpw(normalizeForBcrypt(token), ...)`
+  - `validateRefreshToken`: `BCrypt.checkpw(normalizeForBcrypt(token), ...)`
+- 재검증: Agent 4 ApiResponse를 임시 반영해 `./gradlew --no-daemon test` 실행 → `BUILD SUCCESSFUL`
+- 검증 후 `ApiResponse.java`는 HEAD 상태로 원복 완료
+
+### 문서화
+- `.agent/reviews/REVIEW-REQUEST-P1-AGENT1.md`를 최신 수정 사항 기준으로 갱신
+- Major 수정 2건 + refreshToken 72-byte 이슈 대응 + Agent4 선행머지 의존성/테스트 조건 명시
+
+### 리뷰 Minor 3건 반영 (2026-02-06)
+- `SecurityConfig` CORS allowed origins 파싱 시 trim + 빈 문자열 필터링 적용
+- `authApi.signup`에서 accessToken 누락 시 빈 토큰 반환 대신 예외(`Invalid signup response`) 처리
+- 미사용 `RefreshRequest` DTO 삭제
+- 검증:
+  - Frontend `npm run test -- --run` PASS (3 files, 11 tests)
+  - Backend는 Agent4 `ApiResponse(ok)` 임시 반영 조건에서 `./gradlew --no-daemon test` PASS
+- `.agent/reviews/REVIEW-REQUEST-P1-AGENT1.md`에 반영 내역/테스트 결과 업데이트
+- 정리: `RefreshRequest` 신규 파일은 최종 변경 집합에서 제외(미사용 코드 미반영)
+- `REVIEW-RESULT-P1-AGENT1.md`에 Agent 0 전달 메모 추가: Agent4 선머지 근거, 재검증 조건, Minor 반영 파일 명시
+
+## 2026-02-06: Agent 0 v8 지시서 재확인 및 리뷰요청서 갱신
+- 참조 문서: `agent-0/.agent/reviews/COORDINATION-P1.md`, `agent-0/.agent/reviews/FIX-INSTRUCTIONS-P1-AGENT1.md`
+- v8 신규 요구 `/ws/** permitAll` 확인 결과: 이미 `SecurityConfig.PERMIT_ALL`에 반영되어 추가 코드 수정 불필요
+- 병렬 워크플로우에 맞춰 `REVIEW-REQUEST-P1-AGENT1.md`에 "지시서 반영 상태(v8)" 섹션 추가
+- Agent 0 전달 포인트: Agent 1 신규 요구사항은 모두 반영 완료
+- `REVIEW-RESULT-P1-AGENT1.md` 보강: Agent0 전달 메모에 v8 신규 `/ws/** permitAll` 반영 완료 명시, RefreshRequest 문구 정리
+
+## 2026-02-06: Agent 0 v9 지시서 반영
+- 문서 확인: `agent-0/.agent/reviews/COORDINATION-P1.md`(v9), `agent-0/.agent/reviews/FIX-INSTRUCTIONS-P1-AGENT1.md`(v9)
+- 판단: Agent 1 코드 수정 항목은 v9에서 모두 해결 상태, 신규 코드 수정 없음
+- 실행: `REVIEW-REQUEST-P1-AGENT1.md`를 v9 기준으로 갱신
+  - 섹션명 `지시서 반영 상태 (v9)`로 변경
+  - "v9 추가 코드 수정 요구 없음" 항목 추가
+  - 커밋/푸시만 남은 상태임을 우려사항에 명시
+- v10 통합 지시서 기준 후속 작업: Agent1 커밋(67a2b02) 및 원격 push 완료 상태를 REVIEW-REQUEST에 반영
