@@ -66,8 +66,16 @@ cd frontend && npm run test
 ## 테스트 실행 결과
 - `./gradlew test --tests "site.silverbot.api.robot.service.RobotCommandServiceTest"` ✅ PASS
 - `./gradlew test --tests "site.silverbot.api.robot.service.RobotServiceTest"` ✅ PASS
+- `./gradlew test --tests "site.silverbot.api.robot.RobotControllerTest"` ❌ FAIL (`SnippetException`)
 - Frontend 이전 실행 결과: `npm run test` ✅ PASS
 
 ## 우려 사항 / 특별 검토 요청
 - `/elders/{id}` 응답의 `robot.id` 계약이 없는 경우 FE에서 미등록 처리됨 (Agent 2/4와 계약 합의 필요)
-- 현재 브랜치는 원격 대비 `ahead 2` 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
+- 현재 브랜치는 원격 대비 `ahead 3` 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
+
+## Agent 0 추가 전달 사항 (리뷰 결과 반영)
+- 리뷰 결과 기준 **Major 1건으로 현재 상태는 Request Changes**입니다.
+- 블로킹 이슈: `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java:116`
+  - `sendRobotCommand()` REST Docs 스니펫 누락 (`params.location`)으로 테스트 실패
+  - 재현: `./gradlew test --tests "site.silverbot.api.robot.RobotControllerTest"`
+- WebSocket notifier 구현체 추가 시 `RobotStatusNotifier` 다중 빈 충돌 위험이 있으므로, Agent 4 머지 시점에 `@Primary` 또는 `@ConditionalOnMissingBean` 전략 재조율이 필요합니다.
