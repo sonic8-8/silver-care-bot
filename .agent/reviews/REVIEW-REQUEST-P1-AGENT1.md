@@ -6,13 +6,14 @@
 - 작업 기간: `2026-02-05 ~ 2026-02-06`
 - PR 링크: (없음)
 
-## 지시서 반영 상태 (v9)
+## 지시서 반영 상태 (v10)
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | `FIX-INSTRUCTIONS-P1-AGENT1.md` 신규 항목 `/ws/** permitAll` | ✅ 반영 완료 | `SecurityConfig.PERMIT_ALL`에 포함 |
 | 이전 Major/Minor 지시사항 (maxAge, SecretKey, CORS trim, signup 에러 처리) | ✅ 반영 완료 | 코드/테스트 기준 확인 |
 | 미사용 `RefreshRequest` 정리 | ✅ 반영 완료 | 변경 집합에서 제외 |
-| v9 추가 코드 수정 요구 | ✅ 없음 | Agent 0 지시서 기준 코드 수정 불필요, 커밋/푸시만 남음 |
+| v10 추가 코드 수정 요구 | ✅ 없음 | Agent 0 통합 지시서 기준 코드 수정 불필요 |
+| 커밋/푸시 상태 | ✅ 완료 | `67a2b02` 커밋을 `origin/feature/phase1-auth`로 푸시 완료 |
 
 ## 변경 파일
 | 파일 | 변경 유형 | 설명 |
@@ -74,4 +75,4 @@ cd frontend && npm run test
 - Agent 4 브랜치가 `develop`에 먼저 머지되어야 backend 통합 빌드/테스트가 안정적으로 진행됩니다.
 - `frontend/src/shared/api/axios.ts`는 Agent 4 소유라 본 브랜치에서 직접 수정하지 않았습니다.
 - 이전 리뷰의 Minor 3건(CORS trim, signup 에러 처리, RefreshRequest 미사용)은 모두 반영 완료했습니다.
-- v9 기준 Agent 1은 코드 수정 항목이 없으며, 현재 상태는 커밋/푸시 후 Agent 0 머지 대기입니다.
+- v10 기준 Agent 1은 코드 수정 항목이 없으며, 현재 상태는 Agent 0 머지 대기입니다.
