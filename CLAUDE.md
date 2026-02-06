@@ -304,6 +304,30 @@ git push               # 설정에 따라 여러 브랜치 Push 가능
 
 **권장 설정**: `git config push.default current`
 
+### ✅ Push 실행 체크리스트 (SSH 기준)
+
+```bash
+# 0) 현재 위치 확인 (반드시 자신의 worktree)
+pwd
+
+# 1) 원격 확인 (SSH)
+git remote -v
+# origin이 git@github.com:sonic8-8/silver-care-bot.git 이어야 함
+
+# 2) SSH 인증 확인
+ssh -o StrictHostKeyChecking=accept-new -T git@github.com
+
+# 3) Push 기본 정책 확인
+git config push.default current
+
+# 4) 브랜치 명시 Push (필수)
+git push origin <현재브랜치명>
+```
+
+> 참고:
+> Codex/Claude Code 샌드박스 환경에서 `Could not resolve host` 또는 `Could not resolve hostname` 오류가 발생하면
+> 동일 `git push origin <현재브랜치명>` 명령을 권한 상승(`require_escalated`)으로 재실행합니다.
+
 ## 🏗️ AI Agent Workflow
 
 > 이 섹션은 AI와 사용자의 **협업 규칙**을 정의합니다.

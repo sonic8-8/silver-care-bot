@@ -92,6 +92,29 @@ S14P11C104/                          # Team Repo Root
 > git config push.default current  # 현재 브랜치만 Push
 > ```
 
+> **실행 체크리스트 (SSH + 네트워크 오류 대응)**:
+> ```bash
+> # 0) 자신 worktree 확인
+> pwd
+>
+> # 1) SSH remote 확인
+> git remote -v
+> # origin: git@github.com:sonic8-8/silver-care-bot.git
+>
+> # 2) SSH 인증 확인
+> ssh -o StrictHostKeyChecking=accept-new -T git@github.com
+>
+> # 3) Push 기본 정책 확인
+> git config push.default current
+>
+> # 4) 브랜치 명시 push
+> git push origin <현재브랜치명>
+> ```
+>
+> `Could not resolve host/hostname github.com` 발생 시:
+> - 동일 push 명령을 네트워크 권한 상승(`require_escalated`)으로 재실행
+> - `git push` 단독 실행은 금지 (반드시 `origin <브랜치명>` 명시)
+
 ---
 
 ## 2. 환경 설정 가이드 (Phase 0 사전 작업)
