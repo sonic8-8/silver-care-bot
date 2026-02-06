@@ -106,4 +106,30 @@ class RobotCommandServiceTest {
                 .extracting(RobotSyncResponse.PendingCommandResponse::commandId)
                 .containsExactly(earlier.getCommandId(), later.getCommandId());
     }
+
+    @Test
+    void consumePendingCommandsSameIssuedAtReturnsInIdOrder() {
+        LocalDateTime sameIssuedAt = LocalDateTime.now();
+
+        RobotCommand first = robotCommandRepository.save(RobotCommand.builder()
+                .robot(robot)
+                .commandId("cmd-a")
+                .command(CommandType.START_PATROL)
+                .issuedAt(sameIssuedAt)
+                .build());
+
+        RobotCommand second = robotCommandRepository.save(RobotCommand.builder()
+                .robot(robot)
+                .commandId("cmd-b")
+                .command(CommandType.RETURN_TO_DOCK)
+                .issuedAt(sameIssuedAt)
+                .build());
+
+        List<RobotSyncResponse.PendingCommandResponse> response = robotCommandService.consumePendingCommands(robot.getId());
+
+        assertThat(first.getId()).isLessThan(second.getId());
+        assertThat(response)
+                .extracting(RobotSyncResponse.PendingCommandResponse::commandId)
+                .containsExactly(first.getCommandId(), second.getCommandId());
+    }
 }
