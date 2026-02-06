@@ -34,28 +34,32 @@ Phase 2(High) 기능을 4개 병렬 트랙으로 구현하고, 충돌 최소화/
 
 ---
 
-## P2 리뷰 라운드 1 협업 지시 (2026-02-06)
+## P2 리뷰 라운드 2 상태 (2026-02-06)
 
-### C-01. Flyway 버전 통합 (Agent 3 Lead, Agent 1/4 Follow)
+| Agent | 리뷰 상태 | 병합 가능 여부 | 메모 |
+|---|---|---|---|
+| Agent 1 | ✅ Approve | 조건부 가능 | Agent 3 선행 머지 후 병합 |
+| Agent 2 | ✅ Approve | 조건부 가능 | Agent 4 선행 머지 후 최종 병합 |
+| Agent 3 | ⚠️ Request Changes | 불가 | 후속 수정 반영 메모 있음, 재리뷰 필요 |
+| Agent 4 | ⚠️ Request Changes | 불가 | 후속 수정 반영 메모 있음, 재리뷰 필요 |
+
+---
+
+## C-01. Flyway 버전 통합 (Open)
 목표: 중복 버전(`V3`, `V4`) 충돌을 제거하고 병합 가능한 단일 마이그레이션 체인을 확정한다.
 
 실행 순서:
-1. Agent 3가 DB 브랜치 기준 최종 버전 맵(`V1`~최신)과 전환 전략을 확정한다.
-2. Agent 4는 Agent 3 확정안 기준으로 알림 테이블 마이그레이션 버전을 재배치한다.
-3. Agent 1/4는 Agent 3 머지 후 `develop` 리베이스(또는 동등한 동기화) 후 Flyway 충돌 여부를 재검증한다.
+1. Agent 3가 DB 브랜치 기준 최종 버전 맵(`V1`~최신)과 전환 전략 증빙(`validate/migrate`)을 확정한다.
+2. Agent 4는 Agent 3 확정안 기준으로 알림 테이블 마이그레이션 버전을 재검증한다.
+3. Agent 3/4 모두 재리뷰 Approve를 받은 뒤 머지 순서에 따라 통합한다.
 
 완료 조건:
 - 최종 코드베이스에 동일 버전 번호를 가진 서로 다른 스크립트가 존재하지 않는다.
-- clean DB에서 `flyway validate + migrate` 성공 결과를 각 리뷰 요청서에 기록한다.
+- clean DB + legacy 이력 DB 두 시나리오의 `flyway validate/migrate` 결과가 리뷰 문서에 기록된다.
 
-### C-02. `frontend/src/shared/types/**` 소유권 조율 (Agent 4 Owner, Agent 2 Consumer)
-목표: 병렬 소유권 규칙을 유지하면서 타입 정의 중복/충돌을 제거한다.
+## C-02. `frontend/src/shared/types/**` 소유권 조율 (Closed)
+상태: 완료 (Agent 2 리뷰 결과에서 feature-local type 전환으로 충돌 해소 확인)
 
-실행 규칙:
-1. `frontend/src/shared/types/**` 최종 소스 오브 트루스는 Agent 4 브랜치로 통일한다.
-2. Agent 2가 필요 타입을 제안하면 Agent 4가 동일 내용을 소유 경로에 반영한다.
-3. Agent 2 브랜치에는 `shared/**` 중복 변경이 남지 않도록 정리하고, 기능 코드는 해당 타입을 참조한다.
-
-완료 조건:
-- Agent 2/4 브랜치 병합 시 `shared/types` 충돌이 발생하지 않는다.
-- 두 에이전트 리뷰 요청서에 조율 방식(반영 커밋 또는 동기화 방법)이 명시된다.
+종료 조건 확인:
+- Agent 2 브랜치에서 `shared/types` 중복 변경 제거 확인
+- Agent 2 리뷰 상태 `Approve` 확인

@@ -5,40 +5,24 @@
 
 ## 기준 리뷰
 - `agent-3/.agent/reviews/REVIEW-RESULT-P2-AGENT3.md`
-- 판정: `⚠️ Request Changes` (Major 2)
+- 최신 판정: `⚠️ Request Changes` (Critical 0 / Major 2 / Minor 0)
+- 참고: 동일 문서 내 "후속 조치 결과"에 주요 수정 반영 완료 메모 존재
 
-## 필수 수정 항목
-1. Flyway 버전 전환 전략 확정 및 안전화
-- 파일:
-  - `backend/src/main/resources/db/migration/V4__add_robot_offline_notified_at.sql`
-  - `backend/src/main/resources/db/migration/V5__create_phase2_core_tables.sql`
-- 목적: 버전 충돌 해소와 기존 환경 이력 호환을 동시에 보장한다.
-- 필수 조건:
-  - 중복 버전(`V3` 다중 파일) 상태를 종료한다.
-  - `robot.offline_notified_at` 추가는 재실행 안전성을 확보한다(예: `IF NOT EXISTS`).
-  - 기존 환경 이력 전환 절차(`flyway validate/repair` 필요 조건)를 리뷰 요청서에 명시한다.
-- 추가 조건: 본 변경이 Agent 4의 알림 테이블 마이그레이션 버전 계획과 충돌하지 않도록 `COORDINATION-P2.md`의 `C-01`을 기준으로 정렬한다.
+## 필수 후속 조치
+1. 후속 수정 반영분을 커밋/푸시하고 재리뷰 가능한 단일 상태로 고정한다.
+- `git status` clean 확보
+- `git push origin feature/phase2-db-schedule`
 
-2. `medication_record` 교차 엔터티 무결성 강제
-- 파일: `backend/src/main/resources/db/migration/V5__create_phase2_core_tables.sql`
-- `(medication_id, elder_id)` 정합성 제약을 DB 레벨에서 강제한다.
-- 권장 구현:
-  - `medication`에 `(id, elder_id)` 유니크 제약 추가
-  - `medication_record (medication_id, elder_id)` -> `medication (id, elder_id)` 복합 FK 추가
-- 서비스 레이어에서도 `medication.elder.id == elderId` 검증을 보강한다.
+2. Flyway 전환 안정성 증빙을 보강한다.
+- clean DB 기준 `flyway validate + migrate` 실행 결과 첨부
+- legacy 이력 DB 기준 `validate -> (필요 시 repair) -> migrate` 실행 절차/결과 첨부
+- `V1~최신` 최종 버전 맵을 리뷰 요청서에 명시
 
-## 테스트/검증
-```bash
-cd backend
-./gradlew test
-```
+3. `medication_record` 교차 무결성(DB 제약 + 서비스 검증) 반영 사실을 테스트 로그로 입증한다.
+- 관련 테스트 명/결과를 `REVIEW-REQUEST-P2-AGENT3.md`에 명시
 
-추가로 아래 검증을 포함한다.
-- clean DB에서 `flyway validate + migrate` 성공
-- 이력 전환 시나리오(기존 이력 가정) 검증 결과/절차 문서화
-- 교차 엔터티 불일치 insert 차단 확인
+4. 재리뷰 요청 후 `REVIEW-RESULT-P2-AGENT3.md`를 Approve 상태로 갱신한다.
 
-## 완료 보고
-1. 수정 커밋/푸시 후 `agent-3/.agent/reviews/REVIEW-REQUEST-P2-AGENT3.md` 갱신
-2. 최종 Flyway 버전 맵(V1~최신)을 표로 첨부
-3. 재리뷰 요청
+## 병합 게이트
+- Agent 3이 Phase 2 첫 병합 게이트다.
+- Agent 3 승인/머지 전에는 Agent 1/4/2 순차 병합 진행 불가.
