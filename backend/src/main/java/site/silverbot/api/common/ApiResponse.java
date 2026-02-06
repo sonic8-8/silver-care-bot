@@ -13,7 +13,7 @@ public record ApiResponse<T>(
         return new ApiResponse<>(true, data, OffsetDateTime.now());
     }
 
-    public static ApiResponse<Void> success() {
+    public static ApiResponse<Void> ok() {
         return new ApiResponse<>(true, null, OffsetDateTime.now());
     }
 }
