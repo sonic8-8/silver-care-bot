@@ -351,6 +351,8 @@ git push origin <현재브랜치명>
 | `HISTORY.md` | Done | 프로젝트 영구 작업 로그 | **Archive** |
 | `HANDOFF.md` | Next | 세션 종료 시 인수인계서 | **Bridge** |
 | `PARALLEL-WORK.md` | Who | 병렬 작업 분배 - "누가" 무엇을 할지 | **Reference** |
+| `dispatch/` | Assign | Phase별 작업 배포 지시서 | **Agent 0 관리** |
+| `reviews/` | Review | 리뷰 요청/결과 문서 | **리뷰 워크플로우 전용** |
 
 ```
 .agent/
@@ -363,8 +365,14 @@ git push origin <현재브랜치명>
 ├── SCRATCHPAD.md         # Now - 작업 중 메모
 ├── HISTORY.md            # Done - 영구 로그
 ├── HANDOFF.md            # Next - 세션 인계
-└── PARALLEL-WORK.md      # Who - 병렬 작업 분배
+├── PARALLEL-WORK.md      # Who - 병렬 작업 분배
+├── dispatch/             # Assign - Agent 0 배포 지시서
+└── reviews/              # Review - 리뷰 요청/결과 문서
 ```
+
+`dispatch`와 `reviews` 역할 분리 규칙:
+- `dispatch/`: Agent 0가 작성/배포하는 지시서 보관 (`COORDINATION-*`, `WORK-INSTRUCTION-*`, `FIX-INSTRUCTIONS-*`)
+- `reviews/`: 리뷰 사이클 산출물 보관 (`REVIEW-REQUEST-*`, `REVIEW-RESULT-*`)
 
 ---
 
@@ -774,6 +782,9 @@ http.post('/api/auth/login', () => {
 
 각 Agent는 작업 완료 시 **코드 리뷰 요청 프롬프트**를 작성해야 합니다.
 
+저장 위치:
+- `.agent/reviews/REVIEW-REQUEST-P{phase}-AGENT{N}.md`
+
 ```markdown
 ## 코드 리뷰 요청 [Agent N]
 
@@ -806,6 +817,10 @@ cd /mnt/c/.../sh/agent-N
 claude
 # 리뷰 프롬프트 입력 후 검증 수행
 ```
+
+리뷰 산출물 저장 위치:
+- 리뷰 결과: `.agent/reviews/REVIEW-RESULT-P{phase}-AGENT{N}.md`
+- 수정 지시서: `.agent/dispatch/FIX-INSTRUCTIONS-P{phase}-AGENT{N}.md`
 
 > 상세 템플릿: `.agent/PARALLEL-WORK.md` 섹션 14 참조
 

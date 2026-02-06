@@ -1,7 +1,8 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.0
+> **버전**: v3.2
 > **작성일**: 2026-02-04
+> **최종 수정일**: 2026-02-06
 > **기반 문서**: [PLAN.md](./PLAN.md)
 
 ---
@@ -38,27 +39,37 @@ S14P11C104/                          # Team Repo Root
     ├── agent-0/                     # Worktree: Agent 0 (COMMANDER - 지휘 및 문서 관리)
     │   ├── frontend/
     │   ├── backend/
-    │   └── .agent/                  # 🔒 문서 관리 권한
+    │   └── .agent/
+    │       ├── dispatch/            # 작업/수정 지시서 (COORDINATION/WORK-INSTRUCTION/FIX-INSTRUCTIONS)
+    │       └── reviews/             # 리뷰 요청/결과 문서
     │
     ├── agent-1/                     # Worktree: Agent 1 (BE-INFRA/AUTH)
     │   ├── frontend/
     │   ├── backend/
     │   └── .agent/
+    │       ├── dispatch/            # 배포된 작업/수정 지시서
+    │       └── reviews/             # 리뷰 요청/결과 문서
     │
     ├── agent-2/                     # Worktree: Agent 2 (FE-INFRA/ELDER)
     │   ├── frontend/
     │   ├── backend/
     │   └── .agent/
+    │       ├── dispatch/
+    │       └── reviews/
     │
     ├── agent-3/                     # Worktree: Agent 3 (DB-SCHEMA/ROBOT)
     │   ├── frontend/
     │   ├── backend/
     │   └── .agent/
+    │       ├── dispatch/
+    │       └── reviews/
     │
     └── agent-4/                     # Worktree: Agent 4 (CONTRACTS/WEBSOCKET)
         ├── frontend/
         ├── backend/
         └── .agent/
+            ├── dispatch/
+            └── reviews/
 ```
 
 ### 핵심 규칙
@@ -71,6 +82,14 @@ S14P11C104/                          # Team Repo Root
 | **Agent 0은 문서 전담** | `.agent/` 폴더 내 모든 문서의 소유권 보유 |
 | **코드 리뷰는 새 세션** | 작업 완료 후 같은 워크트리에서 새 Claude 세션을 띄워 리뷰 수행 |
 | **⚠️ Push 시 브랜치 명시** | 모든 워크트리가 `.git`을 공유하므로 `git push origin <브랜치명>` 필수 |
+| **dispatch/reviews 역할 분리** | `dispatch`는 작업/수정 지시, `reviews`는 리뷰 요청/결과 전용 |
+
+### .agent 디렉토리 운영 규칙
+
+| 디렉토리 | 용도 | 작성 주체 | 파일 예시 |
+|---------|------|----------|----------|
+| `.agent/dispatch/` | 작업/수정 지시서 | Agent 0 | `COORDINATION-P2.md`, `WORK-INSTRUCTION-P2-AGENT1.md`, `FIX-INSTRUCTIONS-*` |
+| `.agent/reviews/` | 리뷰 사이클 문서 | Agent 1~4 + 리뷰어 | `REVIEW-REQUEST-*`, `REVIEW-RESULT-*` |
 
 > [!CAUTION]
 > **Git Worktree Push 주의사항**
@@ -572,7 +591,12 @@ git worktree remove --force ../agent-N
   └── src/app/router.tsx      → Agent 2 전담 (라우트 추가 시 요청)
 
 /.agent/
-  └── 모든 문서               → Agent 0 전담
+  ├── PRD.md/PLAN.md/PARALLEL-WORK.md/ADR.md/HANDOFF.md → Agent 0 전담
+  ├── dispatch/COORDINATION-*  → Agent 0 작성/배포
+  ├── dispatch/WORK-INSTRUCTION-* → Agent 0 작성/배포
+  ├── dispatch/FIX-INSTRUCTIONS-* → Agent 0 작성/배포
+  ├── reviews/REVIEW-REQUEST-* → 각 Agent 작성
+  ├── reviews/REVIEW-RESULT-*  → 리뷰어(새 세션) 작성
   └── SCRATCHPAD.md           → 각 Agent 별도 섹션 사용
 ```
 
@@ -996,6 +1020,8 @@ git worktree add ../agent-N -b <correct-branch>
 
 각 Agent는 작업 완료 시 아래 템플릿으로 리뷰 요청 프롬프트를 작성합니다.
 
+- 저장 위치: `.agent/reviews/REVIEW-REQUEST-P{phase}-AGENT{N}.md`
+
 ```markdown
 ## 코드 리뷰 요청 [Agent N]
 
@@ -1059,6 +1085,10 @@ claude
 ### 14.4 리뷰 결과 보고 형식
 
 리뷰어 Claude는 아래 형식으로 결과를 보고합니다.
+
+- 저장 위치:
+  - 결과 보고서: `.agent/reviews/REVIEW-RESULT-P{phase}-AGENT{N}.md`
+  - 수정 지시서: `.agent/dispatch/FIX-INSTRUCTIONS-P{phase}-AGENT{N}.md`
 
 ```markdown
 ## 코드 리뷰 결과 [Agent N → Reviewer X]
