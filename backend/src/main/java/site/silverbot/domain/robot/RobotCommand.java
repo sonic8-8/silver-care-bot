@@ -84,4 +84,14 @@ public class RobotCommand {
         this.issuedAt = issuedAt;
         this.completedAt = completedAt;
     }
+
+    public void markStatus(CommandStatus status) {
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+    public void markReceived() {
+        this.status = CommandStatus.RECEIVED;
+    }
 }

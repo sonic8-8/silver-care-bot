@@ -1,5 +1,6 @@
 package site.silverbot.domain.robot;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -102,6 +103,9 @@ public class Robot {
     @Column(name = "last_sync_at")
     private LocalDateTime lastSyncAt;
 
+    @Column(name = "offline_notified_at")
+    private LocalDateTime offlineNotifiedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -131,9 +135,10 @@ public class Robot {
             LocalTime morningMedicationTime,
             LocalTime eveningMedicationTime,
             Integer ttsVolume,
-            LocalTime patrolStartTime,
-            LocalTime patrolEndTime,
-            LocalDateTime lastSyncAt
+        LocalTime patrolStartTime,
+        LocalTime patrolEndTime,
+        LocalDateTime lastSyncAt,
+        LocalDateTime offlineNotifiedAt
     ) {
         this.elder = elder;
         this.serialNumber = serialNumber;
@@ -157,5 +162,94 @@ public class Robot {
         this.patrolStartTime = patrolStartTime == null ? LocalTime.of(9, 0) : patrolStartTime;
         this.patrolEndTime = patrolEndTime == null ? LocalTime.of(18, 0) : patrolEndTime;
         this.lastSyncAt = lastSyncAt;
+        this.offlineNotifiedAt = offlineNotifiedAt;
+    }
+
+    public void updateBatteryLevel(Integer batteryLevel) {
+        if (batteryLevel != null) {
+            this.batteryLevel = batteryLevel;
+        }
+    }
+
+    public void updateCharging(Boolean isCharging) {
+        if (isCharging != null) {
+            this.isCharging = isCharging;
+        }
+    }
+
+    public boolean updateNetworkStatus(NetworkStatus status) {
+        if (status == null) {
+            return false;
+        }
+        if (status == NetworkStatus.CONNECTED) {
+            this.offlineNotifiedAt = null;
+        }
+        if (this.networkStatus != status) {
+            this.networkStatus = status;
+            return true;
+        }
+        return false;
+    }
+
+    public void updateLocation(String location, Float x, Float y, Integer heading) {
+        if (location != null) {
+            this.currentLocation = location;
+        }
+        if (x != null) {
+            this.currentX = x;
+        }
+        if (y != null) {
+            this.currentY = y;
+        }
+        if (heading != null) {
+            this.currentHeading = heading;
+        }
+    }
+
+    public void updateLcdState(LcdMode mode, LcdEmotion emotion, String message, String subMessage) {
+        if (mode != null) {
+            this.lcdMode = mode;
+        }
+        if (emotion != null) {
+            this.lcdEmotion = emotion;
+        }
+        if (message != null) {
+            this.lcdMessage = message;
+        }
+        if (subMessage != null) {
+            this.lcdSubMessage = subMessage;
+        }
+    }
+
+    public void updateDispenserRemaining(Integer remaining) {
+        if (remaining != null) {
+            this.dispenserRemaining = remaining;
+        }
+    }
+
+    public void updateLastSyncAt(LocalDateTime lastSyncAt) {
+        this.lastSyncAt = lastSyncAt;
+    }
+
+    public void clearOfflineNotification() {
+        this.offlineNotifiedAt = null;
+    }
+
+    public boolean needsOfflineNotification(Duration threshold, LocalDateTime now) {
+        if (this.offlineNotifiedAt != null || this.lastSyncAt == null) {
+            return false;
+        }
+        return Duration.between(this.lastSyncAt, now).compareTo(threshold) >= 0;
+    }
+
+    public void markOfflineNotified(LocalDateTime notifiedAt) {
+        this.offlineNotifiedAt = notifiedAt == null ? LocalDateTime.now() : notifiedAt;
+    }
+
+    public boolean validateAuthCode(String authCode) {
+        if (this.authCode == null || authCode == null) {
+            return false;
+        }
+        return this.authCode.equals(authCode);
     }
 }
