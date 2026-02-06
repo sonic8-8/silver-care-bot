@@ -2,7 +2,7 @@
 
 ## 작업 정보
 - **브랜치**: `feature/phase1-robot`
-- **작업 범위**: Phase 1 Robot 도메인 구현 + v8 수정 지시 반영
+- **작업 범위**: Phase 1 Robot 도메인 구현 + v9 지시사항 확인/반영
 - **작업 기간**: 2026-02-03 ~ 2026-02-06
 - **대상 커밋**:
   - `9d41226` fix(robot): 리뷰 피드백 반영 [Agent 3]
@@ -27,7 +27,7 @@
 | `frontend/src/pages/Robot/RobotControlScreen.tsx` | 수정 | 로봇 제어 화면 |
 | `frontend/src/features/robot-control/**` | 신규/수정 | Robot control UI/API/hook/test |
 
-### B. 이번 리뷰 반영 파일 (v8 지시 반영)
+### B. 이번 리뷰 반영 파일 (v9 기준)
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
 | `backend/src/main/java/site/silverbot/domain/robot/RobotRepository.java` | 수정 | `findByElderIdIn(List<Long> elderIds)` 추가 (Agent 2 요청 반영) |
@@ -41,10 +41,11 @@
 2. 이전 리뷰 Major 반영 완료
 - `updateNetworkStatus` 트랜잭션 명시
 - Pending 명령 정렬 2차 키(`issuedAt`, `id`) 적용
-3. v7~v8 지시 반영 완료
+3. v7~v9 지시 반영 완료
 - `RobotRepository.findByElderIdIn(...)` 추가
 - 동일 `issuedAt` 정렬 안정성 테스트 추가
 - `RobotControllerTest.sendRobotCommand()` REST Docs `params.location`, `data.params.location` 문서화 추가
+ - v9 기준 추가 코드 수정 불필요(Approve 상태 확인)
 4. 통합 컴파일 블로커 해소
 - `ApiResponse` 무인자 static 메서드명 충돌 수정
 5. 테스트 컨텍스트 안정화
@@ -77,9 +78,10 @@ cd frontend && npm run test
 
 ## 우려 사항 / 특별 검토 요청
 - `/elders/{id}` 응답의 `robot.id` 계약이 없는 경우 FE에서 미등록 처리됨 (Agent 2/4와 계약 합의 필요)
-- 현재 브랜치는 원격 대비 `ahead 6` 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
+- 현재 브랜치는 `origin/feature/phase1-robot` 대비 ahead 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
 
 ## Agent 0 추가 전달 사항 (리뷰 결과 반영)
 - v8 Major 이슈(REST Docs `params.location` 누락) 수정 완료.
 - `RobotControllerTest` 단독 및 Agent 3 검증 세트(Controller+Service 2종) 모두 PASS 확인.
 - WebSocket notifier 구현체 추가 시 `RobotStatusNotifier` 다중 빈 충돌 위험이 있으므로, Agent 4 머지 시점에 `@Primary` 또는 `@ConditionalOnMissingBean` 전략 재조율이 필요합니다.
+- v9 지시서 기준 Agent 3는 추가 코드 수정 없이 `push`만 남은 상태이며, 본 환경에서 `git push origin feature/phase1-robot` 재시도 시 인증 오류가 재현됩니다.
