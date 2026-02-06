@@ -18,6 +18,7 @@ import site.silverbot.api.auth.response.TokenResponse;
 import site.silverbot.api.auth.service.AuthService;
 import site.silverbot.api.auth.service.RobotAuthService;
 import site.silverbot.api.common.ApiResponse;
+import site.silverbot.config.JwtTokenProvider;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ import site.silverbot.api.common.ApiResponse;
 public class AuthController {
     private final AuthService authService;
     private final RobotAuthService robotAuthService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
     public ApiResponse<TokenResponse> signup(
@@ -69,7 +71,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/api/auth/refresh")
-                .maxAge(Duration.ofDays(7))
+                .maxAge(Duration.ofMillis(jwtTokenProvider.getRefreshTokenExpiration()))
                 .sameSite("Strict")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());

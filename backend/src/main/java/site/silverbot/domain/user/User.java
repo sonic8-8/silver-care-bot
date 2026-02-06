@@ -1,6 +1,10 @@
 package site.silverbot.domain.user;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -91,13 +95,23 @@ public class User {
             this.refreshToken = null;
             return;
         }
-        this.refreshToken = BCrypt.hashpw(refreshToken, BCrypt.gensalt());
+        this.refreshToken = BCrypt.hashpw(normalizeForBcrypt(refreshToken), BCrypt.gensalt());
     }
 
     public boolean validateRefreshToken(String refreshToken) {
         if (refreshToken == null || this.refreshToken == null) {
             return false;
         }
-        return BCrypt.checkpw(refreshToken, this.refreshToken);
+        return BCrypt.checkpw(normalizeForBcrypt(refreshToken), this.refreshToken);
+    }
+
+    private String normalizeForBcrypt(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashed);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("Unable to hash refresh token", ex);
+        }
     }
 }
