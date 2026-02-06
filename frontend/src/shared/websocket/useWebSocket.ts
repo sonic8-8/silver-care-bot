@@ -40,6 +40,8 @@ export const useWebSocket = ({
     const manualDisconnectRef = useRef(false);
     const previousTokenRef = useRef<string | null | undefined>(token);
     const tokenVersionRef = useRef(0);
+    const connectRef = useRef<() => void>(() => undefined);
+    const disconnectRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
     const clearReconnectTimer = useCallback(() => {
         if (reconnectTimerRef.current !== null) {
@@ -126,14 +128,22 @@ export const useWebSocket = ({
     }, [clearReconnectTimer]);
 
     useEffect(() => {
+        connectRef.current = connect;
+    }, [connect]);
+
+    useEffect(() => {
+        disconnectRef.current = disconnect;
+    }, [disconnect]);
+
+    useEffect(() => {
         if (!autoConnect) {
             return;
         }
-        connect();
+        connectRef.current();
         return () => {
-            void disconnect();
+            void disconnectRef.current();
         };
-    }, [autoConnect, connect, disconnect]);
+    }, [autoConnect]);
 
     useEffect(() => {
         if (previousTokenRef.current === token) {

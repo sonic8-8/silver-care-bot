@@ -50,6 +50,24 @@ describe('useWebSocket', () => {
         expect(result.current.isConnected).toBe(true);
     });
 
+    it('keeps connection after status transitions with autoConnect enabled', async () => {
+        const { result } = renderHook(() => useWebSocket({ token: 'token-a' }));
+
+        expect(createStompClientMock).toHaveBeenCalledTimes(1);
+        expect(mockClient.activate).toHaveBeenCalledTimes(1);
+
+        act(() => {
+            capturedOptions?.onConnect?.(mockClient);
+        });
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(result.current.status).toBe('CONNECTED');
+        expect(mockClient.deactivate).not.toHaveBeenCalled();
+    });
+
     it('reconnects up to max attempts', () => {
         const { result } = renderHook(() =>
             useWebSocket({
