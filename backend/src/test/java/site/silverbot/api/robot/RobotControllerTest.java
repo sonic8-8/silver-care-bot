@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import site.silverbot.domain.elder.ElderRepository;
+import site.silverbot.domain.elder.EmergencyContactRepository;
+import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
@@ -36,12 +39,24 @@ class RobotControllerTest extends RestDocsSupport {
     @Autowired
     private RobotCommandRepository robotCommandRepository;
 
+    @Autowired
+    private ElderRepository elderRepository;
+
+    @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+
+    @Autowired
+    private EmergencyRepository emergencyRepository;
+
     private Robot robot;
 
     @BeforeEach
     void setUp() {
-        robotCommandRepository.deleteAll();
-        robotRepository.deleteAll();
+        robotCommandRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
+        emergencyRepository.deleteAllInBatch();
+        emergencyContactRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
 
         robot = robotRepository.save(Robot.builder()
                 .serialNumber("ROBOT-2026-X82")

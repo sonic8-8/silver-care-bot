@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import site.silverbot.api.robot.request.RobotCommandRequest;
 import site.silverbot.api.robot.response.CommandResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.domain.elder.ElderRepository;
+import site.silverbot.domain.elder.EmergencyContactRepository;
+import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.CommandStatus;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.NetworkStatus;
@@ -36,12 +39,24 @@ class RobotCommandServiceTest {
     @Autowired
     private RobotCommandRepository robotCommandRepository;
 
+    @Autowired
+    private ElderRepository elderRepository;
+
+    @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+
+    @Autowired
+    private EmergencyRepository emergencyRepository;
+
     private Robot robot;
 
     @BeforeEach
     void setUp() {
-        robotCommandRepository.deleteAll();
-        robotRepository.deleteAll();
+        robotCommandRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
+        emergencyRepository.deleteAllInBatch();
+        emergencyContactRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
 
         robot = robotRepository.save(Robot.builder()
                 .serialNumber("ROBOT-2026-X82")
