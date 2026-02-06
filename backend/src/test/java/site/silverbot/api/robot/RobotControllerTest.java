@@ -115,7 +115,8 @@ class RobotControllerTest extends RestDocsSupport {
                         ),
                         requestFields(
                                 fieldWithPath("command").type(JsonFieldType.STRING).description("명령 타입"),
-                                fieldWithPath("params").type(JsonFieldType.OBJECT).description("명령 파라미터").optional()
+                                fieldWithPath("params").type(JsonFieldType.OBJECT).description("명령 파라미터").optional(),
+                                fieldWithPath("params.location").type(JsonFieldType.STRING).description("이동 대상 위치").optional()
                         ),
                         responseFields(
                                 fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
@@ -124,6 +125,7 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("data.robotId").type(JsonFieldType.NUMBER).description("로봇 ID"),
                                 fieldWithPath("data.command").type(JsonFieldType.STRING).description("명령 타입"),
                                 fieldWithPath("data.params").type(JsonFieldType.OBJECT).description("명령 파라미터").optional(),
+                                fieldWithPath("data.params.location").type(JsonFieldType.STRING).description("이동 대상 위치").optional(),
                                 fieldWithPath("data.status").type(JsonFieldType.STRING).description("명령 상태"),
                                 fieldWithPath("data.issuedAt").type(JsonFieldType.STRING).description("발행 시각"),
                                 fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
