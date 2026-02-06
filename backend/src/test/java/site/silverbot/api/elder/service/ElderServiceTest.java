@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,10 @@ import site.silverbot.api.elder.response.ElderResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.ElderStatus;
+import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.elder.Gender;
+import site.silverbot.domain.emergency.EmergencyRepository;
+import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
 import site.silverbot.domain.user.UserRepository;
 import site.silverbot.domain.user.UserRole;
@@ -40,12 +44,29 @@ class ElderServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmergencyRepository emergencyRepository;
+
+    @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+
+    @Autowired
+    private RobotRepository robotRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        elderRepository.deleteAll();
-        userRepository.deleteAll();
+        emergencyRepository.deleteAllInBatch();
+        emergencyContactRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        entityManager.flush();
+        entityManager.clear();
         user = userRepository.save(User.builder()
                 .name("김복지")
                 .email("worker@test.com")

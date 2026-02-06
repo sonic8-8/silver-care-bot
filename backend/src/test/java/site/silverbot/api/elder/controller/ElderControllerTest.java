@@ -22,6 +22,8 @@ import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.elder.Gender;
+import site.silverbot.domain.emergency.EmergencyRepository;
+import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
 import site.silverbot.domain.user.UserRepository;
 import site.silverbot.domain.user.UserRole;
@@ -36,15 +38,23 @@ class ElderControllerTest extends RestDocsSupport {
     private EmergencyContactRepository emergencyContactRepository;
 
     @Autowired
+    private EmergencyRepository emergencyRepository;
+
+    @Autowired
+    private RobotRepository robotRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     private User user;
 
     @BeforeEach
     void setUp() {
-        emergencyContactRepository.deleteAll();
-        elderRepository.deleteAll();
-        userRepository.deleteAll();
+        emergencyRepository.deleteAllInBatch();
+        emergencyContactRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
         user = userRepository.save(User.builder()
                 .name("김복지")
                 .email("worker@test.com")

@@ -1,56 +1,52 @@
 # 코드 리뷰 결과 [Agent 2] - Phase 1
 
 ## 요약
-- **전체 평가**: ⚠️ Request Changes
-- **Critical 이슈**: 1건
-- **Major 이슈**: 3건
-- **Minor 이슈**: 1건
+- **전체 평가**: ✅ Approve (조건부)
+- **Critical 이슈**: 0건
+- **Major 이슈**: 0건
+- **Minor 이슈**: 2건
 
 ## 발견된 이슈
 
-### [Critical] ApiResponse record accessor 충돌로 백엔드 컴파일 실패
-- 파일: `backend/src/main/java/site/silverbot/api/common/ApiResponse.java:16`
-- 내용: record 컴포넌트 `success`의 자동 생성 accessor `success()`와 동일 시그니처의 static `success()`가 충돌하여 컴파일 실패.
-- 영향: `./gradlew test` 자체가 실패하여 머지 불가.
-- 제안: no-arg static 메서드를 `ok()`/`empty()` 등으로 rename하거나 제거하고 호출부에서 `ApiResponse.success(null)` 사용.
+### [Minor] `useElderDetail` 커스텀 훅 테스트 누락
+- 파일: `frontend/src/features/elder/hooks/useElderDetail.ts`
+- 내용: 커스텀 훅 구현은 있으나 테스트 파일이 없습니다.
+- 근거: `agent-2/CLAUDE.md:209` (커스텀 훅 TDD 필수)
+- 비고: `COORDINATION-P1.md`/`FIX-INSTRUCTIONS-P1-AGENT2.md`에서 Phase 2 이연으로 합의된 항목(현재 머지 블로커 아님)
 
-### [Major] 소유권 규칙 위반 파일 수정
-- 규칙: `CLAUDE.md`의 파일 소유권 규칙에 따라 `domain/**`는 Agent 3, `shared/**`/`mocks/**`는 Agent 4 소유.
-- 위반 파일:
-  - `backend/src/main/java/site/silverbot/domain/elder/Elder.java`
-  - `backend/src/main/java/site/silverbot/domain/elder/EmergencyContact.java`
-  - `backend/src/main/java/site/silverbot/domain/emergency/Emergency.java`
-  - `backend/src/main/java/site/silverbot/domain/emergency/EmergencyRepository.java`
-  - `backend/src/main/java/site/silverbot/domain/robot/RobotRepository.java`
-  - `frontend/src/shared/types/elder.types.ts`
-  - `frontend/src/shared/types/emergency.types.ts`
-  - `frontend/src/shared/types/index.ts`
-  - `frontend/src/mocks/handlers/elder.ts`
-  - `frontend/src/mocks/handlers/emergency.ts`
-- 제안: 해당 변경은 Agent 3/4와 협의하여 그들의 브랜치로 이동하거나, Agent 0 통해 조정 필요.
-
-### [Major] Emergency 해제 시 잘못된 예외 타입
-- 파일: `backend/src/main/java/site/silverbot/api/emergency/service/EmergencyService.java:102-104`
-- 내용: `PENDING` 해제 요청 시 `IllegalArgumentException` 사용 → 별도 예외 핸들러 없으면 500으로 처리될 가능성 큼.
-- 제안: `ResponseStatusException(HttpStatus.BAD_REQUEST, ...)` 또는 전용 예외로 400 반환.
-
-### [Major] 커스텀 훅 테스트 누락 (TDD 규칙 위반)
-- 규칙: `CLAUDE.md`에서 커스텀 훅 테스트 필수.
-- 누락 대상: `frontend/src/features/elder/hooks/useElderDetail.ts` (테스트 파일 없음)
-- 제안: `useElderDetail.test.tsx` 추가.
-
-### [Minor] Elder 목록 조회 시 중복 로봇 키 충돌 위험
-- 파일: `backend/src/main/java/site/silverbot/api/elder/service/ElderService.java:84-89`
-- 내용: `Collectors.toMap` 사용 시 동일 elder에 복수 robot이 있으면 `IllegalStateException` 발생.
-- 제안: 1:1 제약이 없다면 merge 함수 추가 또는 DB 레벨에서 유일성 보장 확인.
+### [Minor] 원격 push 미완료 상태
+- 파일: `agent-2/.agent/reviews/REVIEW-REQUEST-P1-AGENT2.md:83`
+- 내용: 요청서에 `origin/feature/phase1-elder` 대비 ahead 및 인증 이슈로 push 보류 상태가 명시되어 있습니다.
+- 영향: 코드 품질 이슈는 아니지만, Agent 0 병합/검증 흐름에서는 운영상 확인이 필요합니다.
 
 ## 테스트 실행 결과
-- Backend: `./gradlew test` 실패 (ApiResponse record accessor 충돌)
-- Frontend: `npm run test` 통과 (Test Files 3, Tests 9)
+- Backend:
+  - 실행: `cd backend && ./gradlew clean test`
+  - 결과: `BUILD SUCCESSFUL`
+  - 상세 집계: `26 tests, 0 failures, 0 errors` (`build/test-results/test/TEST-*.xml` 기준)
+- Frontend:
+  - 실행: `cd frontend && npm run test -- --run`
+  - 결과: `Test Files 3 passed`, `Tests 9 passed`
 
-## 오픈 질문/확인 사항
-- `/api/robots/{robotId}/emergency` 호출 주체가 로봇(비인증)이라면 `EmergencyService.reportEmergency`의 `getCurrentUser()` 검증이 항상 실패합니다. 이 엔드포인트의 인증 정책이 워커용인지 로봇용인지 정책 확인 필요.
+## 검토 메모
+- 이전 리뷰에서 블로커였던 테스트 fixture 정리(FK/UNIQUE) 이슈는 현재 워크트리 기준으로 해소된 상태입니다.
+- 소유권 이슈(Agent 3/4 영역 파일 변경)는 `COORDINATION-P1.md` 및 `FIX-INSTRUCTIONS-P1-AGENT2.md`에서 Agent 0 승인 유지로 확인했습니다.
 
 ## 최종 의견
-- 컴파일 실패 이슈와 소유권 위반 정리 전에는 머지 불가.
-- 위 이슈 조치 후 재확인 요청 바랍니다.
+- 현재 코드/테스트 상태는 **Approve** 가능합니다.
+- 단, 병렬 작업 운영 절차상 다음 2가지는 Agent 0 확인 후 진행 권장:
+  1. `useElderDetail` 테스트 보강(Phase 2 이연 합의 유지 여부)
+  2. 브랜치 push 상태 정리 후 최종 머지 수행
+
+## Agent 2 추가 전달사항 (최신)
+- v9 지시사항 대응으로 아래 테스트 fixture 보정이 추가 반영되었습니다.
+  - `backend/src/test/java/site/silverbot/api/emergency/controller/EmergencyControllerTest.java`
+  - `backend/src/test/java/site/silverbot/api/emergency/service/EmergencyServiceTest.java`
+  - `backend/src/test/java/site/silverbot/api/elder/service/ElderServiceTest.java`
+  - `backend/src/test/java/site/silverbot/api/elder/service/EmergencyContactServiceTest.java`
+- 최신 재검증 결과(로컬):
+  - `cd backend && ./gradlew clean test` → `BUILD SUCCESSFUL`
+  - `cd frontend && npm run test -- --run` → `Test Files 3 passed`, `Tests 9 passed`
+- 현재 워크트리 상태:
+  - `feature/phase1-elder`는 `origin/feature/phase1-elder` 대비 `ahead 1`
+  - 위 v9 대응 변경사항은 **로컬 수정 상태(미커밋)** 이며, push는 아직 수행되지 않았습니다.

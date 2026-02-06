@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import site.silverbot.api.emergency.response.EmergencyResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.ElderStatus;
+import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.Emergency;
 import site.silverbot.domain.emergency.EmergencyRepository;
@@ -54,17 +56,26 @@ class EmergencyServiceTest {
     private ElderRepository elderRepository;
 
     @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+
+    @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Elder elder;
     private Robot robot;
 
     @BeforeEach
     void setUp() {
-        emergencyRepository.deleteAll();
-        robotRepository.deleteAll();
-        elderRepository.deleteAll();
-        userRepository.deleteAll();
+        emergencyRepository.deleteAllInBatch();
+        emergencyContactRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        entityManager.flush();
+        entityManager.clear();
         User user = userRepository.save(User.builder()
                 .name("김복지")
                 .email("worker@test.com")

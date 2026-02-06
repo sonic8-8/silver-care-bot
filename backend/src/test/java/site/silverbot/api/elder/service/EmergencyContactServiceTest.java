@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,13 +43,18 @@ class EmergencyContactServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
     private Elder elder;
 
     @BeforeEach
     void setUp() {
-        emergencyContactRepository.deleteAll();
-        elderRepository.deleteAll();
-        userRepository.deleteAll();
+        emergencyContactRepository.deleteAllInBatch();
+        elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        entityManager.flush();
+        entityManager.clear();
         User user = userRepository.save(User.builder()
                 .name("김복지")
                 .email("worker@test.com")
