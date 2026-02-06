@@ -78,10 +78,10 @@ cd frontend && npm run test
 
 ## 우려 사항 / 특별 검토 요청
 - `/elders/{id}` 응답의 `robot.id` 계약이 없는 경우 FE에서 미등록 처리됨 (Agent 2/4와 계약 합의 필요)
-- 현재 브랜치는 `origin/feature/phase1-robot` 대비 ahead 상태이며, 이 환경에서는 GitHub 인증 부재로 push 미완료
+- `feature/phase1-robot` 브랜치 push 완료 (`a25ce71`까지 원격 반영 완료)
 
 ## Agent 0 추가 전달 사항 (리뷰 결과 반영)
 - v8 Major 이슈(REST Docs `params.location` 누락) 수정 완료.
 - `RobotControllerTest` 단독 및 Agent 3 검증 세트(Controller+Service 2종) 모두 PASS 확인.
 - WebSocket notifier 구현체 추가 시 `RobotStatusNotifier` 다중 빈 충돌 위험이 있으므로, Agent 4 머지 시점에 `@Primary` 또는 `@ConditionalOnMissingBean` 전략 재조율이 필요합니다.
-- v9 지시서 기준 Agent 3는 추가 코드 수정 없이 `push`만 남은 상태이며, 본 환경에서 `git push origin feature/phase1-robot` 재시도 시 인증 오류가 재현됩니다.
+- v10 지시서 기준 Agent 3 액션(`git push origin feature/phase1-robot`) 수행 완료.
