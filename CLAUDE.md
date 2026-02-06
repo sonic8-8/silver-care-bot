@@ -272,6 +272,8 @@ main (production)
 <footer>
 ```
 
+- 커밋 메시지의 `subject`와 본문은 항상 한글로 작성합니다.
+
 | Type | 설명 |
 |------|------|
 | `feat` | 새로운 기능 |
@@ -703,6 +705,8 @@ feat(elder): 노인 CRUD API 구현 [Agent 2]
 chore(db): V2 마이그레이션 스크립트 추가 [Agent 3]
 feat(ws): WebSocket 토픽 설정 [Agent 4]
 ```
+
+- 필수 규칙: 커밋 메시지의 `subject`와 본문은 항상 한글로 작성합니다.
 
 ### 머지 순서
 
