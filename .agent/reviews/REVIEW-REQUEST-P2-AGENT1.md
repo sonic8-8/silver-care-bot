@@ -43,3 +43,9 @@ cd backend
 ### Agent 0 전달 메모
 - Agent 1 브랜치는 품질 게이트 통과 및 `Approve` 상태입니다.
 - 병렬 머지 순서 원칙에 따라 **Agent 3 선행 머지 후 Agent 1 병합**을 권장합니다.
+
+### 반영 이력 (최신)
+- 커밋: `e5489f3` (`feat(medication): Phase2 복약/대시보드 백엔드 구현 및 리뷰 반영 [Agent 1]`)
+- 원격 반영: `origin/feature/phase2-medication-dashboard-be` force-with-lease 동기화 완료
+- Agent 3 선행 머지 반영: `origin/develop` 리베이스 완료(충돌 없음)
+- 리베이스 후 타깃 테스트 재확인: `BUILD SUCCESSFUL` (all up-to-date)
