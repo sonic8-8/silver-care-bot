@@ -85,8 +85,7 @@ public class ElderService {
                 .stream()
                 .collect(Collectors.toMap(
                         robot -> robot.getElder().getId(),
-                        robot -> robot.getNetworkStatus() == NetworkStatus.CONNECTED,
-                        (existing, replacement) -> existing || replacement
+                        robot -> robot.getNetworkStatus() == NetworkStatus.CONNECTED
                 ));
         Map<Long, EmergencyType> pendingEmergencyMap = new HashMap<>();
         List<Emergency> pendingEmergencies = emergencyRepository

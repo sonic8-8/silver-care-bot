@@ -18,7 +18,7 @@ export interface ElderSummary {
     status: ElderStatus;
     lastActivity: string;
     location?: string;
-    robotConnected?: boolean;
+    robotConnected?: boolean | null;
     emergencyType?: EmergencyType;
 }
 
@@ -44,7 +44,7 @@ export interface ElderDetail {
     status: ElderStatus;
     lastActivity: string;
     location?: string | null;
-    robotConnected?: boolean;
+    robotConnected?: boolean | null;
     emergencyType?: EmergencyType;
     emergencyContacts?: EmergencyContact[];
 }

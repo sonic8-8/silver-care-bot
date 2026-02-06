@@ -50,6 +50,6 @@ public class ElderController {
     @DeleteMapping("/{elderId}")
     public ApiResponse<Void> deleteElder(@PathVariable Long elderId) {
         elderService.deleteElder(elderId);
-        return ApiResponse.success();
+        return ApiResponse.ok();
     }
 }

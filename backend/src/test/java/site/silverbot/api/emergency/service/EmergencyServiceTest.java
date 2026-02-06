@@ -1,6 +1,7 @@
 package site.silverbot.api.emergency.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,9 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import site.silverbot.api.emergency.request.ReportEmergencyRequest;
 import site.silverbot.api.emergency.request.ResolveEmergencyRequest;
@@ -135,5 +138,53 @@ class EmergencyServiceTest {
         assertThat(response.resolvedAt()).isNotNull();
         assertThat(elderRepository.findById(elder.getId()).orElseThrow().getStatus())
                 .isEqualTo(ElderStatus.SAFE);
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void resolveEmergency_alreadyResolved_shouldThrowConflict() {
+        Emergency emergency = emergencyRepository.save(Emergency.builder()
+                .elder(elder)
+                .robot(robot)
+                .type(EmergencyType.NO_RESPONSE)
+                .resolution(EmergencyResolution.RESOLVED)
+                .detectedAt(LocalDateTime.now().minusMinutes(10))
+                .resolvedAt(LocalDateTime.now().minusMinutes(1))
+                .build());
+
+        ResolveEmergencyRequest request = new ResolveEmergencyRequest(EmergencyResolution.FALSE_ALARM, "재해제 시도");
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> emergencyService.resolveEmergency(emergency.getId(), request)
+        );
+
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void resolveEmergency_withOtherPending_shouldNotSetElderSafe() {
+        Emergency toResolve = emergencyRepository.save(Emergency.builder()
+                .elder(elder)
+                .robot(robot)
+                .type(EmergencyType.NO_RESPONSE)
+                .detectedAt(LocalDateTime.now().minusMinutes(5))
+                .build());
+        emergencyRepository.save(Emergency.builder()
+                .elder(elder)
+                .robot(robot)
+                .type(EmergencyType.SOS_BUTTON)
+                .detectedAt(LocalDateTime.now().minusMinutes(3))
+                .build());
+        elder.updateStatus(ElderStatus.DANGER);
+
+        ResolveEmergencyRequest request = new ResolveEmergencyRequest(EmergencyResolution.RESOLVED, "첫 번째만 해제");
+
+        emergencyService.resolveEmergency(toResolve.getId(), request);
+
+        Elder refreshedElder = elderRepository.findById(elder.getId()).orElseThrow();
+        assertThat(refreshedElder.getStatus()).isEqualTo(ElderStatus.DANGER);
+        assertThat(emergencyRepository.existsByElderIdAndResolution(elder.getId(), EmergencyResolution.PENDING)).isTrue();
     }
 }

@@ -101,8 +101,11 @@ public class EmergencyService {
         Emergency emergency = emergencyRepository.findById(emergencyId)
                 .orElseThrow(() -> new EntityNotFoundException("Emergency not found"));
         validateOwnership(emergency.getElder());
+        if (emergency.getResolution() != EmergencyResolution.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해제된 긴급 상황입니다.");
+        }
         if (request.resolution() == EmergencyResolution.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PENDING은 해제 상태가 아닙니다.");
+            throw new IllegalArgumentException("PENDING은 해제 상태가 아닙니다.");
         }
         emergency.resolve(request.resolution(), request.note(), LocalDateTime.now());
         emergencyRepository.save(emergency);

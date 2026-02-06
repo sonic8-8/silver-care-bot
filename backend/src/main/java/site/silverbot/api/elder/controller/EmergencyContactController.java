@@ -53,6 +53,6 @@ public class EmergencyContactController {
             @PathVariable Long contactId
     ) {
         emergencyContactService.deleteContact(elderId, contactId);
-        return ApiResponse.success();
+        return ApiResponse.ok();
     }
 }
