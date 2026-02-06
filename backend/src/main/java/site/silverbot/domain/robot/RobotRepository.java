@@ -13,4 +13,6 @@ public interface RobotRepository extends JpaRepository<Robot, Long> {
     Optional<Robot> findByElderId(Long elderId);
 
     List<Robot> findByElderIdIn(List<Long> elderIds);
+
+    List<Robot> findAllByElderIdIn(List<Long> elderIds);
 }

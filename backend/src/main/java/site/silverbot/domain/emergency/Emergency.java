@@ -95,4 +95,12 @@ public class Emergency {
         this.detectedAt = detectedAt;
         this.resolvedAt = resolvedAt;
     }
+
+    public void resolve(EmergencyResolution resolution, String note, LocalDateTime resolvedAt) {
+        if (resolution != null) {
+            this.resolution = resolution;
+        }
+        this.resolutionNote = note;
+        this.resolvedAt = resolvedAt == null ? LocalDateTime.now() : resolvedAt;
+    }
 }

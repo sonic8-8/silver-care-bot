@@ -87,4 +87,34 @@ public class Elder {
         this.lastActivityAt = lastActivityAt;
         this.lastLocation = lastLocation;
     }
+
+    public void updateInfo(String name, LocalDate birthDate, Gender gender, String address) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (birthDate != null) {
+            this.birthDate = birthDate;
+        }
+        if (gender != null) {
+            this.gender = gender;
+        }
+        if (address != null) {
+            this.address = address;
+        }
+    }
+
+    public void updateStatus(ElderStatus status) {
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
+    public void updateLastActivity(LocalDateTime lastActivityAt, String lastLocation) {
+        if (lastActivityAt != null) {
+            this.lastActivityAt = lastActivityAt;
+        }
+        if (lastLocation != null) {
+            this.lastLocation = lastLocation;
+        }
+    }
 }

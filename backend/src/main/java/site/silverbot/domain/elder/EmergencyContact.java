@@ -61,4 +61,19 @@ public class EmergencyContact {
         this.relation = relation;
         this.priority = priority == null ? 1 : priority;
     }
+
+    public void updateInfo(String name, String phone, String relation, Integer priority) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
+        if (relation != null) {
+            this.relation = relation;
+        }
+        if (priority != null) {
+            this.priority = priority;
+        }
+    }
 }
