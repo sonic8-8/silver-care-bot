@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.11
+> **버전**: v3.12
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -1123,7 +1123,7 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] `feature/phase5-*` 4개 브랜치가 `origin/develop`에 포함됨
 - [x] `management/architect`가 `origin/develop`에 포함됨
 - [x] Phase 5 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P5-AGENT*`, `COORDINATION-P5`)
-- [ ] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
+- [x] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
 - [x] `feature/phase5-*` 로컬 브랜치 정리 및 Worktree 재할당
 - [ ] sync.sh 실행하여 Team Repo 동기화
 ```
@@ -1133,11 +1133,25 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 ```markdown
 ## 브랜치 정리 및 재할당 계획
 
-- [ ] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
+- [x] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
 - [x] `feature/phase5-*` 로컬 브랜치 정리
 - [x] Agent 1~4용 `feature/phase6-*` 브랜치 생성 (`origin/develop` 기준)
 - [x] Agent 1~4 Worktree를 `feature/phase6-*`로 전환
 - [x] Phase 6 작업 지시서/DoD 배포 (`COORDINATION-P6`, `WORK-INSTRUCTION-P6-AGENT*`)
+```
+
+### Phase 6 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [x] Agent 1~4 새 세션 리뷰 Approve 완료
+- [x] `feature/phase6-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [x] `management/architect`가 `origin/develop`에 포함됨
+- [x] Phase 6 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P6-AGENT*`, `COORDINATION-P6`)
+- [ ] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
+- [ ] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 
 ---
