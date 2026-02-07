@@ -83,6 +83,7 @@ describe('lcd contracts', () => {
                     type: 'BUTTON',
                     detectedAt: '2026-02-08T08:00:00+09:00',
                     action: 'TAKE',
+                    medicationId: 12,
                     location: '거실',
                 },
             ],
@@ -90,6 +91,7 @@ describe('lcd contracts', () => {
 
         expect(payload.events).toHaveLength(2);
         expect(payload.events[1]?.action).toBe('TAKE');
+        expect(payload.events[1]?.medicationId).toBe(12);
     });
 
     it('rejects button events without action', () => {
@@ -103,6 +105,21 @@ describe('lcd contracts', () => {
                 ],
             })
         ).toThrow('[contract] robotEvent.action is required for BUTTON');
+    });
+
+    it('rejects TAKE action events without medicationId', () => {
+        expect(() =>
+            parseRobotEventsRequest({
+                events: [
+                    {
+                        type: 'BUTTON',
+                        detectedAt: '2026-02-08T08:00:00+09:00',
+                        action: 'TAKE',
+                        location: '거실',
+                    },
+                ],
+            })
+        ).toThrow('[contract] robotEvent.medicationId is required for TAKE');
     });
 
     it('parses robot events response', () => {

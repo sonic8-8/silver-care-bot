@@ -59,6 +59,7 @@ export interface RobotEventPayload {
     location: string | null;
     confidence: number | null;
     action: RobotEventAction | null;
+    medicationId: number | null;
 }
 
 export interface RobotEventsRequest {
@@ -190,28 +191,18 @@ const parseRobotEventPayload = (value: unknown): RobotEventPayload => {
         throw new Error('[contract] robotEvent.detectedAt is required');
     }
 
-    const action = readNullableString(value.action, 'robotEvent.action');
-    if (type === 'BUTTON') {
-        if (action === null) {
-            throw new Error('[contract] robotEvent.action is required for BUTTON');
-        }
-        return {
-            type,
-            detectedAt: readString(detectedAt, 'robotEvent.detectedAt'),
-            location: readNullableString(value.location, 'robotEvent.location'),
-            confidence: readNullableNumber(value.confidence, 'robotEvent.confidence'),
-            action: readEnum(action, ROBOT_EVENT_ACTIONS, 'robotEvent.action'),
-        };
-    }
+    const actionText = readNullableString(value.action, 'robotEvent.action');
+    const action =
+        actionText === null
+            ? null
+            : readEnum(actionText, ROBOT_EVENT_ACTIONS, 'robotEvent.action');
+    const medicationId = readNullableNumber(value.medicationId, 'robotEvent.medicationId');
 
-    if (action === null) {
-        return {
-            type,
-            detectedAt: readString(detectedAt, 'robotEvent.detectedAt'),
-            location: readNullableString(value.location, 'robotEvent.location'),
-            confidence: readNullableNumber(value.confidence, 'robotEvent.confidence'),
-            action: null,
-        };
+    if (type === 'BUTTON' && action === null) {
+        throw new Error('[contract] robotEvent.action is required for BUTTON');
+    }
+    if (action === 'TAKE' && medicationId === null) {
+        throw new Error('[contract] robotEvent.medicationId is required for TAKE');
     }
 
     return {
@@ -219,7 +210,8 @@ const parseRobotEventPayload = (value: unknown): RobotEventPayload => {
         detectedAt: readString(detectedAt, 'robotEvent.detectedAt'),
         location: readNullableString(value.location, 'robotEvent.location'),
         confidence: readNullableNumber(value.confidence, 'robotEvent.confidence'),
-        action: readEnum(action, ROBOT_EVENT_ACTIONS, 'robotEvent.action'),
+        action,
+        medicationId,
     };
 };
 

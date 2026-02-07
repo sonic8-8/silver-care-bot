@@ -77,7 +77,7 @@ const applyButtonEvent = (
             mode: 'IDLE',
             emotion: 'happy',
             message: '',
-            subMessage: '',
+            subMessage: `복약 확인 완료 (medicationId: ${event.medicationId})`,
             lastUpdatedAt: at,
         });
     }
