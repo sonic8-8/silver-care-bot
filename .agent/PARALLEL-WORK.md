@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.4
+> **버전**: v3.5
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -946,6 +946,19 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] `feature/phase3-*` 4개 브랜치가 `origin/develop`에 포함됨
 - [x] `management/architect`가 `origin/develop`에 포함됨
 - [ ] sync.sh 실행하여 Team Repo 동기화
+```
+
+### Phase 3 Round 2 착수 기준
+
+```markdown
+## 재분배 및 브랜치 운영
+
+- [x] 머지된 `feature/phase3-*` 원격 브랜치 정리 완료
+- [x] 기존 브랜치명 재사용 정책 확정(`--force-with-lease`)
+- [x] Round 2 지시서 재배포 완료 (`COORDINATION-P3`, `WORK-INSTRUCTION-P3-AGENT*`)
+- [ ] Agent 1 계약 고정 완료
+- [ ] Agent 4 계약 정렬 완료
+- [ ] Round 2 구현/리뷰/머지 완료
 ```
 
 ---

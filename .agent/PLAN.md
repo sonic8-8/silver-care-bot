@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.5
+> **버전**: v1.6
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -360,6 +360,14 @@
 - [x] Agent 1~4 Phase 3 브랜치 생성 및 워크트리 재할당
 - [x] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
 
+#### 3.0-b Phase 3 Round 2 착수 체크리스트 (2026-02-07)
+- [x] `feature/phase3-*` 원격 브랜치 정리(삭제) 완료
+- [x] 기존 브랜치명 재사용 정책 확정 (`--force-with-lease`)
+- [x] Round 2 작업 지시서 재배포 (`COORDINATION-P3`, `WORK-INSTRUCTION-P3-AGENT*`)
+- [ ] Agent 1 계약 고정 완료 (Activity/Report/Dashboard)
+- [ ] Agent 4 계약 정렬 완료 (shared 타입/Mock/실시간 소비 규칙)
+- [ ] Round 2 구현/리뷰/머지 완료 (Agent 1 → Agent 4 → Agent 2, Agent 3 조건부 선행)
+
 Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
 - [x] 대시보드 실시간 구독(`/topic/robot/{robotId}/status`, `/topic/elder/{elderId}/status`) 반영
@@ -564,3 +572,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.3 | 2026-02-06 | Phase 1 브랜치 정리 및 Phase 2 병렬 분배/브랜치 전략 반영 |
 | v1.4 | 2026-02-07 | Phase 2 구현 체크리스트 업데이트(완료/잔여 반영), Phase 3 병렬 분배 초안/브랜치 정리 계획 추가 |
 | v1.5 | 2026-02-07 | Phase 2 Gate/Phase 3 구현 체크리스트 반영, 공통 마감(`management/architect`→`develop`) 체크 항목 추가 |
+| v1.6 | 2026-02-07 | Phase 3 Round 2 착수 체크리스트 및 재분배 계획 반영 (브랜치 정리/재사용 정책 포함) |
