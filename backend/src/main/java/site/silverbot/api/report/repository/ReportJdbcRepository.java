@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -20,6 +21,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class ReportJdbcRepository {
+    private static final Set<String> NON_POSTGRES_CAST_SQL_STATES = Set.of(
+            "HY004",
+            "22018",
+            "42S22"
+    );
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public Optional<WeeklyReportData> findWeeklyReport(Long elderId, LocalDate weekStartDate, LocalDate weekEndDate) {
@@ -136,6 +143,16 @@ public class ReportJdbcRepository {
     }
 
     private boolean isUnsupportedTypeCast(DataAccessException ex, String typeName) {
+        String sqlState = findSqlState(ex);
+        if (sqlState != null) {
+            if (isPostgresSqlState(sqlState)) {
+                return false;
+            }
+            if (NON_POSTGRES_CAST_SQL_STATES.contains(sqlState)) {
+                return true;
+            }
+        }
+
         String message = ex.getMessage();
         if (message == null) {
             return false;
@@ -147,6 +164,28 @@ public class ReportJdbcRepository {
                 || normalized.contains("not found")
                 || normalized.contains("cannot cast")
                 || normalized.contains("data conversion"));
+    }
+
+    private String findSqlState(DataAccessException ex) {
+        Throwable current = ex;
+        while (current != null) {
+            if (current instanceof SQLException sqlException) {
+                String sqlState = sqlException.getSQLState();
+                if (sqlState != null && !sqlState.isBlank()) {
+                    return sqlState;
+                }
+            }
+            current = current.getCause();
+        }
+        return null;
+    }
+
+    private boolean isPostgresSqlState(String sqlState) {
+        return sqlState.startsWith("22P")
+                || sqlState.startsWith("23P")
+                || sqlState.startsWith("42P")
+                || "42704".equals(sqlState)
+                || "42846".equals(sqlState);
     }
 
     private RowMapper<WeeklyReportData> weeklyReportMapper() {
