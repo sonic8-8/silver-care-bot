@@ -17,6 +17,12 @@
 - [x] `LATER/CONFIRM/EMERGENCY` 기존 동작 유지
 - [x] Agent 4 소유 경로(`frontend-lcd/src/shared/*`, `frontend-lcd/src/mocks/*`) 미수정 유지
 
+### 최신 Fix 반영 항목 (인증 연동)
+- [x] URL query `token` 우선 토큰 해석 경로 추가(무토큰 무인증 호출 차단)
+- [x] REST 요청에 `Authorization: Bearer {token}` 자동 주입
+- [x] STOMP `connectHeaders.Authorization` + SockJS query `?token=` 동시 적용
+- [x] 토큰 누락 시 LCD 상태 조회/액션 전송에 사용자 피드백 메시지 노출
+
 ### 변경 파일
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
@@ -28,11 +34,12 @@
 | `frontend-lcd/src/app/styles.css` | 신규 | 대형 터치 UI/모드별 스타일/애니메이션 |
 | `frontend-lcd/src/pages/LcdScreenPage.tsx` | 신규 | robotId 기반 LCD 메인 페이지 |
 | `frontend-lcd/src/features/lcd/types.ts` | 신규 | LCD mode/emotion/state/action 타입 |
-| `frontend-lcd/src/features/lcd/api/httpClient.ts` | 신규 | API 클라이언트 |
+| `frontend-lcd/src/features/lcd/auth/authToken.ts` | 신규/수정(Latest Fix) | query token 우선 해석 + 토큰 헤더/쿼리 생성 + 무토큰 에러 정의 |
+| `frontend-lcd/src/features/lcd/api/httpClient.ts` | 신규/수정(Latest Fix) | 인터셉터 기반 `Authorization` 헤더 주입 및 무토큰 요청 차단 |
 | `frontend-lcd/src/features/lcd/api/lcdApi.ts` | 신규/수정(Round2) | `GET /api/robots/{robotId}/lcd` 정규화 + `medicationId` 파싱 |
 | `frontend-lcd/src/features/lcd/api/lcdEventApi.ts` | 신규/수정(Round2) | 버튼 액션 -> `POST /api/robots/{robotId}/events`, `TAKE` 시 `medicationId` 포함 |
-| `frontend-lcd/src/features/lcd/hooks/useLcdRealtime.ts` | 신규 | `/topic/robot/{robotId}/lcd` STOMP 구독 |
-| `frontend-lcd/src/features/lcd/hooks/useLcdController.ts` | 신규/수정(Round2) | 초기 조회 + 실시간 반영 + 액션 전송, `TAKE` 400 피드백 처리 |
+| `frontend-lcd/src/features/lcd/hooks/useLcdRealtime.ts` | 신규/수정(Latest Fix) | STOMP `connectHeaders` + ws query token 인증 전달 |
+| `frontend-lcd/src/features/lcd/hooks/useLcdController.ts` | 신규/수정(Round2+Latest Fix) | 초기 조회/액션 전송, `TAKE` 400 및 무토큰 에러 피드백 처리 |
 | `frontend-lcd/src/features/lcd/components/LcdLayout.tsx` | 신규 | 공통 레이아웃/상태 헤더/에러 표시 |
 | `frontend-lcd/src/features/lcd/components/LcdModeScreens.tsx` | 신규 | IDLE/GREETING/MEDICATION/SCHEDULE/LISTENING/EMERGENCY/SLEEP 화면 |
 | `frontend-lcd/src/features/lcd/components/LcdActionButton.tsx` | 신규 | 공통 대형 액션 버튼 |
@@ -49,6 +56,9 @@
 5. Agent 4 소유 경로(`frontend-lcd/src/shared/*`, `frontend-lcd/src/mocks/*`)는 생성/수정하지 않았습니다.
 6. Round 2에서 `TAKE` 이벤트는 `lcdState.medicationId`가 있을 때 payload에 포함되도록 보강했습니다.
 7. Round 2에서 `TAKE` 요청의 400 응답(예: medicationId 누락) 시 전용 에러 메시지를 표시하도록 보강했습니다.
+8. 최신 Fix에서 URL query `token`을 우선 해석하고, 세션/로컬/환경 fallback을 적용했습니다.
+9. 최신 Fix에서 REST 요청은 인터셉터에서 `Authorization` 헤더를 강제하며, 토큰이 없으면 요청을 차단하도록 했습니다.
+10. 최신 Fix에서 WebSocket은 `connectHeaders.Authorization`와 `?token=`을 함께 전달해 서버 인증 방식 차이를 흡수하도록 했습니다.
 
 ### Agent 4 협업 요청 (계약 정렬)
 1. `frontend-lcd/src/shared/*`에 LCD 계약 타입/파서와 실시간 훅이 확정되면 Agent 2 코드의 로컬 정규화 로직과 교체/정렬 필요
@@ -62,6 +72,8 @@
 - [ ] `normalizeLcdState`의 `medicationId` 파싱(number/string)이 안정적인지
 - [ ] 액션 이벤트 요청 payload에서 `TAKE`일 때만 `medicationId`가 포함되는지
 - [ ] `TAKE` 400 응답 시 사용자 피드백이 의도대로 노출되는지
+- [ ] 무토큰 상태에서 REST 요청이 실제 전송되지 않고 명시 에러로 차단되는지
+- [ ] WebSocket 연결 시 인증 헤더/쿼리 토큰 전달이 모두 적용되는지
 - [ ] Agent 4 소유 경로(`shared/*`, `mocks/*`) 침범이 없는지
 
 ### 테스트 명령어

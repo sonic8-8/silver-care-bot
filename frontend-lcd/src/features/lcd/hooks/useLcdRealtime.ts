@@ -1,6 +1,11 @@
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { useEffect, useMemo, useState } from 'react'
+import {
+  appendTokenQuery,
+  getAuthToken,
+  getAuthorizationHeaderValue,
+} from '../auth/authToken'
 import { normalizeLcdState } from '../api/lcdApi'
 import type { LcdConnectionStatus, LcdState, LcdWebSocketEnvelope } from '../types'
 
@@ -18,13 +23,25 @@ export function useLcdRealtime({ robotId, onModeChange }: UseLcdRealtimeParams) 
     useState<LcdConnectionStatus>('connecting')
 
   const wsEndpoint = useMemo(() => import.meta.env.VITE_WS_URL ?? '/ws', [])
+  const authHeader = useMemo(() => getAuthorizationHeaderValue(), [])
+  const wsEndpointWithToken = useMemo(() => {
+    const token = getAuthToken()
+    return token ? appendTokenQuery(wsEndpoint, token) : wsEndpoint
+  }, [wsEndpoint])
 
   useEffect(() => {
+    if (!authHeader) {
+      return
+    }
+
     const client = new Client({
       reconnectDelay: 4_000,
       heartbeatIncoming: 10_000,
       heartbeatOutgoing: 10_000,
-      webSocketFactory: () => new SockJS(wsEndpoint),
+      connectHeaders: {
+        Authorization: authHeader,
+      },
+      webSocketFactory: () => new SockJS(wsEndpointWithToken),
     })
 
     client.onConnect = () => {
@@ -65,7 +82,7 @@ export function useLcdRealtime({ robotId, onModeChange }: UseLcdRealtimeParams) 
     return () => {
       void client.deactivate()
     }
-  }, [onModeChange, robotId, wsEndpoint])
+  }, [authHeader, onModeChange, robotId, wsEndpointWithToken])
 
-  return connectionStatus
+  return authHeader ? connectionStatus : 'error'
 }

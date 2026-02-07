@@ -1,5 +1,9 @@
 import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
+import {
+  getAuthToken,
+  isMissingAuthTokenError,
+} from '../auth/authToken'
 import { getRobotLcdState } from '../api/lcdApi'
 import { postLcdActionEvent } from '../api/lcdEventApi'
 import {
@@ -10,8 +14,9 @@ import {
 import { useLcdRealtime } from './useLcdRealtime'
 
 export function useLcdController(robotId: string) {
+  const hasAuthToken = Boolean(getAuthToken())
   const [lcdState, setLcdState] = useState<LcdState>(DEFAULT_LCD_STATE)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(hasAuthToken)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -25,6 +30,10 @@ export function useLcdController(robotId: string) {
   })
 
   useEffect(() => {
+    if (!hasAuthToken) {
+      return
+    }
+
     let disposed = false
 
     async function load() {
@@ -36,8 +45,13 @@ export function useLcdController(robotId: string) {
         if (!disposed) {
           setLcdState(state)
         }
-      } catch {
+      } catch (error: unknown) {
         if (!disposed) {
+          if (isMissingAuthTokenError(error)) {
+            setErrorMessage('인증 토큰이 없어 LCD에 연결할 수 없습니다. URL token을 확인해 주세요.')
+            return
+          }
+
           setErrorMessage('LCD 상태를 불러오지 못했습니다. 연결 상태를 확인해 주세요.')
         }
       } finally {
@@ -52,7 +66,7 @@ export function useLcdController(robotId: string) {
     return () => {
       disposed = true
     }
-  }, [robotId])
+  }, [hasAuthToken, robotId])
 
   const sendAction = useCallback(
     async (action: LcdActionType) => {
@@ -69,6 +83,11 @@ export function useLcdController(robotId: string) {
             action === 'TAKE' ? (lcdState.medicationId ?? undefined) : undefined,
         })
       } catch (error: unknown) {
+        if (isMissingAuthTokenError(error)) {
+          setErrorMessage('인증 토큰이 없어 버튼 요청을 전송할 수 없습니다. URL token을 확인해 주세요.')
+          return
+        }
+
         if (
           action === 'TAKE' &&
           axios.isAxiosError(error) &&
@@ -92,7 +111,11 @@ export function useLcdController(robotId: string) {
     lcdState,
     isLoading,
     isSubmittingAction,
-    errorMessage,
+    errorMessage:
+      errorMessage ??
+      (hasAuthToken
+        ? null
+        : '인증 토큰이 없어 LCD에 연결할 수 없습니다. URL token을 포함해 접속해 주세요.'),
     connectionStatus,
     sendAction,
   }
