@@ -35,6 +35,7 @@ describe('useDashboard', () => {
                 networkStatus: 'CONNECTED',
                 currentLocation: '거실',
             },
+            latestPatrol: null,
         };
 
         mockedGetDashboardData.mockResolvedValue(dashboardData);

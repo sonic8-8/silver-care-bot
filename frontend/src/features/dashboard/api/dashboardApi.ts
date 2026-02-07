@@ -9,10 +9,15 @@ import type {
     ActivityLevel,
     DashboardCalendarDay,
     DashboardData,
+    DashboardLatestPatrol,
+    DashboardPatrolItem,
     DashboardRobotStatus,
     DashboardTodaySummary,
     NotificationItem,
     NotificationListPayload,
+    PatrolItemStatus,
+    PatrolOverallStatus,
+    PatrolTarget,
     ScheduleItem,
     ScheduleListPayload,
     ScheduleSource,
@@ -56,6 +61,24 @@ type RawScheduleItem = {
 
 interface RawScheduleListPayload {
     schedules: RawScheduleItem[];
+}
+
+interface RawPatrolItem {
+    id?: number;
+    target?: string;
+    label?: string | null;
+    status?: string;
+    confidence?: number | null;
+    imageUrl?: string | null;
+    checkedAt?: string | null;
+}
+
+interface RawPatrolLatestPayload {
+    patrolResultId?: number | null;
+    patrolId?: string | null;
+    overallStatus?: string | null;
+    lastPatrolAt?: string | null;
+    items?: RawPatrolItem[];
 }
 
 const ensureActivityLevel = (value: string | null | undefined): ActivityLevel => {
@@ -106,6 +129,27 @@ const ensureScheduleStatus = (value: string | undefined): ScheduleStatus => {
     }
 
     return 'UPCOMING';
+};
+
+const ensurePatrolOverallStatus = (value: string | null | undefined): PatrolOverallStatus | null => {
+    if (value === 'SAFE' || value === 'WARNING') {
+        return value;
+    }
+    return null;
+};
+
+const ensurePatrolTarget = (value: string | undefined): PatrolTarget => {
+    if (value === 'GAS_VALVE' || value === 'DOOR' || value === 'OUTLET' || value === 'WINDOW') {
+        return value;
+    }
+    return 'MULTI_TAP';
+};
+
+const ensurePatrolItemStatus = (value: string | undefined): PatrolItemStatus => {
+    if (value === 'ON' || value === 'OFF' || value === 'NORMAL' || value === 'LOCKED' || value === 'UNLOCKED') {
+        return value;
+    }
+    return 'NEEDS_CHECK';
 };
 
 const formatDate = (date: Date) => {
@@ -335,6 +379,11 @@ const getWeeklySchedules = async (elderId: number): Promise<ScheduleListPayload>
     };
 };
 
+const getLatestPatrol = async (elderId: number) => {
+    const response = await api.get<ApiResult<RawPatrolLatestPayload>>(`/elders/${elderId}/patrol/latest`);
+    return unwrapApiResponse(response.data);
+};
+
 export const selectRecentNotifications = (notifications: NotificationItem[], limit = 5) => {
     return notifications
         .slice()
@@ -389,6 +438,32 @@ const buildFallbackRobotStatus = (robot?: ElderDetailForDashboard['robot']): Das
     };
 };
 
+const normalizePatrolItem = (item: RawPatrolItem): DashboardPatrolItem => {
+    return {
+        id: item.id ?? 0,
+        target: ensurePatrolTarget(item.target),
+        label: item.label ?? null,
+        status: ensurePatrolItemStatus(item.status),
+        confidence: typeof item.confidence === 'number' ? item.confidence : null,
+        imageUrl: item.imageUrl ?? null,
+        checkedAt: item.checkedAt ?? null,
+    };
+};
+
+const buildLatestPatrol = (payload: RawPatrolLatestPayload | null): DashboardLatestPatrol | null => {
+    if (!payload) {
+        return null;
+    }
+
+    return {
+        patrolResultId: payload.patrolResultId ?? null,
+        patrolId: payload.patrolId ?? null,
+        overallStatus: ensurePatrolOverallStatus(payload.overallStatus),
+        lastPatrolAt: payload.lastPatrolAt ?? null,
+        items: (payload.items ?? []).map(normalizePatrolItem),
+    };
+};
+
 export const getDashboardData = async (elderId: number): Promise<DashboardData> => {
     const elderDetailResponse = await getElderDetail(elderId);
     if (!elderDetailResponse) {
@@ -399,6 +474,7 @@ export const getDashboardData = async (elderId: number): Promise<DashboardData> 
 
     const notificationsResult = await withDependencyFallback(getDashboardNotifications(elderId));
     const schedulesResult = await withDependencyFallback(getWeeklySchedules(elderId));
+    const patrolResult = await withDependencyFallback(getLatestPatrol(elderId));
 
     const robotId = elderDetail.robot?.id;
     let robotStatus = buildFallbackRobotStatus(elderDetail.robot);
@@ -427,5 +503,6 @@ export const getDashboardData = async (elderId: number): Promise<DashboardData> 
         recentNotifications: selectRecentNotifications(notificationsResult?.notifications ?? []),
         weeklyCalendar: buildWeeklyCalendar(schedulesResult?.schedules ?? []),
         robotStatus,
+        latestPatrol: buildLatestPatrol(patrolResult),
     };
 };

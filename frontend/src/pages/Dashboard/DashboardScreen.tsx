@@ -5,18 +5,22 @@ import {
     Battery,
     Bell,
     CalendarDays,
+    DoorOpen,
+    Flame,
     CheckCircle2,
     Clock3,
     MapPin,
     Pill,
+    Plug,
     Router,
+    Square,
 } from 'lucide-react';
 import GuardianAppContainer from '@/pages/_components/GuardianAppContainer';
 import { Button } from '@/shared/ui/Button';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useDashboardRealtime } from '@/features/dashboard/hooks/useDashboardRealtime';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import type { ActivityLevel, NotificationType } from '@/features/dashboard/types';
+import type { ActivityLevel, NotificationType, PatrolItemStatus, PatrolTarget } from '@/features/dashboard/types';
 import type { ElderStatus } from '@/shared/types/elder.types';
 
 const activityLabelMap: Record<ActivityLevel, string> = {
@@ -54,6 +58,40 @@ const notificationTypeClassMap: Record<NotificationType, string> = {
     SYSTEM: 'bg-gray-100 text-gray-600',
 };
 
+const patrolTargetLabelMap: Record<PatrolTarget, string> = {
+    GAS_VALVE: '가스밸브',
+    DOOR: '문',
+    OUTLET: '콘센트',
+    WINDOW: '창문',
+    MULTI_TAP: '멀티탭',
+};
+
+const patrolTargetIconMap: Record<PatrolTarget, typeof MapPin> = {
+    GAS_VALVE: Flame,
+    DOOR: DoorOpen,
+    OUTLET: Plug,
+    WINDOW: Square,
+    MULTI_TAP: Plug,
+};
+
+const patrolStatusLabelMap: Record<PatrolItemStatus, string> = {
+    ON: '켜짐',
+    OFF: '꺼짐',
+    NORMAL: '정상',
+    LOCKED: '잠김',
+    UNLOCKED: '열림',
+    NEEDS_CHECK: '점검 필요',
+};
+
+const patrolStatusClassMap: Record<PatrolItemStatus, string> = {
+    ON: 'bg-safe-bg text-safe',
+    OFF: 'bg-danger-bg text-danger',
+    NORMAL: 'bg-safe-bg text-safe',
+    LOCKED: 'bg-safe-bg text-safe',
+    UNLOCKED: 'bg-danger-bg text-danger',
+    NEEDS_CHECK: 'bg-warning-bg text-warning',
+};
+
 const ensureElderStatus = (value: string | undefined): ElderStatus | undefined => {
     if (value === 'SAFE' || value === 'WARNING' || value === 'DANGER') {
         return value;
@@ -86,6 +124,25 @@ const formatRelativeTime = (dateTime: string) => {
     return `${Math.floor(diff / day)}일 전`;
 };
 
+const formatDateTime = (dateTime: string | null | undefined) => {
+    if (!dateTime) {
+        return '-';
+    }
+
+    const target = new Date(dateTime);
+    if (Number.isNaN(target.getTime())) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat('ko-KR', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(target);
+};
+
 function DashboardScreen() {
     const { elderId } = useParams();
     const parsedElderId = Number(elderId);
@@ -115,6 +172,7 @@ function DashboardScreen() {
     const recentNotifications = dashboardData?.recentNotifications ?? [];
     const weeklyCalendar = dashboardData?.weeklyCalendar ?? [];
     const robotStatus = dashboardData?.robotStatus ?? null;
+    const latestPatrol = dashboardData?.latestPatrol ?? null;
 
     const activeRealtimeRobotStatus = useMemo(() => {
         if (!realtime.robotStatus) {
@@ -148,6 +206,9 @@ function DashboardScreen() {
         }
         : null;
     const mergedElderStatus = activeRealtimeElderStatus ?? elderStatus;
+    const warningPatrolItems = (latestPatrol?.items ?? []).filter((item) => {
+        return item.status === 'OFF' || item.status === 'UNLOCKED' || item.status === 'NEEDS_CHECK';
+    });
 
     if (!isValidElderId) {
         return (
@@ -290,6 +351,64 @@ function DashboardScreen() {
                         <p className="mt-4 text-sm text-gray-500">로봇 상태 데이터가 없습니다.</p>
                     )}
                 </article>
+            </section>
+
+            <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-card">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold text-gray-500">최근 순찰 결과</h2>
+                    {latestPatrol?.overallStatus ? (
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${latestPatrol.overallStatus === 'WARNING' ? 'bg-danger-bg text-danger' : 'bg-safe-bg text-safe'}`}>
+                            {latestPatrol.overallStatus === 'WARNING' ? '주의 필요' : '안전'}
+                        </span>
+                    ) : null}
+                </div>
+
+                {latestPatrol && latestPatrol.items.length > 0 ? (
+                    <>
+                        <p className="mt-3 text-xs text-gray-500">
+                            마지막 순찰: {formatDateTime(latestPatrol.lastPatrolAt)}
+                            {latestPatrol.lastPatrolAt ? ` (${formatRelativeTime(latestPatrol.lastPatrolAt)})` : ''}
+                        </p>
+
+                        {warningPatrolItems.length > 0 ? (
+                            <div className="mt-3 rounded-xl border border-danger bg-danger-bg px-3 py-2 text-xs font-semibold text-danger">
+                                경고 항목 {warningPatrolItems.length}건을 확인해 주세요.
+                            </div>
+                        ) : null}
+
+                        <ul className="mt-4 space-y-2">
+                            {latestPatrol.items.map((item) => {
+                                const Icon = patrolTargetIconMap[item.target];
+                                const isWarning = item.status === 'OFF' || item.status === 'UNLOCKED' || item.status === 'NEEDS_CHECK';
+                                const label = item.label ?? patrolTargetLabelMap[item.target];
+
+                                return (
+                                    <li
+                                        key={`${item.id}-${item.target}`}
+                                        className={`flex items-center justify-between gap-3 rounded-xl border p-3 ${isWarning ? 'border-danger/30 bg-danger-bg/40' : 'border-gray-200 bg-gray-50'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className={`rounded-lg p-2 ${isWarning ? 'bg-danger-bg text-danger' : 'bg-primary-50 text-primary-600'}`}>
+                                                <Icon size={16} />
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-900">{label}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    점검 시각: {formatDateTime(item.checkedAt)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${patrolStatusClassMap[item.status]}`}>
+                                            {patrolStatusLabelMap[item.status]}
+                                        </span>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </>
+                ) : (
+                    <p className="mt-4 text-sm text-gray-500">최근 순찰 데이터가 없습니다.</p>
+                )}
             </section>
 
             <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-card">
