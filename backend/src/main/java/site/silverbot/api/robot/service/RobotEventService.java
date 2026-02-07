@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -39,7 +40,43 @@ import site.silverbot.domain.user.User;
 public class RobotEventService {
     private static final String ACTION_TAKE = "TAKE";
     private static final String ACTION_LATER = "LATER";
+    private static final String ACTION_CONFIRM = "CONFIRM";
     private static final String ACTION_EMERGENCY = "EMERGENCY";
+    private static final String EVENT_TYPE_MEDICATION = "MEDICATION";
+    private static final String EVENT_TYPE_BUTTON = "BUTTON";
+    private static final String EVENT_TYPE_LCD_BUTTON = "LCD_BUTTON";
+    private static final String EVENT_TYPE_SCHEDULE = "SCHEDULE";
+    private static final Set<String> SUPPORTED_EVENT_TYPES = Set.of(
+            "WAKE_UP",
+            "SLEEP",
+            "OUT_DETECTED",
+            "RETURN_DETECTED",
+            "PATROL_COMPLETE",
+            "EMERGENCY",
+            EVENT_TYPE_MEDICATION,
+            EVENT_TYPE_BUTTON,
+            EVENT_TYPE_LCD_BUTTON,
+            EVENT_TYPE_SCHEDULE
+    );
+    private static final Set<String> ACTION_REQUIRED_EVENT_TYPES = Set.of(
+            EVENT_TYPE_BUTTON,
+            EVENT_TYPE_LCD_BUTTON
+    );
+    private static final Set<String> MEDICATION_ACTION_EVENT_TYPES = Set.of(
+            EVENT_TYPE_MEDICATION,
+            EVENT_TYPE_BUTTON,
+            EVENT_TYPE_LCD_BUTTON
+    );
+    private static final Set<String> CONFIRM_ACTION_EVENT_TYPES = Set.of(
+            EVENT_TYPE_BUTTON,
+            EVENT_TYPE_LCD_BUTTON,
+            EVENT_TYPE_SCHEDULE
+    );
+    private static final Set<String> EMERGENCY_ACTION_EVENT_TYPES = Set.of(
+            EVENT_TYPE_BUTTON,
+            EVENT_TYPE_LCD_BUTTON,
+            "EMERGENCY"
+    );
 
     private final RobotRepository robotRepository;
     private final RobotLcdEventRepository robotLcdEventRepository;
@@ -61,7 +98,7 @@ public class RobotEventService {
             String normalizedType = normalizeRequired(event.type(), "type");
             String normalizedAction = normalizeOptional(event.action());
             LocalDateTime occurredAt = resolveOccurredAt(event.timestamp(), event.detectedAt());
-            validateActionRequirements(normalizedAction, event.medicationId());
+            validateEventData(normalizedType, normalizedAction, event.medicationId());
 
             robotLcdEventRepository.save(RobotLcdEvent.builder()
                     .robot(robot)
@@ -118,6 +155,10 @@ public class RobotEventService {
                 insertActivity(robot, activityType, occurredAt, location);
             }
             return SideEffectResult.later();
+        }
+
+        if (ACTION_CONFIRM.equals(action)) {
+            return SideEffectResult.none();
         }
 
         ActivityType activityType = resolveActivityType(eventType, action);
@@ -270,9 +311,50 @@ public class RobotEventService {
         return value.trim().toUpperCase(Locale.ROOT);
     }
 
-    private void validateActionRequirements(String action, Long medicationId) {
-        if (ACTION_TAKE.equals(action) && medicationId == null) {
-            throw new IllegalArgumentException("medicationId is required when action is TAKE");
+    private void validateEventData(String eventType, String action, Long medicationId) {
+        validateEventType(eventType);
+        validateActionRequirements(eventType, action, medicationId);
+    }
+
+    private void validateEventType(String eventType) {
+        if (!SUPPORTED_EVENT_TYPES.contains(eventType)) {
+            throw new IllegalArgumentException("Unsupported event type: " + eventType);
+        }
+    }
+
+    private void validateActionRequirements(String eventType, String action, Long medicationId) {
+        if (action == null) {
+            if (ACTION_REQUIRED_EVENT_TYPES.contains(eventType)) {
+                throw new IllegalArgumentException("action is required for type " + eventType);
+            }
+            return;
+        }
+
+        switch (action) {
+            case ACTION_TAKE -> {
+                if (!MEDICATION_ACTION_EVENT_TYPES.contains(eventType)) {
+                    throw new IllegalArgumentException("action TAKE is not allowed for type " + eventType);
+                }
+                if (medicationId == null) {
+                    throw new IllegalArgumentException("medicationId is required when action is TAKE");
+                }
+            }
+            case ACTION_LATER -> {
+                if (!MEDICATION_ACTION_EVENT_TYPES.contains(eventType)) {
+                    throw new IllegalArgumentException("action LATER is not allowed for type " + eventType);
+                }
+            }
+            case ACTION_CONFIRM -> {
+                if (!CONFIRM_ACTION_EVENT_TYPES.contains(eventType)) {
+                    throw new IllegalArgumentException("action CONFIRM is not allowed for type " + eventType);
+                }
+            }
+            case ACTION_EMERGENCY -> {
+                if (!EMERGENCY_ACTION_EVENT_TYPES.contains(eventType)) {
+                    throw new IllegalArgumentException("action EMERGENCY is not allowed for type " + eventType);
+                }
+            }
+            default -> throw new IllegalArgumentException("Unsupported action: " + action);
         }
     }
 
