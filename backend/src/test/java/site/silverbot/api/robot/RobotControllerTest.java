@@ -278,12 +278,14 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void getRobotLcd() throws Exception {
         mockMvc.perform(RestDocumentationRequestBuilders.get("/api/robots/{robotId}/lcd", robot.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.mode").value("IDLE"))
+                .andExpect(jsonPath("$.data.message").value(""))
+                .andExpect(jsonPath("$.data.subMessage").value(""))
                 .andDo(document("robot-lcd",
                         pathParameters(
                                 parameterWithName("robotId").description("로봇 ID")
@@ -293,8 +295,8 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
                                 fieldWithPath("data.mode").type(JsonFieldType.STRING).description("LCD 모드"),
                                 fieldWithPath("data.emotion").type(JsonFieldType.STRING).description("표정"),
-                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메시지").optional(),
-                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지").optional(),
+                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지"),
                                 fieldWithPath("data.nextSchedule").type(JsonFieldType.OBJECT).description("다음 일정").optional(),
                                 fieldWithPath("data.nextSchedule.label").type(JsonFieldType.STRING).description("일정 제목").optional(),
                                 fieldWithPath("data.nextSchedule.time").type(JsonFieldType.STRING).description("일정 시간").optional(),
@@ -496,6 +498,63 @@ class RobotControllerTest extends RestDocsSupport {
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "LISTENING",
+                "emotion", "happy",
+                "message", "할머니, 말씀해주세요.",
+                "subMessage", "듣고 있어요"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.mode").value("LISTENING"))
+                .andExpect(jsonPath("$.data.emotion").value("happy"))
+                .andDo(document("robot-lcd-mode-update",
+                        pathParameters(
+                                parameterWithName("robotId").description("로봇 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("mode").type(JsonFieldType.STRING).description("LCD 모드"),
+                                fieldWithPath("emotion").type(JsonFieldType.STRING).description("LCD 감정"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메인 메시지").optional(),
+                                fieldWithPath("subMessage").type(JsonFieldType.STRING).description("보조 메시지").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
+                                fieldWithPath("data.mode").type(JsonFieldType.STRING).description("LCD 모드"),
+                                fieldWithPath("data.emotion").type(JsonFieldType.STRING).description("LCD 감정"),
+                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메인 메시지"),
+                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지"),
+                                fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("업데이트 시각"),
+                                fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
+                        )
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode_whenMessageFieldsOmitted_returnsEmptyStrings() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "IDLE",
+                "emotion", "neutral"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value(""))
+                .andExpect(jsonPath("$.data.subMessage").value(""));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateRobotLocation() throws Exception {
         Map<String, Object> request = Map.of(
                 "x", 42.1,
@@ -554,6 +613,22 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
+    void updateRobotLcdMode_roleRobotWithMismatchedPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "IDLE",
+                "emotion", "neutral",
+                "message", "",
+                "subMessage", ""
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(username = "other@test.com", roles = {"WORKER"})
     void updateRobotLocation_nonOwnerWorker_forbidden() throws Exception {
         Map<String, Object> request = Map.of(
@@ -563,6 +638,22 @@ class RobotControllerTest extends RestDocsSupport {
         );
 
         mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "IDLE",
+                "emotion", "neutral",
+                "message", "",
+                "subMessage", ""
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isForbidden());

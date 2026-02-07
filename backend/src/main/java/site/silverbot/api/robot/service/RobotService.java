@@ -16,11 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLcdModeRequest;
 import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.RobotLcdResponse;
 import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.api.robot.response.UpdateRobotLcdModeResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
@@ -28,6 +30,8 @@ import site.silverbot.domain.robot.NetworkStatus;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
+import site.silverbot.websocket.WebSocketMessageService;
+import site.silverbot.websocket.dto.LcdModeMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class RobotService {
     private final RobotCommandService robotCommandService;
     private final RobotStatusNotifier robotStatusNotifier;
     private final CurrentUserService currentUserService;
+    private final WebSocketMessageService webSocketMessageService;
 
     public RobotStatusResponse getStatus(Long robotId) {
         Robot robot = getRobot(robotId);
@@ -80,12 +85,53 @@ public class RobotService {
 
     public RobotLcdResponse getLcd(Long robotId) {
         Robot robot = getRobot(robotId);
+        validateLcdAccess(robot);
+
+        String message = normalizeLcdText(robot.getLcdMessage());
+        String subMessage = normalizeLcdText(robot.getLcdSubMessage());
         return new RobotLcdResponse(
                 robot.getLcdMode().name(),
                 robot.getLcdEmotion().name().toLowerCase(Locale.ROOT),
-                robot.getLcdMessage(),
-                robot.getLcdSubMessage(),
+                message,
+                subMessage,
                 null,
+                robot.getUpdatedAt()
+        );
+    }
+
+    @Transactional
+    public UpdateRobotLcdModeResponse updateLcdMode(Long robotId, UpdateRobotLcdModeRequest request) {
+        Robot robot = getRobot(robotId);
+        validateLcdAccess(robot);
+
+        LcdMode mode = parseMode(request.mode());
+        LcdEmotion emotion = parseEmotion(request.emotion());
+        String message = normalizeLcdText(request.message());
+        String subMessage = normalizeLcdText(request.subMessage());
+
+        robot.updateLcdState(mode, emotion, message, subMessage);
+        robotRepository.flush();
+
+        String modeName = robot.getLcdMode().name();
+        String emotionName = robot.getLcdEmotion().name().toLowerCase(Locale.ROOT);
+        String normalizedMessage = normalizeLcdText(robot.getLcdMessage());
+        String normalizedSubMessage = normalizeLcdText(robot.getLcdSubMessage());
+        webSocketMessageService.sendLcdMode(
+                robotId,
+                new LcdModeMessage.Payload(
+                        robotId,
+                        modeName,
+                        emotionName,
+                        normalizedMessage,
+                        normalizedSubMessage
+                )
+        );
+
+        return new UpdateRobotLcdModeResponse(
+                modeName,
+                emotionName,
+                normalizedMessage,
+                normalizedSubMessage,
                 robot.getUpdatedAt()
         );
     }
@@ -159,6 +205,14 @@ public class RobotService {
     }
 
     private void validateLocationWriteAccess(Robot robot) {
+        validateRobotWriteAccess(robot, "Robot location update access denied");
+    }
+
+    private void validateLcdAccess(Robot robot) {
+        validateRobotWriteAccess(robot, "Robot lcd access denied");
+    }
+
+    private void validateRobotWriteAccess(Robot robot, String deniedMessage) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -169,7 +223,7 @@ public class RobotService {
         if (hasRole(authentication, "ROLE_ROBOT")) {
             Long robotPrincipalId = parseLong(authentication.getName());
             if (robotPrincipalId == null || !robot.getId().equals(robotPrincipalId)) {
-                throw new AccessDeniedException("Robot location update access denied");
+                throw new AccessDeniedException(deniedMessage);
             }
             return;
         }
@@ -177,7 +231,7 @@ public class RobotService {
         Elder elder = robot.getElder();
         User user = currentUserService.getCurrentUser();
         if (elder == null || elder.getUser() == null || !elder.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("Robot location update access denied");
+            throw new AccessDeniedException(deniedMessage);
         }
     }
 
@@ -195,6 +249,10 @@ public class RobotService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private String normalizeLcdText(String value) {
+        return value == null ? "" : value;
     }
 
     private LcdMode parseMode(String mode) {

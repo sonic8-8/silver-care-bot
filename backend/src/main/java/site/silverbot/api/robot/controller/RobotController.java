@@ -13,6 +13,7 @@ import site.silverbot.api.common.ApiResponse;
 import site.silverbot.api.robot.request.RobotCommandRequest;
 import site.silverbot.api.robot.request.ReportRobotEventsRequest;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLcdModeRequest;
 import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.CommandResponse;
 import site.silverbot.api.robot.response.RobotEventsReportResponse;
@@ -20,6 +21,7 @@ import site.silverbot.api.robot.response.RobotLcdResponse;
 import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.api.robot.response.UpdateRobotLcdModeResponse;
 import site.silverbot.api.robot.service.RobotCommandService;
 import site.silverbot.api.robot.service.RobotEventService;
 import site.silverbot.api.robot.service.RobotService;
@@ -72,5 +74,13 @@ public class RobotController {
             @Valid @RequestBody ReportRobotEventsRequest request
     ) {
         return ApiResponse.success(robotEventService.reportEvents(robotId, request));
+    }
+
+    @PostMapping("/{robotId}/lcd-mode")
+    public ApiResponse<UpdateRobotLcdModeResponse> updateLcdMode(
+            @PathVariable Long robotId,
+            @Valid @RequestBody UpdateRobotLcdModeRequest request
+    ) {
+        return ApiResponse.success(robotService.updateLcdMode(robotId, request));
     }
 }
