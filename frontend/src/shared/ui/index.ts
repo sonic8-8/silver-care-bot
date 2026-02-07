@@ -4,3 +4,4 @@ export { Header } from './Header';
 export { Badge } from './Badge';
 export { Input } from './Input';
 export { SectionHeader } from './SectionHeader';
+export { NotificationBell } from './NotificationBell';

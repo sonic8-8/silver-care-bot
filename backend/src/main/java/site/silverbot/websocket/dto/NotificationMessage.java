@@ -16,7 +16,8 @@ public record NotificationMessage(
             String type,
             String title,
             String message,
-            Long elderId
+            Long elderId,
+            String targetPath
     ) {
     }
 }

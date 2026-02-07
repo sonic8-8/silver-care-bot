@@ -105,6 +105,16 @@ public class User {
         return BCrypt.checkpw(normalizeForBcrypt(refreshToken), this.refreshToken);
     }
 
+    public void updateNotificationSettings(String notificationSettings) {
+        this.notificationSettings = notificationSettings == null ? "{}" : notificationSettings;
+    }
+
+    public void updateTheme(ThemeMode theme) {
+        if (theme != null) {
+            this.theme = theme;
+        }
+    }
+
     private String normalizeForBcrypt(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

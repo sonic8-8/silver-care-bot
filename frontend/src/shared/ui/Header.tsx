@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/shared/utils/cn';
 
-export interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface HeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
     title: React.ReactNode;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;

@@ -43,6 +43,7 @@ export type NotificationPayload = {
     title: string;
     message: string;
     elderId?: number;
+    targetPath?: string;
 };
 
 export type EmergencyPayload = {

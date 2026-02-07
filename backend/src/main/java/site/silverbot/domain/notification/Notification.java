@@ -2,10 +2,6 @@ package site.silverbot.domain.notification;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +17,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.user.User;
 
@@ -47,17 +46,20 @@ public class Notification {
     @Column(nullable = false, length = 20)
     private NotificationType type;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 120)
     private String title;
 
-    @Column(columnDefinition = "text")
+    @Column(nullable = false, columnDefinition = "text")
     private String message;
 
-    @Column(name = "action_url", length = 255)
-    private String actionUrl;
+    @Column(name = "target_path", length = 255)
+    private String targetPath;
 
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -70,19 +72,26 @@ public class Notification {
             NotificationType type,
             String title,
             String message,
-            String actionUrl,
-            Boolean isRead
+            String targetPath,
+            Boolean isRead,
+            LocalDateTime readAt
     ) {
         this.user = user;
         this.elder = elder;
         this.type = type;
         this.title = title;
         this.message = message;
-        this.actionUrl = actionUrl;
+        this.targetPath = targetPath;
         this.isRead = isRead == null ? false : isRead;
+        this.readAt = readAt;
     }
 
-    public void markRead() {
+    public boolean markRead(LocalDateTime at) {
+        if (Boolean.TRUE.equals(isRead)) {
+            return false;
+        }
         this.isRead = true;
+        this.readAt = at == null ? LocalDateTime.now() : at;
+        return true;
     }
 }
