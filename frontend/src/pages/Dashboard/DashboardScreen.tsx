@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     Activity,
     Battery,
@@ -144,6 +144,7 @@ const formatDateTime = (dateTime: string | null | undefined) => {
 };
 
 function DashboardScreen() {
+    const navigate = useNavigate();
     const { elderId } = useParams();
     const parsedElderId = Number(elderId);
     const isValidElderId = Number.isFinite(parsedElderId);
@@ -346,6 +347,14 @@ function DashboardScreen() {
                                 <span className="text-gray-600">LCD 모드</span>
                                 <span className="font-semibold text-gray-900">{mergedRobotStatus.lcdMode ?? '-'}</span>
                             </div>
+                            <Button
+                                size="sm"
+                                variant="white"
+                                className="mt-2"
+                                onClick={() => navigate(`/elders/${parsedElderId}/map`)}
+                            >
+                                지도/스냅샷 보기
+                            </Button>
                         </div>
                     ) : (
                         <p className="mt-4 text-sm text-gray-500">로봇 상태 데이터가 없습니다.</p>
