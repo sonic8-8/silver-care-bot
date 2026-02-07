@@ -1,6 +1,6 @@
 # 📡 AI 반려로봇 API 명세서
 
-> **버전**: v1.0.0  
+> **버전**: v1.3.2  
 > **작성일**: 2026-01-29  
 > **대상**: 백엔드, 프론트엔드, 임베디드, AI 개발자
 
@@ -832,6 +832,7 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 
 **Query Params**
 - `date`: 날짜 (YYYY-MM-DD)
+  - 로컬 날짜 기준으로 해석 (UTC 변환 전제 아님)
 
 **Response** `200 OK`
 ```json
@@ -873,6 +874,8 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
   }
 }
 ```
+
+> `activities[].title`, `activities[].description`, `activities[].location`은 상황에 따라 `null`일 수 있습니다.
 
 | type | 설명 |
 |------|------|
@@ -976,13 +979,15 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 }
 ```
 
+> 순찰 이력이 없는 경우 `lastPatrolAt`은 `null`이고 `items`는 빈 배열일 수 있습니다.
+
 | target | 설명 |
 |--------|------|
 | `GAS_VALVE` | 가스밸브 |
 | `DOOR` | 현관문 |
 | `OUTLET` | 콘센트 |
 | `WINDOW` | 창문 |
-| `APPLIANCE` | 전열기구 |
+| `MULTI_TAP` | 멀티탭 |
 
 | status | 설명 |
 |--------|------|
@@ -1841,6 +1846,7 @@ const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
 | 1.2.0 | 2026-01-30 | MVP 단순화: Emotion을 neutral, happy, sleep 3가지로 축소 |
 | 1.3.0 | 2026-01-30 | LCD 화면 전환 아키텍처 수정: REST API + WebSocket 기반으로 변경, `POST /api/robots/{robotId}/lcd-mode` API 추가, WebSocket 토픽 `/topic/robot/{robotId}/lcd` 명세 추가 |
 | 1.3.1 | 2026-01-30 | Speech AI API에 `normalizedText` 필드 추가 (STT 원본 → 정규화된 텍스트) |
+| 1.3.2 | 2026-02-07 | Phase 3 계약 정합성 보정: `PatrolTarget` 값을 `MULTI_TAP`으로 통일, `lastPatrolAt`/`activities` nullable 규칙 명시, `date` 쿼리 로컬 날짜 해석 기준 추가 |
 
 ---
 
