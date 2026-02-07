@@ -74,4 +74,25 @@ public class Room {
         this.y = y;
         this.roomType = roomType;
     }
+
+    public void updateName(String name) {
+        if (name != null) {
+            this.name = name;
+        }
+    }
+
+    public void updateCoordinate(Float x, Float y) {
+        if (x != null) {
+            this.x = x;
+        }
+        if (y != null) {
+            this.y = y;
+        }
+    }
+
+    public void updateRoomType(RoomType roomType) {
+        if (roomType != null) {
+            this.roomType = roomType;
+        }
+    }
 }
