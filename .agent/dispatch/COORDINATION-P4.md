@@ -74,3 +74,17 @@
 2. Agent 4 계약/Mock 수정 + 재리뷰 Approve
 3. Agent 2 소유권 충돌 해소 + 재리뷰 Approve
 4. Agent 0 순차 병합 (권장: 3 → 4 → 2)
+
+---
+
+## Round 3 상태 (승인 이후)
+
+### 협업 이슈 상태
+- Agent 2 ↔ Agent 4 `mocks/*` 소유권 충돌: 해소됨
+- Agent 3 ↔ Agent 4 location 요청 계약 정렬: 해소됨
+- 추가 협업 수정 지시: 없음
+
+### 병합 실행 순서
+1. Agent 3 (`feature/phase4-video-location-be`)
+2. Agent 4 (`feature/phase4-contract-realtime-map`)
+3. Agent 2 (`feature/phase4-map-video-fe`)
