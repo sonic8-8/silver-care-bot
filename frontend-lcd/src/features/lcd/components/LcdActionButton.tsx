@@ -21,9 +21,13 @@ export function LcdActionButton({
   }
 
   return (
-    <button type="button" className={classes.join(' ')} {...props}>
+    <button
+      type="button"
+      className={classes.join(' ')}
+      aria-disabled={props.disabled}
+      {...props}
+    >
       {children}
     </button>
   )
 }
-

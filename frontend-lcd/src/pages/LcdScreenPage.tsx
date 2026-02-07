@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { LcdLayout } from '../features/lcd/components/LcdLayout'
 import { LcdModeScreen } from '../features/lcd/components/LcdModeScreens'
@@ -29,13 +30,24 @@ export function LcdScreenPage() {
     lcdState,
     isLoading,
     isSubmittingAction,
+    statusMessage,
     errorMessage,
     connectionStatus,
     sendAction,
   } = useLcdController(selectedRobotId)
 
-  const nowLabel = formatNow()
+  const [nowLabel, setNowLabel] = useState(() => formatNow())
   const title = modeTitle[lcdState.mode]
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowLabel(formatNow())
+    }, 30_000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
 
   return (
     <LcdLayout
@@ -43,8 +55,15 @@ export function LcdScreenPage() {
       title={title}
       nowLabel={nowLabel}
       status={connectionStatus}
-      lastUpdatedAt={lcdState.lastUpdatedAt}
       errorMessage={errorMessage}
+      noticeMessage={
+        statusMessage ??
+        (lcdState.lastUpdatedAt
+          ? `마지막 업데이트 ${new Date(lcdState.lastUpdatedAt).toLocaleTimeString(
+              'ko-KR',
+            )}`
+          : null)
+      }
       loading={isLoading}
     >
       <LcdModeScreen
