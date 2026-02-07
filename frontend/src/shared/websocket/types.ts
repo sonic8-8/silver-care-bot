@@ -1,7 +1,9 @@
 import type { RobotConnectionStatus, RobotLcdMode } from '@/shared/types/robot.types';
+import type { RobotLocationRealtimePayload } from '@/shared/types/map.types';
 
 export type WebSocketMessageType =
     | 'ROBOT_STATUS_UPDATE'
+    | 'ROBOT_LOCATION_UPDATE'
     | 'LCD_MODE_CHANGE'
     | 'EMERGENCY_ALERT'
     | 'NOTIFICATION'
@@ -39,6 +41,8 @@ export type ElderStatusPayload = {
     location?: string | null;
 };
 
+export type RobotLocationPayload = RobotLocationRealtimePayload;
+
 export type NotificationPayload = {
     id: number;
     type: string;
@@ -74,3 +78,5 @@ export type DashboardElderRealtimeState = {
     location: string | null;
     timestamp?: string;
 };
+
+export type RobotLocationRealtimeState = RobotLocationRealtimePayload;
