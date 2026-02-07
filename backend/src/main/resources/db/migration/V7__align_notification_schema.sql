@@ -10,7 +10,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
           FROM information_schema.tables
-         WHERE table_schema = 'public'
+         WHERE table_schema = current_schema()
            AND table_name = 'notification'
     ) THEN
         CREATE TABLE notification (
@@ -33,7 +33,7 @@ BEGIN
     IF EXISTS (
         SELECT 1
           FROM information_schema.columns
-         WHERE table_schema = 'public'
+         WHERE table_schema = current_schema()
            AND table_name = 'notification'
            AND column_name = 'action_url'
     ) THEN
