@@ -54,4 +54,5 @@ npm run lint
 
 ### Agent 0 전달 메모
 - Work Instruction Round 2 기준(3.3/3.5/3.7) 구현 완료 상태입니다.
-- 커밋 해시와 푸시 결과는 본 문서 하단에 최종 반영하겠습니다.
+- 구현 커밋: `b95ae04`
+- 원격 브랜치 반영: `origin/feature/phase3-history-report-fe`
