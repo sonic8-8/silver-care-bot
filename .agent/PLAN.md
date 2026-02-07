@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.11
+> **버전**: v1.12
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -484,46 +484,58 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 
 #### 5.1 LCD 프로젝트 설정
-- [ ] Vite 프로젝트 설정 (별도 디렉토리: `/frontend-lcd`)
+- [x] Vite 프로젝트 설정 (별도 디렉토리: `/frontend-lcd`)
 - [ ] Tailwind CSS + Framer Motion 설정
 - [ ] 전체화면 레이아웃 (1024x600)
-- [ ] 대형 폰트 + 터치 최적화 (64px+, 터치 영역 64px+)
+- [x] 대형 폰트 + 터치 최적화 (64px+, 터치 영역 64px+)
 - [ ] WCAG AAA 접근성 (대비율 7:1)
-- [ ] WebSocket 연결 (서버 → LCD)
+- [x] WebSocket 연결 (서버 → LCD)
 
 #### 5.2 LCD 공통 컴포넌트
 - [ ] RobotFace 컴포넌트 (눈 애니메이션)
   - [ ] 자동 깜빡임
   - [ ] 표정 변화 (neutral, happy, sleep)
 - [ ] StatusBar 컴포넌트 (시계, WiFi, 배터리)
-- [ ] LargeButton 컴포넌트 (터치 최적화)
+- [x] LargeButton 컴포넌트 (터치 최적화)
 
 #### 5.3 LCD 화면 구현
 - [ ] IDLE 모드 - 평상시
-  - [ ] 메인 메시지 + 서브 메시지
-  - [ ] 다음 일정 표시
-  - [ ] neutral 표정
+  - [x] 메인 메시지 + 서브 메시지
+  - [x] 다음 일정 표시
+  - [x] neutral 표정
 - [ ] GREETING 모드 - 기상/귀가
   - [ ] 인사말 + 날씨 정보
   - [ ] happy 표정
 - [ ] MEDICATION 모드 - 약 시간
-  - [ ] 초대형 버튼 2개 (복용완료/나중에)
+  - [x] 초대형 버튼 2개 (복용완료/나중에)
   - [ ] happy 표정
-  - [ ] 버튼 클릭 → 서버 API 호출
+  - [x] 버튼 클릭 → 서버 API 호출
 - [ ] SCHEDULE 모드 - 일정 알림
-  - [ ] 일정 카드 (제목, 시간, 장소)
-  - [ ] 확인 버튼
+  - [x] 일정 카드 (제목, 시간, 장소)
+  - [x] 확인 버튼
   - [ ] neutral 표정
 - [ ] LISTENING 모드 - 음성 인식
-  - [ ] 파동 애니메이션 (Framer Motion)
+  - [x] 파동 애니메이션 (Framer Motion)
   - [ ] neutral 표정
 - [ ] EMERGENCY 모드 - 긴급 상황
-  - [ ] 배경 빨간색 점멸
+  - [x] 배경 빨간색 점멸
   - [ ] 119 버튼 + 괜찮아요 버튼
   - [ ] neutral 표정
 - [ ] SLEEP 모드 - 충전 중
-  - [ ] 충전 상태 표시 (배터리 %)
-  - [ ] sleep 표정 (눈 감김)
+  - [x] 충전 상태 표시 (배터리 %)
+  - [x] sleep 표정 (눈 감김)
+
+#### 5.4 LCD Backend/API/계약 정렬
+- [x] `GET /api/robots/{robotId}/lcd` 구현 및 계약 정렬 (`message/subMessage` string 보장)
+- [x] `POST /api/robots/{robotId}/lcd-mode` 구현 및 권한 검증 정렬
+- [x] `POST /api/robots/{robotId}/events` 구현 (`TAKE/LATER` 처리, `medicationId` 규칙 반영)
+- [x] WebSocket `/topic/robot/{robotId}/lcd` 브로드캐스트 및 파서 정렬
+- [x] `frontend/src/shared/*`, `frontend/src/mocks/*` LCD 계약/Mock 정렬 반영
+
+#### 5.5 병렬 작업/머지 상태
+- [x] Agent 1~4 리뷰 Approve 완료
+- [x] `feature/phase5-*` 4개 브랜치 `origin/develop` 반영 완료
+- [x] `management/architect` 최신 지시서 반영 후 `origin/develop` 반영 완료
 
 ---
 
@@ -587,7 +599,7 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | Phase 2 | 🔄 진행 중 (핵심 게이트 완료, 일부 위젯 보강 잔여) | 95% |
 | Phase 3 | ✅ 구현 완료 (동기화/운영 정리 대기) | 100% |
 | Phase 4 | ✅ 구현 완료 (Map/Room/Location/Snapshot + 계약 정렬) | 100% |
-| Phase 5 | ⏳ 대기 | 0% |
+| Phase 5 | 🔄 진행 중 (핵심 기능 구현/머지 완료, UI 접근성·표현 고도화 잔여) | 80% |
 
 ---
 
@@ -607,3 +619,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.9 | 2026-02-07 | Phase 4 구현 완료 체크 반영(Map/Room/Location/Snapshot/계약 정렬), Phase 5 착수 준비 계획(브랜치 정리/재할당) 추가 |
 | v1.10 | 2026-02-07 | Phase 5 착수 준비 실제 반영: Phase 4 브랜치 정리(로컬/원격), Phase 5 브랜치 생성 및 Worktree 전환 체크 완료 |
 | v1.11 | 2026-02-07 | Phase 5 지시서 배포 완료 반영(`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`) |
+| v1.12 | 2026-02-07 | Phase 5 구현/머지 반영: LCD UI/API/이벤트/계약 체크리스트 갱신, 진행률 및 남은 고도화 항목 업데이트 |

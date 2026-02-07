@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.9
+> **버전**: v3.10
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -415,7 +415,7 @@ git branch -D feature/phase4-video-location-be feature/phase4-contract-realtime-
 
 ### 실무 Agent (1~4) Phase별 역할
 
-| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 4 역할 (완료) | Phase 5 역할 (계획) | 다음 브랜치 |
+| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 4 역할 (완료) | Phase 5 역할 (완료) | Phase 5 브랜치 |
 |-------|-------------|-------------|--------------------|---------------------|---------------------|-------------|
 | **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Map 조회/Room CRUD BE | LCD 제어/액션 Backend API + 권한 검증 | `feature/phase5-lcd-backend-be` |
 | **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | 지도 Canvas + Snapshot 갤러리 FE | LCD React UI(모드 화면/상호작용) | `feature/phase5-lcd-ui-fe` |
@@ -1075,6 +1075,20 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
 - [x] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
 - [x] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
+```
+
+### Phase 5 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [x] Agent 1~4 새 세션 리뷰 Approve 완료
+- [x] `feature/phase5-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [x] `management/architect`가 `origin/develop`에 포함됨
+- [x] Phase 5 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P5-AGENT*`, `COORDINATION-P5`)
+- [ ] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
+- [ ] `feature/phase5-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 
 ---
