@@ -1,8 +1,8 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.2
+> **버전**: v3.3
 > **작성일**: 2026-02-04
-> **최종 수정일**: 2026-02-06
+> **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
 
 ---
@@ -203,7 +203,7 @@ cd ../agent-4
 git checkout -b feature/phase1-websocket origin/develop
 ```
 
-### 2.4 Phase 2용 Worktree 전환 (현재)
+### 2.4 Phase 2용 Worktree 전환 (완료 기록)
 
 ```bash
 # ============================================
@@ -232,7 +232,64 @@ git branch -D feature/phase1-auth feature/phase1-elder feature/phase1-robot feat
 git push origin --delete feature/phase1-auth feature/phase1-elder feature/phase1-robot feature/phase1-websocket
 ```
 
-### 2.5 Worktree 상태 확인
+### 2.5 Phase 3 착수 전 브랜치 정리 (권장)
+
+```bash
+# ============================================
+# Phase 2 develop 병합 완료 후 브랜치 정리
+# ============================================
+cd /mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-0
+
+# remote phase2 브랜치 정리
+git push origin --delete \
+  feature/phase2-medication-dashboard-be \
+  feature/phase2-medication-dashboard-fe \
+  feature/phase2-db-schedule \
+  feature/phase2-notification-realtime
+
+# local phase2 브랜치 정리 (체크아웃된 worktree가 있으면 먼저 2.6 절차 수행)
+git branch -D feature/phase2-medication-dashboard-be feature/phase2-medication-dashboard-fe
+git branch -D feature/phase2-db-schedule feature/phase2-notification-realtime
+```
+
+### 2.6 Phase 3용 Worktree 전환 (다음 단계)
+
+```bash
+# ============================================
+# develop 최신화 + management 브랜치 동기화
+# ============================================
+cd /mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-0
+git fetch origin
+git checkout management/architect
+git merge --ff-only origin/develop
+git push origin management/architect
+
+# ============================================
+# Agent 1~4: Phase 3 브랜치 생성 및 체크아웃
+# ============================================
+
+# Agent 1: Activity + Report Backend
+cd ../agent-1
+git fetch origin
+git checkout -B feature/phase3-activity-report-be origin/develop
+
+# Agent 2: History + Report Frontend
+cd ../agent-2
+git fetch origin
+git checkout -B feature/phase3-history-report-fe origin/develop
+
+# Agent 3: DB + Patrol + AI Data Backend
+cd ../agent-3
+git fetch origin
+git checkout -B feature/phase3-db-patrol-ai origin/develop
+
+# Agent 4: Contract + Realtime Integration
+cd ../agent-4
+git fetch origin
+git checkout -B feature/phase3-contract-realtime origin/develop
+```
+
+### 2.7 Worktree 상태 확인
 
 ```bash
 # 현재 워크트리 목록 확인
@@ -242,13 +299,13 @@ git worktree list
 # 예상 출력 (5인 체제):
 # /mnt/c/.../sh/main     abc1234 [develop]
 # /mnt/c/.../sh/agent-0  xyz0000 [management/architect]
-# /mnt/c/.../sh/agent-1  def5678 [feature/phase2-medication-dashboard-be]
-# /mnt/c/.../sh/agent-2  ghi9012 [feature/phase2-medication-dashboard-fe]
-# /mnt/c/.../sh/agent-3  jkl3456 [feature/phase2-db-schedule]
-# /mnt/c/.../sh/agent-4  mno7890 [feature/phase2-notification-realtime]
+# /mnt/c/.../sh/agent-1  def5678 [feature/phase3-activity-report-be]
+# /mnt/c/.../sh/agent-2  ghi9012 [feature/phase3-history-report-fe]
+# /mnt/c/.../sh/agent-3  jkl3456 [feature/phase3-db-patrol-ai]
+# /mnt/c/.../sh/agent-4  mno7890 [feature/phase3-contract-realtime]
 ```
 
-### 2.6 Worktree 정리 (Phase 완료 후)
+### 2.8 Worktree 정리 (Phase 완료 후)
 
 ```bash
 # 워크트리 제거 (브랜치 머지 완료 후)
@@ -305,12 +362,12 @@ git worktree remove --force ../agent-N
 
 ### 실무 Agent (1~4) Phase별 역할
 
-| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 | 현재 브랜치 |
-|-------|-------------|-------------|-------------|-------------|
-| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | `feature/phase2-medication-dashboard-be` |
-| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | `feature/phase2-medication-dashboard-fe` |
-| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | `feature/phase2-db-schedule` |
-| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | `feature/phase2-notification-realtime` |
+| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 3 역할 (계획) | 다음 브랜치 |
+|-------|-------------|-------------|--------------------|---------------------|-------------|
+| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Activity + AI Report Backend | `feature/phase3-activity-report-be` |
+| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | History + AI Report Frontend | `feature/phase3-history-report-fe` |
+| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | DB 확장 + Patrol/AI Data Backend | `feature/phase3-db-patrol-ai` |
+| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | Contract/Realtime 통합 + 공통 훅 | `feature/phase3-contract-realtime` |
 
 ---
 
@@ -749,6 +806,26 @@ git worktree remove --force ../agent-N
    └── 백엔드 API 반영 후 UI 통합
 ```
 
+### 머지 순서 (Phase 3)
+
+```
+1. Agent 3 (DB + PATROL/AI-DATA-BE) → develop ⭐ 최우선
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── Activity/Patrol/Conversation/Search/AI Report 스키마 선행 반영
+
+2. Agent 1 (ACTIVITY + REPORT-BE) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── Agent 3 스키마 기반 API/스케줄러 반영
+
+3. Agent 4 (CONTRACT + REALTIME-INTEGRATION) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── API 계약/공통 훅/실시간 연계 안정화
+
+4. Agent 2 (HISTORY + REPORT-FE) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── 백엔드 API 반영 후 UI 통합
+```
+
 ---
 
 ## 8. 충돌 방지 가이드
@@ -760,16 +837,16 @@ git worktree remove --force ../agent-N
 ```
 ❌ 금지되는 상황:
 
-sh/agent-1/ → feature/phase2-medication-dashboard-be (체크아웃 중)
-sh/agent-2/ → feature/phase2-medication-dashboard-be (체크아웃 시도) → ERROR!
+sh/agent-1/ → feature/phase3-activity-report-be (체크아웃 중)
+sh/agent-2/ → feature/phase3-activity-report-be (체크아웃 시도) → ERROR!
 
 ✅ 올바른 상황:
 
 sh/agent-0/ → management/architect
-sh/agent-1/ → feature/phase2-medication-dashboard-be
-sh/agent-2/ → feature/phase2-medication-dashboard-fe
-sh/agent-3/ → feature/phase2-db-schedule
-sh/agent-4/ → feature/phase2-notification-realtime
+sh/agent-1/ → feature/phase3-activity-report-be
+sh/agent-2/ → feature/phase3-history-report-fe
+sh/agent-3/ → feature/phase3-db-patrol-ai
+sh/agent-4/ → feature/phase3-contract-realtime
 ```
 
 ### 8.2 충돌 발생 시 대응
@@ -827,13 +904,25 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 ```markdown
 ## 통합 테스트
 
-- [ ] 새 세션 리뷰: 전체 코드 리뷰 완료
-- [ ] MEDICATION/MEDICATION_RECORD/SCHEDULE/NOTIFICATION 마이그레이션 성공
-- [ ] 복약 등록/조회/수정/삭제 + 복용기록 API 동작
-- [ ] 일정 등록/조회/수정/삭제 + 음성 일정 API 동작
-- [ ] 알림 목록/읽음/전체읽음 + 실시간 WebSocket 알림 동작
+- [x] 새 세션 리뷰: 전체 코드 리뷰 완료
+- [x] MEDICATION/MEDICATION_RECORD/SCHEDULE/NOTIFICATION 마이그레이션 성공
+- [x] 복약 등록/조회/수정/삭제 + 복용기록 API 동작
+- [x] 일정 등록/조회/수정/삭제 + 음성 일정 API 동작
+- [x] 알림 목록/읽음/전체읽음 + 실시간 WebSocket 알림 동작
 - [ ] 대시보드 API + 대시보드 UI 실시간 반영 동작
 - [ ] sync.sh 실행하여 Team Repo 동기화
+```
+
+### Phase 3 착수 준비 기준
+
+```markdown
+## 오케스트레이션 준비
+
+- [ ] `origin/develop` 최신 동기화 완료
+- [ ] `management/architect` 브랜치 재정렬(`origin/develop` 기준)
+- [ ] `feature/phase2-*` 로컬/원격 브랜치 정리 완료
+- [ ] Agent 1~4 Phase 3 브랜치 생성 및 Worktree 재할당 완료
+- [ ] Phase 3 작업 지시서/완료 기준(DoD) 배포 완료
 ```
 
 ---

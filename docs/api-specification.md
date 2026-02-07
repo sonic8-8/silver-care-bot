@@ -29,7 +29,7 @@
 │                                  │                 └──────────────────────┘│
 │                                  ▼                                          │
 │                           ┌──────────────┐                                  │
-│                           │    MySQL     │                                  │
+│                           │ PostgreSQL   │                                  │
 │                           │   Database   │                                  │
 │                           └──────────────┘                                  │
 │                                                                             │
@@ -820,7 +820,7 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 
 ---
 
-#### POST `/api/notifications/read-all`
+#### PATCH `/api/notifications/read-all`
 > 모든 알림 읽음 처리
 
 ---
@@ -1495,13 +1495,13 @@ free_thresh: 0.196
 ### 4.1 연결
 
 ```
-WebSocket URL: wss://api.silver-care.com/ws
+WebSocket URL: wss://i14c104.p.ssafy.io/ws
 Connection: Authorization header 또는 query param token
 ```
 
 **연결 예시**
 ```javascript
-const ws = new WebSocket('wss://api.silver-care.com/ws?token=eyJhbG...');
+const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
 ```
 
 ### 4.2 메시지 형식

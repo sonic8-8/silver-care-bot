@@ -79,7 +79,7 @@ class DashboardControllerTest extends RestDocsSupport {
                 .build());
 
         insertMedication(elder.getId(), "혈압약", "1정", "MORNING", LocalDate.now(), null);
-        insertNotification(elder.getId(), "MEDICATION", "복약 알림", "아침 복약 시간이 되었습니다.");
+        insertNotification(user.getId(), elder.getId(), "MEDICATION", "복약 알림", "아침 복약 시간이 되었습니다.");
         insertSchedule(elder.getId(), "병원 예약", LocalDateTime.now().plusDays(1), "서울대병원", "HOSPITAL", "UPCOMING");
         insertWakeUpActivity(elder.getId(), LocalDateTime.now().withHour(7).withMinute(20).withSecond(0).withNano(0));
     }
@@ -208,12 +208,13 @@ class DashboardControllerTest extends RestDocsSupport {
         );
     }
 
-    private void insertNotification(Long elderId, String type, String title, String message) {
+    private void insertNotification(Long userId, Long elderId, String type, String title, String message) {
         jdbcTemplate.update(
                 """
-                INSERT INTO notification (elder_id, type, title, message, is_read, created_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO notification (user_id, elder_id, type, title, message, is_read, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 """,
+                userId,
                 elderId,
                 type,
                 title,
@@ -232,15 +233,28 @@ class DashboardControllerTest extends RestDocsSupport {
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO schedule (elder_id, title, scheduled_at, location, type, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO schedule (
+                    elder_id,
+                    title,
+                    scheduled_at,
+                    location,
+                    type,
+                    source,
+                    status,
+                    remind_before_minutes,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """,
                 elderId,
                 title,
                 scheduledAt,
                 location,
                 type,
-                status
+                "MANUAL",
+                status,
+                60
         );
     }
 
