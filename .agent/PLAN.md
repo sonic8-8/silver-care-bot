@@ -364,9 +364,9 @@
 - [x] `feature/phase3-*` 원격 브랜치 정리(삭제) 완료
 - [x] 기존 브랜치명 재사용 정책 확정 (`--force-with-lease`)
 - [x] Round 2 작업 지시서 재배포 (`COORDINATION-P3`, `WORK-INSTRUCTION-P3-AGENT*`)
-- [ ] Agent 1 계약 고정 완료 (Activity/Report/Dashboard)
-- [ ] Agent 4 계약 정렬 완료 (shared 타입/Mock/실시간 소비 규칙)
-- [ ] Round 2 구현/리뷰/머지 완료 (Agent 1 → Agent 4 → Agent 2, Agent 3 조건부 선행)
+- [x] Agent 1 계약 고정 완료 (Activity/Report/Dashboard)
+- [x] Agent 4 계약 정렬 완료 (shared 타입/Mock/실시간 소비 규칙)
+- [x] Round 2 구현/리뷰/머지 완료 (Agent 1 → Agent 4 → Agent 2, Agent 3 조건부 선행)
 
 Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
@@ -384,32 +384,32 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] AI_REPORT 테이블 + Entity
 
 #### 3.2 활동 로그 (Activity) - Backend
-- [ ] `GET /api/elders/{elderId}/activities` - 일일 로그
-  - [ ] Query: date (기본값: 오늘)
-- [ ] `POST /api/robots/{robotId}/activities` - 활동 보고
-  - [ ] 유형: WAKE_UP, SLEEP, OUT_DETECTED, RETURN_DETECTED 등
+- [x] `GET /api/elders/{elderId}/activities` - 일일 로그
+  - [x] Query: date (기본값: 오늘)
+- [x] `POST /api/robots/{robotId}/activities` - 활동 보고
+  - [x] 유형: WAKE_UP, SLEEP, OUT_DETECTED, RETURN_DETECTED 등
 
 #### 3.3 활동 로그 (Activity) - Frontend
-- [ ] 기록 페이지 (`/elders/:id/history`)
-  - [ ] 타임라인 뷰
-  - [ ] 날짜 선택기
-  - [ ] 활동 유형별 아이콘/색상
-  - [ ] 탭: 활동 로그 / AI 리포트
+- [x] 기록 페이지 (`/elders/:id/history`)
+  - [x] 타임라인 뷰
+  - [x] 날짜 선택기
+  - [x] 활동 유형별 아이콘/색상
+  - [x] 탭: 활동 로그 / AI 리포트
 
 #### 3.4 AI 리포트 (Report) - Backend
-- [ ] `GET /api/elders/{elderId}/reports/weekly` - 주간 리포트
-  - [ ] 복용률
-  - [ ] 활동량
-  - [ ] 대화 키워드
-  - [ ] 추천사항
-- [ ] 주간 리포트 자동 생성 스케줄러 (매주 월요일)
+- [x] `GET /api/elders/{elderId}/reports/weekly` - 주간 리포트
+  - [x] 복용률
+  - [x] 활동량
+  - [x] 대화 키워드
+  - [x] 추천사항
+- [x] 주간 리포트 자동 생성 스케줄러 (매주 월요일)
 
 #### 3.5 AI 리포트 (Report) - Frontend
-- [ ] 기록 페이지 리포트 탭
-  - [ ] 복용률 차트 (막대/라인)
-  - [ ] 활동량 그래프
-  - [ ] 대화 키워드 클라우드
-  - [ ] AI 추천사항 카드
+- [x] 기록 페이지 리포트 탭
+  - [x] 복용률 차트 (막대/라인)
+  - [x] 활동량 그래프
+  - [x] 대화 키워드 클라우드
+  - [x] AI 추천사항 카드
 
 #### 3.6 순찰 피드 (Patrol) - Backend
 - [x] `GET /api/elders/{elderId}/patrol/latest` - 최근 순찰 결과
@@ -419,10 +419,10 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
   - [x] 상태: ON, OFF, NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK
 
 #### 3.7 순찰 피드 (Patrol) - Frontend
-- [ ] 순찰 결과 카드 (대시보드)
-  - [ ] 가스밸브/창문/콘센트 상태 아이콘
-  - [ ] 경고 항목 하이라이트
-  - [ ] 마지막 순찰 시간
+- [x] 순찰 결과 카드 (대시보드)
+  - [x] 가스밸브/창문/콘센트 상태 아이콘
+  - [x] 경고 항목 하이라이트
+  - [x] 마지막 순찰 시간
 
 #### 3.8 AI 대화/검색 기록 - Backend
 - [x] `GET /api/robots/{robotId}/conversations` - 대화 기록
@@ -573,3 +573,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.4 | 2026-02-07 | Phase 2 구현 체크리스트 업데이트(완료/잔여 반영), Phase 3 병렬 분배 초안/브랜치 정리 계획 추가 |
 | v1.5 | 2026-02-07 | Phase 2 Gate/Phase 3 구현 체크리스트 반영, 공통 마감(`management/architect`→`develop`) 체크 항목 추가 |
 | v1.6 | 2026-02-07 | Phase 3 Round 2 착수 체크리스트 및 재분배 계획 반영 (브랜치 정리/재사용 정책 포함) |
+| v1.7 | 2026-02-07 | Phase 3 Round 2 완료 반영: 3.2~3.5/3.7 체크 완료, Round 2 계약 고정/정렬/병합 완료 체크 반영 |
