@@ -53,8 +53,8 @@ export interface RobotLocationUpdateRequest {
     x: number;
     y: number;
     roomId: string;
-    heading: number;
-    timestamp: string;
+    heading: number | null;
+    timestamp: string | null;
 }
 
 export interface RobotLocationUpdateAckPayload {
@@ -232,8 +232,8 @@ export const parseRobotLocationUpdateRequest = (value: unknown): RobotLocationUp
         x: readNumber(value.x, 'location.x'),
         y: readNumber(value.y, 'location.y'),
         roomId: readString(value.roomId, 'location.roomId'),
-        heading: readNumber(value.heading, 'location.heading'),
-        timestamp: readString(value.timestamp, 'location.timestamp'),
+        heading: readNullableNumber(value.heading, 'location.heading'),
+        timestamp: readNullableString(value.timestamp, 'location.timestamp'),
     };
 };
 

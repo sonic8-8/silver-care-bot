@@ -144,7 +144,7 @@ const sanitizeRoomId = (name: string) => {
         .replace(/^_+|_+$/g, '');
 };
 
-export const mapVideoHandlers = [
+export const mapHandlers = [
     http.get('/api/elders/:elderId/map', ({ params }) => {
         const elderId = Number(params.elderId);
         const robotId = Number.isNaN(elderId) ? 1 : elderId;
@@ -308,12 +308,13 @@ export const mapVideoHandlers = [
         const robotId = Number(params.robotId);
         const location = parseRobotLocationUpdateRequest(await request.json());
         const resolvedRobotId = Number.isNaN(robotId) ? 1 : robotId;
+        const previous = getRobotPosition(resolvedRobotId);
 
         robotPositionById.set(resolvedRobotId, {
             x: location.x,
             y: location.y,
             roomId: location.roomId,
-            heading: location.heading,
+            heading: location.heading ?? previous.heading,
         });
 
         const payload = parseRobotLocationUpdateAckPayload({

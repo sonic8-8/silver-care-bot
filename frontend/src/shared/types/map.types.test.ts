@@ -134,6 +134,22 @@ describe('map/video contracts', () => {
         expect(ack.received).toBe(true);
     });
 
+    it('parses location update request without optional heading and timestamp', () => {
+        const request = parseRobotLocationUpdateRequest({
+            x: 450,
+            y: 150,
+            roomId: 'LIVING_ROOM',
+        });
+
+        expect(request).toMatchObject({
+            x: 450,
+            y: 150,
+            roomId: 'LIVING_ROOM',
+            heading: null,
+            timestamp: null,
+        });
+    });
+
     it('parses realtime location payload with nullable coordinates', () => {
         const payload = parseRobotLocationRealtimePayload({
             robotId: 1,
