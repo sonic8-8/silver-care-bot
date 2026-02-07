@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.9
+> **버전**: v1.10
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -477,10 +477,10 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 > Robot React App (별도 빌드)
 
 #### 5.0 Phase 5 착수 준비 계획 (2026-02-07)
-- [ ] merge 완료된 `feature/phase4-*` 원격 브랜치 정리
-- [ ] `feature/phase4-*` 로컬 브랜치 정리 및 Worktree 재할당
-- [ ] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
-- [ ] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
+- [x] merge 완료된 `feature/phase4-*` 원격 브랜치 정리
+- [x] `feature/phase4-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [x] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
+- [x] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
 - [ ] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 
 #### 5.1 LCD 프로젝트 설정
@@ -605,3 +605,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.7 | 2026-02-07 | Phase 3 Round 2 완료 반영: 3.2~3.5/3.7 체크 완료, Round 2 계약 고정/정렬/병합 완료 체크 반영 |
 | v1.8 | 2026-02-07 | Phase 4 착수 준비 체크리스트(브랜치 정리/재할당/지시서 배포) 반영 및 진행률 정합화 |
 | v1.9 | 2026-02-07 | Phase 4 구현 완료 체크 반영(Map/Room/Location/Snapshot/계약 정렬), Phase 5 착수 준비 계획(브랜치 정리/재할당) 추가 |
+| v1.10 | 2026-02-07 | Phase 5 착수 준비 실제 반영: Phase 4 브랜치 정리(로컬/원격), Phase 5 브랜치 생성 및 Worktree 전환 체크 완료 |
