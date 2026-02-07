@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { getRobotLcdState } from '../api/lcdApi'
 import { postLcdActionEvent } from '../api/lcdEventApi'
@@ -64,14 +65,27 @@ export function useLcdController(robotId: string) {
           action,
           mode: lcdState.mode,
           message: lcdState.message,
+          medicationId:
+            action === 'TAKE' ? (lcdState.medicationId ?? undefined) : undefined,
         })
-      } catch {
+      } catch (error: unknown) {
+        if (
+          action === 'TAKE' &&
+          axios.isAxiosError(error) &&
+          error.response?.status === 400
+        ) {
+          setErrorMessage(
+            '복약 정보가 확인되지 않아 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          )
+          return
+        }
+
         setErrorMessage('버튼 이벤트 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.')
       } finally {
         setIsSubmittingAction(false)
       }
     },
-    [lcdState.message, lcdState.mode, robotId],
+    [lcdState.medicationId, lcdState.message, lcdState.mode, robotId],
   )
 
   return {
@@ -83,4 +97,3 @@ export function useLcdController(robotId: string) {
     sendAction,
   }
 }
-

@@ -44,6 +44,19 @@ function normalizeText(rawText: unknown): string {
   return typeof rawText === 'string' ? rawText : ''
 }
 
+function normalizeMedicationId(raw: unknown): number | null {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw
+  }
+
+  if (typeof raw === 'string' && raw.trim()) {
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
 function normalizeSchedule(raw: unknown): LcdSchedulePreview | null {
   if (!isRecord(raw)) {
     return null
@@ -87,6 +100,7 @@ export function normalizeLcdState(raw: unknown): LcdState {
     emotion: normalizeEmotion(payload.emotion),
     message: normalizeText(payload.message),
     subMessage: normalizeText(payload.subMessage),
+    medicationId: normalizeMedicationId(payload.medicationId),
     nextSchedule: normalizeSchedule(payload.nextSchedule),
     lastUpdatedAt:
       normalizeText(payload.lastUpdatedAt) ||
@@ -99,4 +113,3 @@ export async function getRobotLcdState(robotId: string): Promise<LcdState> {
   const response = await httpClient.get(`/api/robots/${robotId}/lcd`)
   return normalizeLcdState(response.data)
 }
-

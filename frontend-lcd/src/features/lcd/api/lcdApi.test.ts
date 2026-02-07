@@ -10,6 +10,7 @@ describe('normalizeLcdState', () => {
         emotion: 'happy',
         message: '약 드실 시간이에요!',
         subMessage: '아침약 (고혈압)',
+        medicationId: 15,
         nextSchedule: {
           label: '병원 방문',
           time: '14:00',
@@ -20,6 +21,7 @@ describe('normalizeLcdState', () => {
 
     expect(normalized.mode).toBe('MEDICATION')
     expect(normalized.emotion).toBe('happy')
+    expect(normalized.medicationId).toBe(15)
     expect(normalized.nextSchedule?.label).toBe('병원 방문')
     expect(normalized.lastUpdatedAt).toBe('2026-02-08T00:00:00+09:00')
   })
@@ -35,5 +37,16 @@ describe('normalizeLcdState', () => {
     expect(normalized.mode).toBe('IDLE')
     expect(normalized.emotion).toBe('neutral')
   })
-})
 
+  it('medicationId가 문자열이어도 숫자로 변환한다', () => {
+    const normalized = normalizeLcdState({
+      data: {
+        mode: 'MEDICATION',
+        emotion: 'happy',
+        medicationId: '27',
+      },
+    })
+
+    expect(normalized.medicationId).toBe(27)
+  })
+})

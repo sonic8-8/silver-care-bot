@@ -31,6 +31,7 @@ export interface LcdState {
   emotion: LcdEmotion
   message: string
   subMessage: string
+  medicationId: number | null
   nextSchedule: LcdSchedulePreview | null
   lastUpdatedAt: string | null
 }
@@ -46,7 +47,7 @@ export const DEFAULT_LCD_STATE: LcdState = {
   emotion: 'neutral',
   message: '할머니~ 오늘도 편안한 하루 보내세요!',
   subMessage: '',
+  medicationId: null,
   nextSchedule: null,
   lastUpdatedAt: null,
 }
-
