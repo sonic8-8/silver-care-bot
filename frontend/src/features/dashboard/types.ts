@@ -82,6 +82,28 @@ export interface DashboardRobotStatus {
     lastUpdatedAt?: string;
 }
 
+export type PatrolOverallStatus = 'SAFE' | 'WARNING';
+export type PatrolTarget = 'GAS_VALVE' | 'DOOR' | 'OUTLET' | 'WINDOW' | 'MULTI_TAP';
+export type PatrolItemStatus = 'ON' | 'OFF' | 'NORMAL' | 'LOCKED' | 'UNLOCKED' | 'NEEDS_CHECK';
+
+export interface DashboardPatrolItem {
+    id: number;
+    target: PatrolTarget;
+    label?: string | null;
+    status: PatrolItemStatus;
+    confidence?: number | null;
+    imageUrl?: string | null;
+    checkedAt?: string | null;
+}
+
+export interface DashboardLatestPatrol {
+    patrolResultId?: number | null;
+    patrolId?: string | null;
+    overallStatus?: PatrolOverallStatus | null;
+    lastPatrolAt?: string | null;
+    items: DashboardPatrolItem[];
+}
+
 export interface DashboardData {
     elderName?: string;
     elderStatus?: ElderStatus;
@@ -89,4 +111,5 @@ export interface DashboardData {
     recentNotifications: NotificationItem[];
     weeklyCalendar: DashboardCalendarDay[];
     robotStatus: DashboardRobotStatus | null;
+    latestPatrol: DashboardLatestPatrol | null;
 }
