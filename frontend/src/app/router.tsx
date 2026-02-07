@@ -11,6 +11,7 @@ import RobotControlScreen from '@/pages/Robot/RobotControlScreen';
 import RobotLCDScreen from '@/pages/Robot/RobotLCDScreen';
 import MedicationScreen from '@/pages/Medication/MedicationScreen';
 import HistoryScreen from '@/pages/History/HistoryScreen';
+import MapScreen from '@/pages/Map/MapScreen';
 import NotificationScreen from '@/pages/Notification/NotificationScreen';
 import EmergencyScreen from '@/pages/Emergency/EmergencyScreen';
 
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
     { path: '/elders/:elderId/robot/lcd', element: <RobotLCDScreen /> },
     { path: '/elders/:elderId/medications', element: <MedicationScreen /> },
     { path: '/elders/:elderId/history', element: <HistoryScreen /> },
+    { path: '/elders/:elderId/map', element: <MapScreen /> },
     { path: '/notifications', element: <NotificationScreen /> },
     { path: '/settings', element: <SettingsScreen /> },
     { path: '/emergency/:id', element: <EmergencyScreen /> },
