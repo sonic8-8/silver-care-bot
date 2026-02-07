@@ -1,17 +1,12 @@
 import type { ReactNode } from 'react'
 import { LcdActionButton } from './LcdActionButton'
-import type { LcdActionType, LcdEmotion, LcdMode, LcdState } from '../types'
+import { RobotFace } from './RobotFace'
+import type { LcdActionType, LcdMode, LcdState } from '../types'
 
 interface LcdModeScreenProps {
   state: LcdState
   actionPending: boolean
   onAction: (action: LcdActionType) => void
-}
-
-const emotionEmoji: Record<LcdEmotion, string> = {
-  neutral: '🙂',
-  happy: '😊',
-  sleep: '😴',
 }
 
 const modeTitle: Record<LcdMode, string> = {
@@ -26,23 +21,21 @@ const modeTitle: Record<LcdMode, string> = {
 
 function ScreenFrame({
   title,
-  icon,
   message,
   subMessage,
+  emotion,
   children,
 }: {
   title: string
-  icon: string
   message: string
   subMessage: string
+  emotion: LcdState['emotion']
   children?: ReactNode
 }) {
   return (
     <article className="lcd-screen">
       <p className="lcd-screen-title">{title}</p>
-      <p className="lcd-screen-icon" aria-label="emotion-icon">
-        {icon}
-      </p>
+      <RobotFace emotion={emotion} />
       <p className="lcd-screen-message">{message || '할머니~ 상태를 확인하고 있어요.'}</p>
       {subMessage && <p className="lcd-screen-submessage">{subMessage}</p>}
       {children}
@@ -54,7 +47,7 @@ function IdleScreen({ state }: Pick<LcdModeScreenProps, 'state'>) {
   return (
     <ScreenFrame
       title={modeTitle.IDLE}
-      icon={emotionEmoji[state.emotion]}
+      emotion={state.emotion}
       message={state.message || '할머니~ 오늘도 좋은 하루 되세요!'}
       subMessage={state.subMessage}
     >
@@ -72,10 +65,17 @@ function GreetingScreen({ state }: Pick<LcdModeScreenProps, 'state'>) {
   return (
     <ScreenFrame
       title={modeTitle.GREETING}
-      icon="☀️"
+      emotion={state.emotion}
       message={state.message || '할머니~ 잘 주무셨어요?'}
-      subMessage={state.subMessage || '오늘도 제가 곁에서 도와드릴게요.'}
-    />
+      subMessage="오늘도 제가 곁에서 도와드릴게요."
+    >
+      <div className="lcd-weather-slot" aria-label="today-weather">
+        <p className="lcd-weather-slot-title">오늘 날씨</p>
+        <p className="lcd-weather-slot-value">
+          {state.subMessage || '맑음 · 22°C · 미세먼지 보통'}
+        </p>
+      </div>
+    </ScreenFrame>
   )
 }
 
@@ -83,7 +83,7 @@ function MedicationScreen({ state, actionPending, onAction }: LcdModeScreenProps
   return (
     <ScreenFrame
       title={modeTitle.MEDICATION}
-      icon="💊"
+      emotion={state.emotion}
       message={state.message || '할머니~ 약 드실 시간이에요!'}
       subMessage={state.subMessage || '복약 여부를 버튼으로 알려주세요.'}
     >
@@ -93,14 +93,14 @@ function MedicationScreen({ state, actionPending, onAction }: LcdModeScreenProps
           disabled={actionPending}
           onClick={() => onAction('TAKE')}
         >
-          응, 먹었어~
+          {actionPending ? '처리 중...' : '응, 먹었어~'}
         </LcdActionButton>
         <LcdActionButton
           variant="secondary"
           disabled={actionPending}
           onClick={() => onAction('LATER')}
         >
-          아직이야~
+          {actionPending ? '처리 중...' : '아직이야~'}
         </LcdActionButton>
       </div>
     </ScreenFrame>
@@ -111,7 +111,7 @@ function ScheduleScreen({ state, actionPending, onAction }: LcdModeScreenProps) 
   return (
     <ScreenFrame
       title={modeTitle.SCHEDULE}
-      icon="📅"
+      emotion={state.emotion}
       message={state.message || '할머니~ 곧 일정이 있어요!'}
       subMessage={state.subMessage}
     >
@@ -128,7 +128,7 @@ function ScheduleScreen({ state, actionPending, onAction }: LcdModeScreenProps) 
           disabled={actionPending}
           onClick={() => onAction('CONFIRM')}
         >
-          응, 알겠어~
+          {actionPending ? '확인 처리 중...' : '응, 알겠어~'}
         </LcdActionButton>
       </div>
     </ScreenFrame>
@@ -139,7 +139,7 @@ function ListeningScreen({ state }: Pick<LcdModeScreenProps, 'state'>) {
   return (
     <ScreenFrame
       title={modeTitle.LISTENING}
-      icon="🎤"
+      emotion={state.emotion}
       message={state.message || '이야기를 듣는 중이에요...'}
       subMessage={state.subMessage}
     >
@@ -157,27 +157,32 @@ function ListeningScreen({ state }: Pick<LcdModeScreenProps, 'state'>) {
 function EmergencyScreen({ state, actionPending, onAction }: LcdModeScreenProps) {
   return (
     <article className="lcd-screen lcd-screen--emergency">
+      <p className="lcd-priority-chip">긴급 대응 필요</p>
       <p className="lcd-screen-title">{modeTitle.EMERGENCY}</p>
-      <p className="lcd-screen-icon">🚨</p>
+      <RobotFace emotion="neutral" emergency />
       <p className="lcd-screen-message">{state.message || '할머니! 괜찮으세요?'}</p>
-      {state.subMessage && <p className="lcd-screen-submessage">{state.subMessage}</p>}
+      <p className="lcd-screen-submessage">
+        {state.subMessage || '위급하면 바로 119 연결 요청 버튼을 눌러주세요.'}
+      </p>
       <div className="lcd-action-column">
         <LcdActionButton
           variant="primary"
           disabled={actionPending}
           onClick={() => onAction('CONFIRM')}
         >
-          괜찮아~
+          {actionPending ? '확인 처리 중...' : '괜찮아요'}
         </LcdActionButton>
         <LcdActionButton
           variant="danger"
           disabled={actionPending}
           onClick={() => onAction('EMERGENCY')}
         >
-          도와줘!
+          {actionPending ? '요청 중...' : '119 연결 요청'}
         </LcdActionButton>
       </div>
-      <p className="lcd-emergency-guide">30초 내 응답이 없으면 보호자에게 자동 알림됩니다.</p>
+      <p className="lcd-emergency-guide">
+        응답이 없으면 보호자와 관제 화면에 긴급 알림이 전송됩니다.
+      </p>
     </article>
   )
 }
@@ -186,7 +191,7 @@ function SleepScreen({ state }: Pick<LcdModeScreenProps, 'state'>) {
   return (
     <ScreenFrame
       title={modeTitle.SLEEP}
-      icon="😴"
+      emotion="sleep"
       message={state.message || '할머니~ 저 충전할게요.'}
       subMessage={state.subMessage || '안녕히 주무세요.'}
     >
