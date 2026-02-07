@@ -27,7 +27,7 @@ class FlywayMigrationVerificationTest {
         MigrateResult migrateResult = flyway.migrate();
         assertThat(migrateResult.success).isTrue();
         assertThat(migrateResult.targetSchemaVersion).isNotNull();
-        assertThat(migrateResult.targetSchemaVersion).isEqualTo("10");
+        assertThat(migrateResult.targetSchemaVersion).isEqualTo("11");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {
@@ -36,6 +36,7 @@ class FlywayMigrationVerificationTest {
             assertThat(hasTable(connection, "activity")).isTrue();
             assertThat(hasTable(connection, "patrol_result")).isTrue();
             assertThat(hasTable(connection, "patrol_snapshot")).isTrue();
+            assertThat(hasTable(connection, "robot_lcd_event")).isTrue();
             assertThat(hasTable(connection, "conversation")).isTrue();
             assertThat(hasTable(connection, "search_result")).isTrue();
             assertThat(hasTable(connection, "ai_report")).isTrue();
@@ -89,7 +90,7 @@ class FlywayMigrationVerificationTest {
 
         MigrateResult migrated = flyway.migrate();
         assertThat(migrated.success).isTrue();
-        assertThat(migrated.targetSchemaVersion).isEqualTo("10");
+        assertThat(migrated.targetSchemaVersion).isEqualTo("11");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {
@@ -98,6 +99,7 @@ class FlywayMigrationVerificationTest {
             assertThat(hasTable(connection, "activity")).isTrue();
             assertThat(hasTable(connection, "patrol_result")).isTrue();
             assertThat(hasTable(connection, "patrol_snapshot")).isTrue();
+            assertThat(hasTable(connection, "robot_lcd_event")).isTrue();
             assertThat(hasTable(connection, "conversation")).isTrue();
             assertThat(hasTable(connection, "search_result")).isTrue();
             assertThat(hasTable(connection, "ai_report")).isTrue();

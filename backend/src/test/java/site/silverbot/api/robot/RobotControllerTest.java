@@ -3,8 +3,10 @@ package site.silverbot.api.robot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.relaxedRequestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -13,11 +15,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
@@ -27,6 +31,10 @@ import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.EmergencyRepository;
+import site.silverbot.domain.medication.Medication;
+import site.silverbot.domain.medication.MedicationFrequency;
+import site.silverbot.domain.medication.MedicationRecordRepository;
+import site.silverbot.domain.medication.MedicationRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
@@ -34,6 +42,8 @@ import site.silverbot.domain.robot.NetworkStatus;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotCommand;
 import site.silverbot.domain.robot.RobotCommandRepository;
+import site.silverbot.domain.robot.RobotLcdEvent;
+import site.silverbot.domain.robot.RobotLcdEventRepository;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
 import site.silverbot.domain.user.UserRepository;
@@ -60,10 +70,25 @@ class RobotControllerTest extends RestDocsSupport {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private MedicationRepository medicationRepository;
+
+    @Autowired
+    private MedicationRecordRepository medicationRecordRepository;
+
+    @Autowired
+    private RobotLcdEventRepository robotLcdEventRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private Robot robot;
 
     @BeforeEach
     void setUp() {
+        robotLcdEventRepository.deleteAllInBatch();
+        medicationRecordRepository.deleteAllInBatch();
+        medicationRepository.deleteAllInBatch();
         robotCommandRepository.deleteAllInBatch();
         emergencyRepository.deleteAllInBatch();
         robotRepository.deleteAllInBatch();
@@ -280,6 +305,121 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
+    void reportRobotEvents_recordsTakeActionAndMedicationRecord() throws Exception {
+        Medication medication = createMedication("아침약");
+
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "MEDICATION",
+                        "action", "TAKE",
+                        "medicationId", medication.getId(),
+                        "timestamp", "2026-02-08T08:15:00+09:00",
+                        "location", "거실",
+                        "payload", Map.of("source", "LCD")
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.received").value(true))
+                .andExpect(jsonPath("$.data.processedCount").value(1))
+                .andExpect(jsonPath("$.data.medicationTakenCount").value(1))
+                .andDo(document("robot-events-report",
+                        pathParameters(
+                                parameterWithName("robotId").description("로봇 ID")
+                        ),
+                        relaxedRequestFields(
+                                fieldWithPath("events").type(JsonFieldType.ARRAY).description("이벤트 목록"),
+                                fieldWithPath("events[].type").type(JsonFieldType.STRING).description("이벤트 타입"),
+                                fieldWithPath("events[].action").type(JsonFieldType.STRING).description("액션 타입").optional(),
+                                fieldWithPath("events[].medicationId").type(JsonFieldType.NUMBER).description("복약 ID").optional(),
+                                fieldWithPath("events[].timestamp").type(JsonFieldType.STRING).description("이벤트 발생 시각").optional(),
+                                fieldWithPath("events[].detectedAt").type(JsonFieldType.STRING).description("호환용 감지 시각").optional(),
+                                fieldWithPath("events[].location").type(JsonFieldType.STRING).description("이벤트 위치").optional(),
+                                fieldWithPath("events[].confidence").type(JsonFieldType.NUMBER).description("신뢰도").optional(),
+                                subsectionWithPath("events[].payload").type(JsonFieldType.OBJECT).description("추가 메타데이터").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
+                                fieldWithPath("data.received").type(JsonFieldType.BOOLEAN).description("수신 여부"),
+                                fieldWithPath("data.processedCount").type(JsonFieldType.NUMBER).description("처리 이벤트 건수"),
+                                fieldWithPath("data.medicationTakenCount").type(JsonFieldType.NUMBER).description("복약 완료 처리 건수"),
+                                fieldWithPath("data.medicationDeferredCount").type(JsonFieldType.NUMBER).description("복약 연기 처리 건수"),
+                                fieldWithPath("data.serverTime").type(JsonFieldType.STRING).description("서버 처리 시각"),
+                                fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
+                        )
+                ));
+
+        assertThat(robotLcdEventRepository.count()).isEqualTo(1);
+        RobotLcdEvent savedEvent = robotLcdEventRepository.findAll().get(0);
+        assertThat(savedEvent.getEventType()).isEqualTo("MEDICATION");
+        assertThat(savedEvent.getEventAction()).isEqualTo("TAKE");
+        assertThat(savedEvent.getMedicationId()).isEqualTo(medication.getId());
+
+        Integer recordCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM medication_record WHERE medication_id = ? AND status = 'TAKEN'",
+                Integer.class,
+                medication.getId()
+        );
+        assertThat(recordCount).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void reportRobotEvents_ownerWorkerAccepted() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "WAKE_UP",
+                        "timestamp", "2026-02-08T07:30:00+09:00",
+                        "location", "침실"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.processedCount").value(1));
+    }
+
+    @Test
+    void reportRobotEvents_mismatchedRobotPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "WAKE_UP",
+                        "timestamp", "2026-02-08T07:30:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void reportRobotEvents_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "WAKE_UP",
+                        "timestamp", "2026-02-08T07:30:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateRobotLocation() throws Exception {
         Map<String, Object> request = Map.of(
@@ -351,5 +491,17 @@ class RobotControllerTest extends RestDocsSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isForbidden());
+    }
+
+    private Medication createMedication(String name) {
+        return medicationRepository.save(Medication.builder()
+                .elder(robot.getElder())
+                .name(name)
+                .dosage("1정")
+                .frequency(MedicationFrequency.BOTH)
+                .timing("아침/저녁")
+                .color("#00C471")
+                .isActive(true)
+                .build());
     }
 }

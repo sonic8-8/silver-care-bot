@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.silverbot.api.common.ApiResponse;
 import site.silverbot.api.robot.request.RobotCommandRequest;
+import site.silverbot.api.robot.request.ReportRobotEventsRequest;
 import site.silverbot.api.robot.request.RobotSyncRequest;
 import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.CommandResponse;
+import site.silverbot.api.robot.response.RobotEventsReportResponse;
 import site.silverbot.api.robot.response.RobotLcdResponse;
 import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
 import site.silverbot.api.robot.service.RobotCommandService;
+import site.silverbot.api.robot.service.RobotEventService;
 import site.silverbot.api.robot.service.RobotService;
 
 @RestController
@@ -27,6 +30,7 @@ import site.silverbot.api.robot.service.RobotService;
 public class RobotController {
     private final RobotService robotService;
     private final RobotCommandService robotCommandService;
+    private final RobotEventService robotEventService;
 
     @GetMapping("/{robotId}/status")
     public ApiResponse<RobotStatusResponse> getStatus(@PathVariable Long robotId) {
@@ -60,5 +64,13 @@ public class RobotController {
     @GetMapping("/{robotId}/lcd")
     public ApiResponse<RobotLcdResponse> getLcd(@PathVariable Long robotId) {
         return ApiResponse.success(robotService.getLcd(robotId));
+    }
+
+    @PostMapping("/{robotId}/events")
+    public ApiResponse<RobotEventsReportResponse> reportEvents(
+            @PathVariable Long robotId,
+            @Valid @RequestBody ReportRobotEventsRequest request
+    ) {
+        return ApiResponse.success(robotEventService.reportEvents(robotId, request));
     }
 }
