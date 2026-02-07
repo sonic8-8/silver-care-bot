@@ -5,6 +5,7 @@ import {
     Battery,
     Bell,
     CalendarDays,
+    CheckCircle2,
     Clock3,
     MapPin,
     Pill,
@@ -13,13 +14,28 @@ import {
 import GuardianAppContainer from '@/pages/_components/GuardianAppContainer';
 import { Button } from '@/shared/ui/Button';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { useDashboardRealtime } from '@/features/dashboard/hooks/useDashboardRealtime';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { ActivityLevel, NotificationType } from '@/features/dashboard/types';
+import type { ElderStatus } from '@/shared/types/elder.types';
 
 const activityLabelMap: Record<ActivityLevel, string> = {
     LOW: '낮음',
     NORMAL: '보통',
     HIGH: '높음',
     UNKNOWN: '미확인',
+};
+
+const elderStatusLabelMap: Record<ElderStatus, string> = {
+    SAFE: '안전',
+    WARNING: '주의',
+    DANGER: '위험',
+};
+
+const elderStatusClassMap: Record<ElderStatus, string> = {
+    SAFE: 'bg-safe-bg text-safe',
+    WARNING: 'bg-warning-bg text-warning',
+    DANGER: 'bg-danger-bg text-danger',
 };
 
 const notificationTypeLabelMap: Record<NotificationType, string> = {
@@ -36,6 +52,14 @@ const notificationTypeClassMap: Record<NotificationType, string> = {
     SCHEDULE: 'bg-warning-bg text-warning',
     ACTIVITY: 'bg-safe-bg text-safe',
     SYSTEM: 'bg-gray-100 text-gray-600',
+};
+
+const ensureElderStatus = (value: string | undefined): ElderStatus | undefined => {
+    if (value === 'SAFE' || value === 'WARNING' || value === 'DANGER') {
+        return value;
+    }
+
+    return undefined;
 };
 
 const formatRelativeTime = (dateTime: string) => {
@@ -68,6 +92,14 @@ function DashboardScreen() {
     const isValidElderId = Number.isFinite(parsedElderId);
 
     const dashboardQuery = useDashboard(isValidElderId ? parsedElderId : undefined);
+    const token = useAuthStore((state) => state.tokens?.accessToken ?? null);
+
+    const realtime = useDashboardRealtime({
+        token,
+        elderId: isValidElderId ? parsedElderId : null,
+        robotId: dashboardQuery.data?.robotStatus?.id ?? null,
+        enabled: isValidElderId,
+    });
 
     const errorMessage = useMemo(() => {
         if (dashboardQuery.error instanceof Error) {
@@ -75,6 +107,47 @@ function DashboardScreen() {
         }
         return '알 수 없는 오류가 발생했습니다.';
     }, [dashboardQuery.error]);
+
+    const dashboardData = dashboardQuery.data;
+    const elderName = dashboardData?.elderName;
+    const elderStatus = dashboardData?.elderStatus;
+    const todaySummary = dashboardData?.todaySummary ?? null;
+    const recentNotifications = dashboardData?.recentNotifications ?? [];
+    const weeklyCalendar = dashboardData?.weeklyCalendar ?? [];
+    const robotStatus = dashboardData?.robotStatus ?? null;
+
+    const activeRealtimeRobotStatus = useMemo(() => {
+        if (!realtime.robotStatus) {
+            return null;
+        }
+        if (robotStatus && realtime.robotStatus.robotId !== robotStatus.id) {
+            return null;
+        }
+        if (realtime.robotStatus.elderId !== null && realtime.robotStatus.elderId !== parsedElderId) {
+            return null;
+        }
+
+        return realtime.robotStatus;
+    }, [parsedElderId, realtime.robotStatus, robotStatus]);
+
+    const activeRealtimeElderStatus = useMemo(() => {
+        if (!realtime.elderStatus || realtime.elderStatus.elderId !== parsedElderId) {
+            return undefined;
+        }
+
+        return ensureElderStatus(realtime.elderStatus.status);
+    }, [parsedElderId, realtime.elderStatus]);
+
+    const mergedRobotStatus = robotStatus
+        ? {
+            ...robotStatus,
+            batteryLevel: activeRealtimeRobotStatus?.batteryLevel ?? robotStatus.batteryLevel,
+            networkStatus: activeRealtimeRobotStatus?.networkStatus ?? robotStatus.networkStatus,
+            currentLocation: activeRealtimeRobotStatus?.currentLocation ?? robotStatus.currentLocation,
+            lcdMode: activeRealtimeRobotStatus?.lcdMode ?? robotStatus.lcdMode,
+        }
+        : null;
+    const mergedElderStatus = activeRealtimeElderStatus ?? elderStatus;
 
     if (!isValidElderId) {
         return (
@@ -98,7 +171,7 @@ function DashboardScreen() {
         );
     }
 
-    if (dashboardQuery.isError || !dashboardQuery.data) {
+    if (dashboardQuery.isError || !dashboardData) {
         return (
             <GuardianAppContainer title="대시보드" description="오늘의 상태 요약을 확인합니다.">
                 <div className="rounded-2xl border border-danger bg-danger-bg p-5 text-sm text-danger">
@@ -110,8 +183,6 @@ function DashboardScreen() {
         );
     }
 
-    const { elderName, todaySummary, recentNotifications, weeklyCalendar, robotStatus } = dashboardQuery.data;
-
     return (
         <GuardianAppContainer
             title="대시보드"
@@ -119,7 +190,15 @@ function DashboardScreen() {
         >
             <section className="grid gap-4 md:grid-cols-2">
                 <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card">
-                    <h2 className="text-sm font-semibold text-gray-500">오늘의 요약</h2>
+                    <div className="flex items-start justify-between gap-3">
+                        <h2 className="text-sm font-semibold text-gray-500">오늘의 요약</h2>
+                        {mergedElderStatus ? (
+                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${elderStatusClassMap[mergedElderStatus]}`}>
+                                {elderStatusLabelMap[mergedElderStatus]}
+                            </span>
+                        ) : null}
+                    </div>
+
                     {todaySummary ? (
                         <div className="mt-4 grid gap-3 text-sm">
                             <div className="flex items-center justify-between">
@@ -138,6 +217,23 @@ function DashboardScreen() {
                                     {todaySummary.medicationStatus.taken}/{todaySummary.medicationStatus.total} 복용
                                 </span>
                             </div>
+                            <div className="grid grid-cols-2 gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">아침</span>
+                                    <span className="font-semibold text-gray-900">
+                                        {todaySummary.medicationStatus.morningTaken ?? 0}/{todaySummary.medicationStatus.morningTotal ?? 0}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-500">저녁</span>
+                                    <span className="font-semibold text-gray-900">
+                                        {todaySummary.medicationStatus.eveningTaken ?? 0}/{todaySummary.medicationStatus.eveningTotal ?? 0}
+                                    </span>
+                                </div>
+                            </div>
+                            {todaySummary.medicationStatus.summaryText ? (
+                                <p className="text-xs text-gray-500">{todaySummary.medicationStatus.summaryText}</p>
+                            ) : null}
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-2 text-gray-600">
                                     <Activity size={14} />
@@ -154,23 +250,28 @@ function DashboardScreen() {
                 </article>
 
                 <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card">
-                    <h2 className="text-sm font-semibold text-gray-500">로봇 상태</h2>
-                    {robotStatus ? (
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-gray-500">로봇 상태</h2>
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${realtime.isConnected ? 'text-safe' : 'text-gray-500'}`}>
+                            <CheckCircle2 size={12} /> {realtime.isConnected ? '실시간 연결됨' : '실시간 연결 대기'}
+                        </span>
+                    </div>
+                    {mergedRobotStatus ? (
                         <div className="mt-4 grid gap-3 text-sm">
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-2 text-gray-600">
                                     <Battery size={14} />
                                     배터리
                                 </span>
-                                <span className="font-semibold text-gray-900">{robotStatus.batteryLevel}%</span>
+                                <span className="font-semibold text-gray-900">{mergedRobotStatus.batteryLevel}%</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-2 text-gray-600">
                                     <Router size={14} />
                                     연결 상태
                                 </span>
-                                <span className={`font-semibold ${robotStatus.networkStatus === 'CONNECTED' ? 'text-safe' : 'text-danger'}`}>
-                                    {robotStatus.networkStatus === 'CONNECTED' ? '연결됨' : '연결 끊김'}
+                                <span className={`font-semibold ${mergedRobotStatus.networkStatus === 'CONNECTED' ? 'text-safe' : 'text-danger'}`}>
+                                    {mergedRobotStatus.networkStatus === 'CONNECTED' ? '연결됨' : '연결 끊김'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -178,11 +279,11 @@ function DashboardScreen() {
                                     <MapPin size={14} />
                                     현재 위치
                                 </span>
-                                <span className="font-semibold text-gray-900">{robotStatus.currentLocation ?? '-'}</span>
+                                <span className="font-semibold text-gray-900">{mergedRobotStatus.currentLocation ?? '-'}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-600">LCD 모드</span>
-                                <span className="font-semibold text-gray-900">{robotStatus.lcdMode ?? '-'}</span>
+                                <span className="font-semibold text-gray-900">{mergedRobotStatus.lcdMode ?? '-'}</span>
                             </div>
                         </div>
                     ) : (
