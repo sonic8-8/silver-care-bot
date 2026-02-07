@@ -10,7 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.RobotStatusResponse;
+import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.EmergencyContactRepository;
@@ -107,5 +109,21 @@ class RobotServiceTest {
 
         assertThat(response.pendingCommands()).hasSize(1);
         assertThat(response.pendingCommands().get(0).commandId()).isEqualTo(pending.getCommandId());
+    }
+
+    @Test
+    void updateLocationUpdatesRobotPosition() {
+        RobotLocationUpdateResponse response = robotService.updateLocation(
+                robot.getId(),
+                new UpdateRobotLocationRequest(14.2f, 25.8f, "KITCHEN", 270, null)
+        );
+
+        Robot updated = robotRepository.findById(robot.getId()).orElseThrow();
+        assertThat(response.received()).isTrue();
+        assertThat(response.serverTime()).isNotNull();
+        assertThat(updated.getCurrentLocation()).isEqualTo("KITCHEN");
+        assertThat(updated.getCurrentX()).isEqualTo(14.2f);
+        assertThat(updated.getCurrentY()).isEqualTo(25.8f);
+        assertThat(updated.getCurrentHeading()).isEqualTo(270);
     }
 }

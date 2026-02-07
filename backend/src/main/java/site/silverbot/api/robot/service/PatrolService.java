@@ -1,6 +1,7 @@
 package site.silverbot.api.robot.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -23,6 +24,8 @@ import site.silverbot.api.robot.response.PatrolHistoryResponse;
 import site.silverbot.api.robot.response.PatrolItemResponse;
 import site.silverbot.api.robot.response.PatrolLatestResponse;
 import site.silverbot.api.robot.response.PatrolReportResponse;
+import site.silverbot.api.robot.response.PatrolSnapshotListResponse;
+import site.silverbot.api.robot.response.PatrolSnapshotResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.patrol.PatrolItem;
@@ -30,6 +33,8 @@ import site.silverbot.domain.patrol.PatrolItemStatus;
 import site.silverbot.domain.patrol.PatrolOverallStatus;
 import site.silverbot.domain.patrol.PatrolResult;
 import site.silverbot.domain.patrol.PatrolResultRepository;
+import site.silverbot.domain.patrol.PatrolSnapshot;
+import site.silverbot.domain.patrol.PatrolSnapshotRepository;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
@@ -41,6 +46,7 @@ public class PatrolService {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final PatrolResultRepository patrolResultRepository;
+    private final PatrolSnapshotRepository patrolSnapshotRepository;
     private final RobotRepository robotRepository;
     private final ElderRepository elderRepository;
     private final CurrentUserService currentUserService;
@@ -90,6 +96,25 @@ public class PatrolService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public PatrolSnapshotListResponse getPatrolSnapshots(String patrolId) {
+        validateUserPrincipalForElderRead();
+        if (!StringUtils.hasText(patrolId)) {
+            throw new IllegalArgumentException("patrolId must not be blank");
+        }
+
+        PatrolResult patrolResult = patrolResultRepository.findByPatrolId(patrolId)
+                .orElseThrow(() -> new EntityNotFoundException("Patrol not found"));
+        validateElderOwnership(patrolResult.getElder());
+
+        List<PatrolSnapshotResponse> snapshots = patrolSnapshotRepository
+                .findByPatrolResultIdOrderByCapturedAtDescIdDesc(patrolResult.getId())
+                .stream()
+                .map(this::toSnapshotResponse)
+                .toList();
+        return new PatrolSnapshotListResponse(patrolResult.getPatrolId(), snapshots);
+    }
+
     public PatrolReportResponse reportPatrol(Long robotId, ReportPatrolRequest request) {
         Robot robot = getRobot(robotId);
         validatePatrolWriteAccess(robot);
@@ -115,21 +140,39 @@ public class PatrolService {
                 .startedAt(request.startedAt())
                 .completedAt(completedAt)
                 .build();
+        List<PatrolSnapshot> snapshots = new ArrayList<>();
 
         for (ReportPatrolRequest.PatrolItemRequest item : request.items()) {
+            String label = StringUtils.hasText(item.label()) ? item.label() : defaultLabel(item.target().name());
+            LocalDateTime checkedAt = item.checkedAt() == null ? completedAt : item.checkedAt();
             PatrolItem patrolItem = PatrolItem.builder()
                     .patrolResult(patrolResult)
                     .target(item.target())
-                    .label(StringUtils.hasText(item.label()) ? item.label() : defaultLabel(item.target().name()))
+                    .label(label)
                     .status(item.status())
                     .confidence(item.confidence())
                     .imageUrl(item.imageUrl())
-                    .checkedAt(item.checkedAt() == null ? completedAt : item.checkedAt())
+                    .checkedAt(checkedAt)
                     .build();
             patrolResult.addItem(patrolItem);
+
+            if (StringUtils.hasText(item.imageUrl())) {
+                snapshots.add(PatrolSnapshot.builder()
+                        .patrolResult(patrolResult)
+                        .target(item.target())
+                        .label(label)
+                        .status(item.status())
+                        .confidence(item.confidence())
+                        .imageUrl(item.imageUrl())
+                        .capturedAt(checkedAt)
+                        .build());
+            }
         }
 
         PatrolResult saved = patrolResultRepository.save(patrolResult);
+        if (!snapshots.isEmpty()) {
+            patrolSnapshotRepository.saveAll(snapshots);
+        }
         return toReportResponse(saved);
     }
 
@@ -163,6 +206,18 @@ public class PatrolService {
                 result.getOverallStatus(),
                 result.getCompletedAt(),
                 result.getItems().size()
+        );
+    }
+
+    private PatrolSnapshotResponse toSnapshotResponse(PatrolSnapshot snapshot) {
+        return new PatrolSnapshotResponse(
+                snapshot.getId(),
+                snapshot.getTarget(),
+                snapshot.getLabel(),
+                snapshot.getStatus(),
+                snapshot.getConfidence(),
+                snapshot.getImageUrl(),
+                snapshot.getCapturedAt()
         );
     }
 
@@ -231,6 +286,13 @@ public class PatrolService {
             throw new AccessDeniedException("Patrol access denied");
         }
         return elder;
+    }
+
+    private void validateElderOwnership(Elder elder) {
+        User user = currentUserService.getCurrentUser();
+        if (elder == null || elder.getUser() == null || !elder.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Patrol access denied");
+        }
     }
 
     private void validateUserPrincipalForElderRead() {

@@ -20,12 +20,14 @@ import site.silverbot.api.robot.request.ReportPatrolRequest;
 import site.silverbot.api.robot.response.PatrolHistoryResponse;
 import site.silverbot.api.robot.response.PatrolLatestResponse;
 import site.silverbot.api.robot.response.PatrolReportResponse;
+import site.silverbot.api.robot.response.PatrolSnapshotListResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.patrol.PatrolItemStatus;
 import site.silverbot.domain.patrol.PatrolResultRepository;
+import site.silverbot.domain.patrol.PatrolSnapshotRepository;
 import site.silverbot.domain.patrol.PatrolTarget;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
@@ -45,6 +47,9 @@ class PatrolServiceTest {
     private PatrolResultRepository patrolResultRepository;
 
     @Autowired
+    private PatrolSnapshotRepository patrolSnapshotRepository;
+
+    @Autowired
     private RobotRepository robotRepository;
 
     @Autowired
@@ -58,6 +63,7 @@ class PatrolServiceTest {
 
     @BeforeEach
     void setUp() {
+        patrolSnapshotRepository.deleteAllInBatch();
         patrolResultRepository.deleteAllInBatch();
         robotRepository.deleteAllInBatch();
         elderRepository.deleteAllInBatch();
@@ -122,6 +128,26 @@ class PatrolServiceTest {
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void reportPatrol_withImageUrl_savesSnapshotMetadata() {
+        patrolService.reportPatrol(robot.getId(), new ReportPatrolRequest(
+                "patrol-snapshot-save",
+                LocalDateTime.of(2026, 2, 7, 9, 0),
+                LocalDateTime.of(2026, 2, 7, 9, 5),
+                List.of(new ReportPatrolRequest.PatrolItemRequest(
+                        PatrolTarget.WINDOW,
+                        "창문",
+                        PatrolItemStatus.LOCKED,
+                        0.91f,
+                        "https://cdn.test/snapshot/window.jpg",
+                        LocalDateTime.of(2026, 2, 7, 9, 4)
+                ))
+        ));
+
+        assertThat(patrolSnapshotRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void getLatestPatrol_returnsMostRecentPatrol() {
         patrolService.reportPatrol(robot.getId(), new ReportPatrolRequest(
                 "patrol-1",
@@ -155,6 +181,30 @@ class PatrolServiceTest {
 
         assertThat(response.patrolId()).isEqualTo("patrol-2");
         assertThat(response.items()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void getPatrolSnapshots_returnsSnapshotsForPatrolId() {
+        patrolService.reportPatrol(robot.getId(), new ReportPatrolRequest(
+                "patrol-snapshot-list",
+                LocalDateTime.of(2026, 2, 7, 9, 0),
+                LocalDateTime.of(2026, 2, 7, 9, 5),
+                List.of(new ReportPatrolRequest.PatrolItemRequest(
+                        PatrolTarget.GAS_VALVE,
+                        "가스밸브",
+                        PatrolItemStatus.NORMAL,
+                        0.95f,
+                        "https://cdn.test/snapshot/gas.jpg",
+                        LocalDateTime.of(2026, 2, 7, 9, 3)
+                ))
+        ));
+
+        PatrolSnapshotListResponse response = patrolService.getPatrolSnapshots("patrol-snapshot-list");
+
+        assertThat(response.patrolId()).isEqualTo("patrol-snapshot-list");
+        assertThat(response.snapshots()).hasSize(1);
+        assertThat(response.snapshots().get(0).imageUrl()).isEqualTo("https://cdn.test/snapshot/gas.jpg");
     }
 
     @Test

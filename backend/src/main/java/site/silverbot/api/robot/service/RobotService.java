@@ -2,13 +2,16 @@ package site.silverbot.api.robot.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.RobotLcdResponse;
+import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
 import site.silverbot.domain.robot.LcdEmotion;
@@ -101,6 +104,13 @@ public class RobotService {
             robotStatusNotifier.notifyStatusChanged(robot);
         }
         return statusChanged;
+    }
+
+    @Transactional
+    public RobotLocationUpdateResponse updateLocation(Long robotId, UpdateRobotLocationRequest request) {
+        Robot robot = getRobot(robotId);
+        robot.updateLocation(request.roomId(), request.x(), request.y(), request.heading());
+        return new RobotLocationUpdateResponse(true, OffsetDateTime.now());
     }
 
     private Robot getRobot(Long robotId) {
