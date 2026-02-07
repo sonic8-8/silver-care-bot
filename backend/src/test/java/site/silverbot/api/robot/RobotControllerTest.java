@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -304,6 +305,28 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
                         )
                 ));
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void getRobotLcd_nonOwnerWorker_forbidden() throws Exception {
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/robots/{robotId}/lcd", robot.getId()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getRobotLcd_roleRobotWithMatchedPrincipal_ok() throws Exception {
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/robots/{robotId}/lcd", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.mode").value("IDLE"));
+    }
+
+    @Test
+    void getRobotLcd_roleRobotWithMismatchedPrincipal_forbidden() throws Exception {
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/robots/{robotId}/lcd", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT")))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -658,6 +681,24 @@ class RobotControllerTest extends RestDocsSupport {
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode_whenMessageFieldsNull_returnsEmptyStrings() throws Exception {
+        Map<String, Object> request = new HashMap<>();
+        request.put("mode", "IDLE");
+        request.put("emotion", "neutral");
+        request.put("message", null);
+        request.put("subMessage", null);
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value(""))
+                .andExpect(jsonPath("$.data.subMessage").value(""));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateRobotLocation() throws Exception {
         Map<String, Object> request = Map.of(
                 "x", 42.1,
@@ -729,6 +770,42 @@ class RobotControllerTest extends RestDocsSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateRobotLcdMode_roleRobotWithMatchedPrincipal_ok() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "LISTENING",
+                "emotion", "happy",
+                "message", "안녕하세요",
+                "subMessage", "도와드릴까요?"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.mode").value("LISTENING"))
+                .andExpect(jsonPath("$.data.emotion").value("happy"));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode_invalidMode_badRequest() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "UNKNOWN_MODE",
+                "emotion", "neutral",
+                "message", "",
+                "subMessage", ""
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.details").value("Invalid lcd mode"));
     }
 
     @Test

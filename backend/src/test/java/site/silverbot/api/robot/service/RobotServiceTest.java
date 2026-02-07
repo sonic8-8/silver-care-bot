@@ -8,18 +8,25 @@ import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import site.silverbot.api.robot.request.RobotSyncRequest;
 import site.silverbot.api.robot.request.UpdateRobotLcdModeRequest;
 import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
+import site.silverbot.api.robot.response.RobotLcdResponse;
 import site.silverbot.api.robot.response.UpdateRobotLcdModeResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
@@ -74,6 +81,11 @@ class RobotServiceTest {
     private WebSocketMessageService webSocketMessageService;
 
     private Robot robot;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @BeforeEach
     void setUp() {
@@ -198,6 +210,40 @@ class RobotServiceTest {
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void getLcd_ownerWorker_returnsNormalizedStrings() {
+        RobotLcdResponse response = robotService.getLcd(robot.getId());
+
+        assertThat(response.mode()).isEqualTo("IDLE");
+        assertThat(response.emotion()).isEqualTo("neutral");
+        assertThat(response.message()).isEqualTo("");
+        assertThat(response.subMessage()).isEqualTo("");
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void getLcd_nonOwnerWorker_throwsAccessDeniedException() {
+        assertThrows(AccessDeniedException.class, () -> robotService.getLcd(robot.getId()));
+    }
+
+    @Test
+    void getLcd_robotPrincipalMatched_returnsResponse() {
+        authenticateAsRobot(robot.getId());
+
+        RobotLcdResponse response = robotService.getLcd(robot.getId());
+
+        assertThat(response.mode()).isEqualTo("IDLE");
+        assertThat(response.emotion()).isEqualTo("neutral");
+    }
+
+    @Test
+    void getLcd_robotPrincipalMismatch_throwsAccessDeniedException() {
+        authenticateAsRobot(robot.getId() + 1);
+
+        assertThrows(AccessDeniedException.class, () -> robotService.getLcd(robot.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateLcdMode_updatesStateAndBroadcasts() {
         UpdateRobotLcdModeResponse response = robotService.updateLcdMode(
                 robot.getId(),
@@ -277,5 +323,52 @@ class RobotServiceTest {
                         robot.getId(),
                         new UpdateRobotLcdModeRequest("IDLE", "neutral", "", "")
                 ));
+    }
+
+    @Test
+    void updateLcdMode_robotPrincipalMatched_updatesState() {
+        authenticateAsRobot(robot.getId());
+
+        UpdateRobotLcdModeResponse response = robotService.updateLcdMode(
+                robot.getId(),
+                new UpdateRobotLcdModeRequest("LISTENING", "happy", "안녕하세요", "도와드릴까요?")
+        );
+
+        assertThat(response.mode()).isEqualTo("LISTENING");
+        assertThat(response.emotion()).isEqualTo("happy");
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateLcdMode_invalidMode_throwsIllegalArgumentException() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> robotService.updateLcdMode(
+                        robot.getId(),
+                        new UpdateRobotLcdModeRequest("UNKNOWN_MODE", "neutral", "", "")
+                ));
+
+        assertThat(exception).hasMessage("Invalid lcd mode");
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateLcdMode_blankEmotion_throwsIllegalArgumentException() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> robotService.updateLcdMode(
+                        robot.getId(),
+                        new UpdateRobotLcdModeRequest("IDLE", "   ", "", "")
+                ));
+
+        assertThat(exception).hasMessage("Invalid lcd emotion");
+    }
+
+    private void authenticateAsRobot(Long robotPrincipalId) {
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(new UsernamePasswordAuthenticationToken(
+                String.valueOf(robotPrincipalId),
+                "N/A",
+                List.of(new SimpleGrantedAuthority("ROLE_ROBOT"))
+        ));
+        SecurityContextHolder.setContext(context);
     }
 }
