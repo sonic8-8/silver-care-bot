@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.14
+> **버전**: v1.15
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -111,127 +111,127 @@
 > 서비스 동작을 위한 최소 필수 기능
 
 #### 1.1 데이터베이스 스키마
-- [ ] PostgreSQL ENUM 타입 생성 (V1__create_enums.sql)
-- [ ] USER 테이블 + Entity
-- [ ] ELDER 테이블 + Entity
-- [ ] EMERGENCY_CONTACT 테이블 + Entity
-- [ ] ROBOT 테이블 + Entity
-- [ ] ROOM 테이블 + Entity
-- [ ] EMERGENCY 테이블 + Entity
-- [ ] ROBOT_COMMAND 테이블 + Entity
+- [x] PostgreSQL ENUM 타입 생성 (V1__create_enums.sql)
+- [x] USER 테이블 + Entity
+- [x] ELDER 테이블 + Entity
+- [x] EMERGENCY_CONTACT 테이블 + Entity
+- [x] ROBOT 테이블 + Entity
+- [x] ROOM 테이블 + Entity
+- [x] EMERGENCY 테이블 + Entity
+- [x] ROBOT_COMMAND 테이블 + Entity
 
 #### 1.2 인증 (Auth) - Backend
-- [ ] `POST /api/auth/signup` - 회원가입
-  - [ ] Controller 테스트 작성 (RED)
-  - [ ] Service + Repository 구현 (GREEN)
-  - [ ] BCrypt 비밀번호 암호화
-  - [ ] 역할(WORKER/FAMILY) 저장
-  - [ ] REST Docs 스니펫 생성
-- [ ] `POST /api/auth/login` - 로그인
-  - [ ] JWT 토큰 생성 (Access 1h + Refresh 7d)
-  - [ ] 토큰 응답 형식 정의
-- [ ] `POST /api/auth/refresh` - 토큰 갱신
-- [ ] `POST /api/auth/robot/login` - 로봇 인증
-  - [ ] 시리얼번호 + 인증코드 검증
-- [ ] JWT 필터 구현 (JwtAuthenticationFilter)
-- [ ] Security 설정 (permitAll, authenticated)
+- [x] `POST /api/auth/signup` - 회원가입
+  - [x] Controller 테스트 작성 (RED)
+  - [x] Service + Repository 구현 (GREEN)
+  - [x] BCrypt 비밀번호 암호화
+  - [x] 역할(WORKER/FAMILY) 저장
+  - [x] REST Docs 스니펫 생성
+- [x] `POST /api/auth/login` - 로그인
+  - [x] JWT 토큰 생성 (Access 1h + Refresh 7d)
+  - [x] 토큰 응답 형식 정의
+- [x] `POST /api/auth/refresh` - 토큰 갱신
+- [x] `POST /api/auth/robot/login` - 로봇 인증
+  - [x] 시리얼번호 + 인증코드 검증
+- [x] JWT 필터 구현 (JwtAuthenticationFilter)
+- [x] Security 설정 (permitAll, authenticated)
 
 #### 1.3 인증 (Auth) - Frontend
-- [ ] 로그인 페이지 (`/login`)
-  - [ ] 보호자/로봇 탭 UI
-  - [ ] 이메일/비밀번호 폼
-  - [ ] 유효성 검증
-  - [ ] 로그인 API 연동
-- [ ] 회원가입 페이지 (`/signup`)
-  - [ ] 역할 선택 (WORKER/FAMILY)
-  - [ ] 폼 입력 + 검증
-- [ ] useAuth 훅 구현
-  - [ ] 테스트 작성 (TDD 필수)
-  - [ ] 토큰 저장/갱신 로직
-- [ ] AuthStore (Zustand)
-  - [ ] user 상태 관리
-  - [ ] login/logout 액션
-- [ ] ProtectedRoute 컴포넌트
-- [ ] 역할별 라우팅 분기
-  - [ ] WORKER: 로그인 성공 → `/elders`
-  - [ ] FAMILY: 로그인 성공 → `/elders/:elderId` (직행)
-- [ ] Axios 인터셉터 (토큰 자동 첨부, 401 처리)
+- [x] 로그인 페이지 (`/login`)
+  - [x] 보호자/로봇 탭 UI
+  - [x] 이메일/비밀번호 폼
+  - [x] 유효성 검증
+  - [x] 로그인 API 연동
+- [x] 회원가입 페이지 (`/signup`)
+  - [x] 역할 선택 (WORKER/FAMILY)
+  - [x] 폼 입력 + 검증
+- [x] useAuth 훅 구현
+  - [x] 테스트 작성 (TDD 필수)
+  - [x] 토큰 저장/갱신 로직
+- [x] AuthStore (Zustand)
+  - [x] user 상태 관리
+  - [x] login/logout 액션
+- [x] ProtectedRoute 컴포넌트
+- [x] 역할별 라우팅 분기
+  - [x] WORKER: 로그인 성공 → `/elders`
+  - [x] FAMILY: 로그인 성공 → `/elders/:elderId` (직행)
+- [x] Axios 인터셉터 (토큰 자동 첨부, 401 처리)
 
 #### 1.4 노인 관리 (Elder) - Backend
-- [ ] `POST /api/elders` - 노인 등록
-- [ ] `GET /api/elders` - 목록 조회 (담당 노인만)
-- [ ] `GET /api/elders/{elderId}` - 상세 조회
-- [ ] `PUT /api/elders/{elderId}` - 정보 수정
-- [ ] `DELETE /api/elders/{elderId}` - 삭제
-- [ ] 긴급연락처 API (하위 리소스)
-  - [ ] `POST /api/elders/{elderId}/contacts` - 연락처 추가
-  - [ ] `GET /api/elders/{elderId}/contacts` - 연락처 목록
-  - [ ] `PUT /api/elders/{elderId}/contacts/{contactId}` - 연락처 수정
-  - [ ] `DELETE /api/elders/{elderId}/contacts/{contactId}` - 연락처 삭제
+- [x] `POST /api/elders` - 노인 등록
+- [x] `GET /api/elders` - 목록 조회 (담당 노인만)
+- [x] `GET /api/elders/{elderId}` - 상세 조회
+- [x] `PUT /api/elders/{elderId}` - 정보 수정
+- [x] `DELETE /api/elders/{elderId}` - 삭제
+- [x] 긴급연락처 API (하위 리소스)
+  - [x] `POST /api/elders/{elderId}/contacts` - 연락처 추가
+  - [x] `GET /api/elders/{elderId}/contacts` - 연락처 목록
+  - [x] `PUT /api/elders/{elderId}/contacts/{contactId}` - 연락처 수정
+  - [x] `DELETE /api/elders/{elderId}/contacts/{contactId}` - 연락처 삭제
 
 #### 1.5 노인 관리 (Elder) - Frontend
-- [ ] 노인 선택 페이지 (`/elders`) - 복지사 전용
-  - [ ] 노인 카드 목록
-  - [ ] 상태 뱃지 (SAFE/WARNING/DANGER)
-  - [ ] 노인 추가 모달
-  - [ ] 긴급연락처 관리 UI
+- [x] 노인 선택 페이지 (`/elders`) - 복지사 전용
+  - [x] 노인 카드 목록
+  - [x] 상태 뱃지 (SAFE/WARNING/DANGER)
+  - [x] 노인 추가 모달
+  - [x] 긴급연락처 관리 UI
 
 #### 1.6 로봇 상태/제어 (Robot) - Backend
-- [ ] `GET /api/robots/{robotId}/status` - 상태 조회
-- [ ] `POST /api/robots/{robotId}/commands` - 명령 전송
-  - [ ] 명령 유형: MOVE_TO, START_PATROL, RETURN_TO_DOCK, SPEAK, CHANGE_LCD_MODE
-- [ ] `POST /api/robots/{robotId}/sync` - 상태 동기화 (Heartbeat)
-  - [ ] 60초 주기 수신
-  - [ ] last_sync_at 업데이트
-- [ ] `GET /api/robots/{robotId}/lcd` - LCD 상태 조회
-- [ ] 명령 큐 처리 로직
+- [x] `GET /api/robots/{robotId}/status` - 상태 조회
+- [x] `POST /api/robots/{robotId}/commands` - 명령 전송
+  - [x] 명령 유형: MOVE_TO, START_PATROL, RETURN_TO_DOCK, SPEAK, CHANGE_LCD_MODE
+- [x] `POST /api/robots/{robotId}/sync` - 상태 동기화 (Heartbeat)
+  - [x] 60초 주기 수신
+  - [x] last_sync_at 업데이트
+- [x] `GET /api/robots/{robotId}/lcd` - LCD 상태 조회
+- [x] 명령 큐 처리 로직
 
 #### 1.7 로봇 연결 상태 관리 - Backend
-- [ ] 오프라인 판정 스케줄러
-  - [ ] 2분(120초) 동안 heartbeat 미수신 시 DISCONNECTED 처리
-- [ ] 오프라인 알림 스케줄러
-  - [ ] 30분 동안 오프라인 지속 시 보호자에게 알림 발송
-- [ ] 연결 상태 변경 시 WebSocket 브로드캐스트
+- [x] 오프라인 판정 스케줄러
+  - [x] 2분(120초) 동안 heartbeat 미수신 시 DISCONNECTED 처리
+- [x] 오프라인 알림 스케줄러
+  - [x] 30분 동안 오프라인 지속 시 보호자에게 알림 발송
+- [x] 연결 상태 변경 시 WebSocket 브로드캐스트
 
 #### 1.8 로봇 상태/제어 (Robot) - Frontend
-- [ ] 로봇 제어 페이지 (`/elders/:id/robot`)
-  - [ ] 배터리/연결 상태 표시
-  - [ ] 위치 정보 표시
-  - [ ] 이동 명령 버튼 (방 선택)
-  - [ ] TTS 메시지 입력
-  - [ ] LCD 모드 변경
-- [ ] LCD 미러링 페이지 (`/elders/:id/robot/lcd`)
-  - [ ] 로봇 LCD 화면 프리뷰
+- [x] 로봇 제어 페이지 (`/elders/:id/robot`)
+  - [x] 배터리/연결 상태 표시
+  - [x] 위치 정보 표시
+  - [x] 이동 명령 버튼 (방 선택)
+  - [x] TTS 메시지 입력
+  - [x] LCD 모드 변경
+- [x] LCD 미러링 페이지 (`/elders/:id/robot/lcd`)
+  - [x] 로봇 LCD 화면 프리뷰
 
 #### 1.9 긴급 상황 (Emergency) - Backend
-- [ ] `POST /api/robots/{robotId}/emergency` - 긴급 보고
-  - [ ] 유형: FALL_DETECTED, NO_RESPONSE, SOS_BUTTON, UNUSUAL_PATTERN
-- [ ] `GET /api/emergencies` - 긴급 상황 목록
-- [ ] `GET /api/emergencies/{id}` - 긴급 상황 상세
-- [ ] `PATCH /api/emergencies/{id}/resolve` - 긴급 해제
-  - [ ] 해결 유형: FALSE_ALARM, RESOLVED, EMERGENCY_CALLED, FAMILY_CONTACTED
-- [ ] 긴급 상황 발생 시 알림 생성
+- [x] `POST /api/robots/{robotId}/emergency` - 긴급 보고
+  - [x] 유형: FALL_DETECTED, NO_RESPONSE, SOS_BUTTON, UNUSUAL_PATTERN
+- [x] `GET /api/emergencies` - 긴급 상황 목록
+- [x] `GET /api/emergencies/{id}` - 긴급 상황 상세
+- [x] `PATCH /api/emergencies/{id}/resolve` - 긴급 해제
+  - [x] 해결 유형: FALSE_ALARM, RESOLVED, EMERGENCY_CALLED, FAMILY_CONTACTED
+- [x] 긴급 상황 발생 시 알림 생성
 
 #### 1.10 긴급 상황 (Emergency) - Frontend
 - [ ] 긴급 상황 페이지 (`/emergency/:id`)
-  - [ ] 풀스크린 경고 UI
-  - [ ] 119 전화 버튼
-  - [ ] 해제 버튼 + 확인 다이얼로그
+  - [x] 풀스크린 경고 UI
+  - [x] 119 전화 버튼
+  - [x] 해제 버튼 + 확인 다이얼로그
   - [ ] 긴급연락처 목록
 
 #### 1.11 WebSocket 기반 구축
-- [ ] Backend: STOMP + SockJS 설정
-- [ ] Backend: WebSocket 토픽 정의
-  - [ ] `/topic/robot/{robotId}/status` - 로봇 상태 업데이트
-  - [ ] `/topic/robot/{robotId}/lcd` - LCD 화면 전환
-  - [ ] `/topic/elder/{elderId}/status` - 노인 상태 변경
-  - [ ] `/topic/user/{userId}/notifications` - 사용자별 알림
-  - [ ] `/topic/emergency` - 긴급 알림 (브로드캐스트)
-- [ ] Backend: WebSocket 인증 (JWT)
-- [ ] Frontend: WebSocket 클라이언트 설정 (SockJS + STOMP)
-- [ ] Frontend: useWebSocket 훅 구현
-  - [ ] 자동 재연결 로직
-  - [ ] 구독/해제 관리
+- [x] Backend: STOMP + SockJS 설정
+- [x] Backend: WebSocket 토픽 정의
+  - [x] `/topic/robot/{robotId}/status` - 로봇 상태 업데이트
+  - [x] `/topic/robot/{robotId}/lcd` - LCD 화면 전환
+  - [x] `/topic/elder/{elderId}/status` - 노인 상태 변경
+  - [x] `/topic/user/{userId}/notifications` - 사용자별 알림
+  - [x] `/topic/emergency` - 긴급 알림 (브로드캐스트)
+- [x] Backend: WebSocket 인증 (JWT)
+- [x] Frontend: WebSocket 클라이언트 설정 (SockJS + STOMP)
+- [x] Frontend: useWebSocket 훅 구현
+  - [x] 자동 재연결 로직
+  - [x] 구독/해제 관리
 
 ---
 
@@ -486,25 +486,25 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 #### 5.1 LCD 프로젝트 설정
 - [x] Vite 프로젝트 설정 (별도 디렉토리: `/frontend-lcd`)
 - [ ] Tailwind CSS + Framer Motion 설정
-- [ ] 전체화면 레이아웃 (1024x600)
+- [x] 전체화면 레이아웃 (1024x600)
 - [x] 대형 폰트 + 터치 최적화 (64px+, 터치 영역 64px+)
 - [ ] WCAG AAA 접근성 (대비율 7:1)
 - [x] WebSocket 연결 (서버 → LCD)
 
 #### 5.2 LCD 공통 컴포넌트
-- [ ] RobotFace 컴포넌트 (눈 애니메이션)
-  - [ ] 자동 깜빡임
-  - [ ] 표정 변화 (neutral, happy, sleep)
-- [ ] StatusBar 컴포넌트 (시계, WiFi, 배터리)
+- [x] RobotFace 컴포넌트 (눈 애니메이션)
+  - [x] 자동 깜빡임
+  - [x] 표정 변화 (neutral, happy, sleep)
+- [x] StatusBar 컴포넌트 (시계, WiFi, 배터리)
 - [x] LargeButton 컴포넌트 (터치 최적화)
 
 #### 5.3 LCD 화면 구현
-- [ ] IDLE 모드 - 평상시
+- [x] IDLE 모드 - 평상시
   - [x] 메인 메시지 + 서브 메시지
   - [x] 다음 일정 표시
   - [x] neutral 표정
 - [ ] GREETING 모드 - 기상/귀가
-  - [ ] 인사말 + 날씨 정보
+  - [x] 인사말 + 날씨 정보
   - [ ] happy 표정
 - [ ] MEDICATION 모드 - 약 시간
   - [x] 초대형 버튼 2개 (복용완료/나중에)
@@ -517,11 +517,11 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [ ] LISTENING 모드 - 음성 인식
   - [x] 파동 애니메이션 (Framer Motion)
   - [ ] neutral 표정
-- [ ] EMERGENCY 모드 - 긴급 상황
+- [x] EMERGENCY 모드 - 긴급 상황
   - [x] 배경 빨간색 점멸
-  - [ ] 119 버튼 + 괜찮아요 버튼
-  - [ ] neutral 표정
-- [ ] SLEEP 모드 - 충전 중
+  - [x] 119 버튼 + 괜찮아요 버튼
+  - [x] neutral 표정
+- [x] SLEEP 모드 - 충전 중
   - [x] 충전 상태 표시 (배터리 %)
   - [x] sleep 표정 (눈 감김)
 
@@ -657,3 +657,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.12 | 2026-02-07 | Phase 5 구현/머지 반영: LCD UI/API/이벤트/계약 체크리스트 갱신, 진행률 및 남은 고도화 항목 업데이트 |
 | v1.13 | 2026-02-08 | Phase 6 착수 반영: Phase 5 브랜치 로컬 정리/Worktree 재할당 완료, Phase 6 하드닝 계획 및 체크리스트 추가 |
 | v1.14 | 2026-02-08 | Phase 6 완료 반영: UI/Backend/계약 하드닝 체크 완료, `origin/develop` 병합 상태 및 운영 잔여 작업(브랜치 정리/동기화) 갱신 |
+| v1.15 | 2026-02-08 | develop 코드 기준 미체크 항목 정리: Phase 1/5 구현 완료 체크 보강 및 부분 구현 항목(예: 긴급연락처 목록, Framer Motion)은 미체크 유지 |

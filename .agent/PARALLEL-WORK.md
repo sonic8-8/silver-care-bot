@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.12
+> **버전**: v3.13
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -996,9 +996,9 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 ## 모든 Agent 작업 완료 후 확인
 
 - [ ] Agent 0: 모든 작업 지시 완료
-- [ ] Agent 1~4: 각 Worktree에서 정상 커밋/푸시 완료
-- [ ] 새 세션 리뷰: 모든 PR 검수 완료 및 Approve
-- [ ] Agent 0: develop 병합 완료
+- [x] Agent 1~4: 각 Worktree에서 정상 커밋/푸시 완료
+- [x] 새 세션 리뷰: 모든 PR 검수 완료 및 Approve
+- [x] Agent 0: develop 병합 완료
 - [ ] `docker-compose up` → PostgreSQL + App 정상 실행
 - [ ] Flyway 마이그레이션 성공 (V1, V2)
 - [ ] `npm run dev` → Frontend 정상 실행
