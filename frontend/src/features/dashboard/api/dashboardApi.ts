@@ -3,7 +3,7 @@ import { api } from '@/shared/api';
 import { unwrapApiResponse } from '@/shared/api/response';
 import { getElderDetail } from '@/features/elder/api/elderApi';
 import { robotApi } from '@/features/robot-control/api/robotApi';
-import type { ApiResult } from '@/shared/types';
+import type { ApiResult, ElderStatus } from '@/shared/types';
 import type { RobotConnectionStatus, RobotLcdMode } from '@/shared/types/robot.types';
 import type {
     ActivityLevel,
@@ -15,18 +15,19 @@ import type {
     NotificationListPayload,
     ScheduleItem,
     ScheduleListPayload,
+    ScheduleSource,
+    ScheduleStatus,
+    ScheduleType,
 } from '../types';
 
 const dayLabels = ['일', '월', '화', '수', '목', '금', '토'] as const;
 
 interface ElderDetailForDashboard {
     name: string;
+    status?: ElderStatus;
     todaySummary?: {
         wakeUpTime?: string | null;
-        medicationStatus?: {
-            taken: number;
-            total: number;
-        };
+        medicationStatus?: unknown;
         activityLevel?: ActivityLevel;
     };
     robot?: {
@@ -36,6 +37,25 @@ interface ElderDetailForDashboard {
         networkStatus?: RobotConnectionStatus;
         currentLocation?: string;
     };
+}
+
+type RawScheduleItem = {
+    id: number;
+    title: string;
+    description?: string | null;
+    scheduledAt?: string;
+    datetime?: string;
+    location?: string | null;
+    type?: string;
+    source?: string;
+    status?: string;
+    remindBefore?: number | null;
+    remindBeforeMinutes?: number | null;
+    voiceOriginal?: string | null;
+};
+
+interface RawScheduleListPayload {
+    schedules: RawScheduleItem[];
 }
 
 const ensureActivityLevel = (value: string | null | undefined): ActivityLevel => {
@@ -62,6 +82,30 @@ const ensureLcdMode = (value: string | null | undefined): RobotLcdMode | undefin
         return value;
     }
     return undefined;
+};
+
+const ensureScheduleType = (value: string | undefined): ScheduleType => {
+    if (value === 'HOSPITAL' || value === 'MEDICATION' || value === 'PERSONAL' || value === 'FAMILY') {
+        return value;
+    }
+
+    return 'OTHER';
+};
+
+const ensureScheduleSource = (value: string | undefined): ScheduleSource => {
+    if (value === 'VOICE' || value === 'SYSTEM') {
+        return value;
+    }
+
+    return 'MANUAL';
+};
+
+const ensureScheduleStatus = (value: string | undefined): ScheduleStatus => {
+    if (value === 'COMPLETED' || value === 'CANCELLED') {
+        return value;
+    }
+
+    return 'UPCOMING';
 };
 
 const formatDate = (date: Date) => {
@@ -98,11 +142,135 @@ const buildWeekRange = () => {
     };
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === 'object' && value !== null;
+};
+
+const toNonNegativeNumber = (value: unknown) => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return undefined;
+    }
+
+    return Math.max(0, Math.trunc(value));
+};
+
+const resolveDoseCounts = (value: unknown) => {
+    if (!isRecord(value)) {
+        return {
+            taken: undefined,
+            total: undefined,
+        };
+    }
+
+    return {
+        taken: toNonNegativeNumber(value.taken),
+        total: toNonNegativeNumber(value.total),
+    };
+};
+
+const normalizeMedicationStatus = (value: unknown) => {
+    if (typeof value === 'string') {
+        return {
+            taken: 0,
+            total: 0,
+            morningTaken: 0,
+            morningTotal: 0,
+            eveningTaken: 0,
+            eveningTotal: 0,
+            summaryText: value,
+        };
+    }
+
+    if (!isRecord(value)) {
+        return {
+            taken: 0,
+            total: 0,
+            morningTaken: 0,
+            morningTotal: 0,
+            eveningTaken: 0,
+            eveningTotal: 0,
+            summaryText: null,
+        };
+    }
+
+    const directTaken = toNonNegativeNumber(value.taken);
+    const directTotal = toNonNegativeNumber(value.total);
+
+    const nestedMorning = resolveDoseCounts(value.morning);
+    const nestedEvening = resolveDoseCounts(value.evening);
+
+    const morningTaken =
+        toNonNegativeNumber(value.morningTaken)
+        ?? toNonNegativeNumber(value.morningTakenCount)
+        ?? nestedMorning.taken
+        ?? 0;
+    const morningTotal =
+        toNonNegativeNumber(value.morningTotal)
+        ?? toNonNegativeNumber(value.morningTotalCount)
+        ?? nestedMorning.total
+        ?? 0;
+
+    const eveningTaken =
+        toNonNegativeNumber(value.eveningTaken)
+        ?? toNonNegativeNumber(value.eveningTakenCount)
+        ?? nestedEvening.taken
+        ?? 0;
+    const eveningTotal =
+        toNonNegativeNumber(value.eveningTotal)
+        ?? toNonNegativeNumber(value.eveningTotalCount)
+        ?? nestedEvening.total
+        ?? 0;
+
+    const totalTaken = directTaken ?? (morningTaken + eveningTaken);
+    const totalCount = directTotal ?? (morningTotal + eveningTotal);
+
+    const summaryText =
+        typeof value.summaryText === 'string'
+            ? value.summaryText
+            : typeof value.statusText === 'string'
+                ? value.statusText
+                : typeof value.label === 'string'
+                    ? value.label
+                    : null;
+
+    return {
+        taken: totalTaken,
+        total: totalCount,
+        morningTaken,
+        morningTotal,
+        eveningTaken,
+        eveningTotal,
+        summaryText,
+    };
+};
+
+const resolveScheduleDateTime = (item: Pick<RawScheduleItem, 'scheduledAt' | 'datetime'>): string => {
+    return item.scheduledAt ?? item.datetime ?? '';
+};
+
+const normalizeSchedule = (item: RawScheduleItem): ScheduleItem => {
+    return {
+        id: item.id,
+        title: item.title,
+        description: item.description ?? null,
+        scheduledAt: resolveScheduleDateTime(item),
+        datetime: item.datetime,
+        location: item.location ?? null,
+        type: ensureScheduleType(item.type),
+        source: ensureScheduleSource(item.source),
+        status: ensureScheduleStatus(item.status),
+        remindBefore: item.remindBefore ?? item.remindBeforeMinutes ?? null,
+        remindBeforeMinutes: item.remindBeforeMinutes ?? item.remindBefore ?? null,
+        voiceOriginal: item.voiceOriginal ?? null,
+    };
+};
+
 const buildWeeklyCalendar = (schedules: ScheduleItem[]): DashboardCalendarDay[] => {
     const schedulesByDate = new Map<string, ScheduleItem[]>();
 
     schedules.forEach((item) => {
-        const date = new Date(item.datetime);
+        const dateTime = resolveScheduleDateTime(item);
+        const date = new Date(dateTime);
         if (Number.isNaN(date.getTime())) {
             return;
         }
@@ -123,11 +291,11 @@ const buildWeeklyCalendar = (schedules: ScheduleItem[]): DashboardCalendarDay[] 
         const dateKey = formatDate(targetDate);
         const events = (schedulesByDate.get(dateKey) ?? [])
             .slice()
-            .sort((a, b) => a.datetime.localeCompare(b.datetime))
+            .sort((a, b) => resolveScheduleDateTime(a).localeCompare(resolveScheduleDateTime(b)))
             .map((event) => ({
                 id: event.id,
                 title: event.title,
-                time: formatTime(event.datetime),
+                time: formatTime(resolveScheduleDateTime(event)),
                 type: event.type,
             }));
 
@@ -152,16 +320,19 @@ const getDashboardNotifications = async (elderId: number) => {
     return unwrapApiResponse(response.data);
 };
 
-const getWeeklySchedules = async (elderId: number) => {
+const getWeeklySchedules = async (elderId: number): Promise<ScheduleListPayload> => {
     const { startDate, endDate } = buildWeekRange();
-    const response = await api.get<ApiResult<ScheduleListPayload>>(`/elders/${elderId}/schedules`, {
+    const response = await api.get<ApiResult<RawScheduleListPayload>>(`/elders/${elderId}/schedules`, {
         params: {
             startDate,
             endDate,
         },
     });
 
-    return unwrapApiResponse(response.data);
+    const payload = unwrapApiResponse(response.data);
+    return {
+        schedules: (payload?.schedules ?? []).map(normalizeSchedule),
+    };
 };
 
 export const selectRecentNotifications = (notifications: NotificationItem[], limit = 5) => {
@@ -199,10 +370,7 @@ const buildTodaySummary = (summary?: ElderDetailForDashboard['todaySummary']): D
 
     return {
         wakeUpTime: summary.wakeUpTime ?? null,
-        medicationStatus: {
-            taken: summary.medicationStatus?.taken ?? 0,
-            total: summary.medicationStatus?.total ?? 0,
-        },
+        medicationStatus: normalizeMedicationStatus(summary.medicationStatus),
         activityLevel: ensureActivityLevel(summary.activityLevel),
     };
 };
@@ -254,6 +422,7 @@ export const getDashboardData = async (elderId: number): Promise<DashboardData> 
 
     return {
         elderName: elderDetail.name,
+        elderStatus: elderDetail.status,
         todaySummary: buildTodaySummary(elderDetail.todaySummary),
         recentNotifications: selectRecentNotifications(notificationsResult?.notifications ?? []),
         weeklyCalendar: buildWeeklyCalendar(schedulesResult?.schedules ?? []),

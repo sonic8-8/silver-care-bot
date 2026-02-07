@@ -1,3 +1,4 @@
+import type { ElderStatus } from '@/shared/types/elder.types';
 import type { RobotConnectionStatus, RobotLcdMode } from '@/shared/types/robot.types';
 
 export type NotificationType = 'EMERGENCY' | 'MEDICATION' | 'SCHEDULE' | 'ACTIVITY' | 'SYSTEM';
@@ -27,12 +28,14 @@ export interface ScheduleItem {
     id: number;
     title: string;
     description?: string | null;
-    datetime: string;
+    scheduledAt: string;
+    datetime?: string;
     location?: string | null;
     type: ScheduleType;
     source: ScheduleSource;
     status: ScheduleStatus;
     remindBefore?: number | null;
+    remindBeforeMinutes?: number | null;
     voiceOriginal?: string | null;
 }
 
@@ -47,6 +50,11 @@ export interface DashboardTodaySummary {
     medicationStatus: {
         taken: number;
         total: number;
+        morningTaken?: number;
+        morningTotal?: number;
+        eveningTaken?: number;
+        eveningTotal?: number;
+        summaryText?: string | null;
     };
     activityLevel: ActivityLevel;
 }
@@ -76,6 +84,7 @@ export interface DashboardRobotStatus {
 
 export interface DashboardData {
     elderName?: string;
+    elderStatus?: ElderStatus;
     todaySummary: DashboardTodaySummary | null;
     recentNotifications: NotificationItem[];
     weeklyCalendar: DashboardCalendarDay[];
