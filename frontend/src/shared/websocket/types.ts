@@ -1,5 +1,6 @@
 import type { RobotConnectionStatus, RobotLcdMode } from '@/shared/types/robot.types';
 import type { RobotLocationRealtimePayload } from '@/shared/types/map.types';
+import type { RobotLcdRealtimePayload } from '@/shared/types/lcd.types';
 
 export type WebSocketMessageType =
     | 'ROBOT_STATUS_UPDATE'
@@ -26,13 +27,7 @@ export type RobotStatusPayload = {
     lcdMode?: RobotLcdMode | string | null;
 };
 
-export type LcdModePayload = {
-    robotId: number;
-    mode: string;
-    emotion?: string;
-    message?: string;
-    subMessage?: string;
-};
+export type LcdModePayload = RobotLcdRealtimePayload;
 
 export type ElderStatusPayload = {
     elderId: number;
@@ -80,3 +75,5 @@ export type DashboardElderRealtimeState = {
 };
 
 export type RobotLocationRealtimeState = RobotLocationRealtimePayload;
+
+export type RobotLcdRealtimeState = RobotLcdRealtimePayload;
