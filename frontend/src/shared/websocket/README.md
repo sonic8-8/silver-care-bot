@@ -31,3 +31,10 @@ const { robotStatus, elderStatus, isConnected } = useDashboardRealtime({
 - `isConnected`: 연결 여부
 - `robotStatus`: 최근 로봇 상태 이벤트 (없으면 `null`)
 - `elderStatus`: 최근 어르신 상태 이벤트 (없으면 `null`)
+
+## History/Report/Patrol 연동 규칙
+- History(`GET /api/elders/{elderId}/activities`), Weekly Report(`GET /api/elders/{elderId}/reports/weekly`), Patrol(`GET /api/elders/{elderId}/patrol/latest`)은 REST 계약을 기준으로 최초 조회합니다.
+- 실시간 이벤트는 `ELDER_STATUS_UPDATE`/`ROBOT_STATUS_UPDATE`를 캐시 갱신 트리거로만 사용하고, History/Report/Patrol 리스트에 직접 append 하지 않습니다.
+- `elderStatus.lastActivity`가 바뀌었거나 Activity 계열 알림(`NOTIFICATION.type === ACTIVITY`)이 수신되면 History/Patrol 쿼리만 선택적으로 `refetch`합니다.
+- 주간 리포트는 push 기반 갱신을 하지 않고 화면 진입/주차 변경 시점에만 재조회합니다.
+- 공통 계약 파서는 `@/shared/types/history.types`의 `parseActivityListPayload`, `parseWeeklyReportPayload`, `parsePatrolLatestPayload`를 사용합니다.
