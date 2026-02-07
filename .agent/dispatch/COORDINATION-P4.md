@@ -47,3 +47,30 @@
 - 새 세션 리뷰 `REVIEW-RESULT-P4-AGENT{N}.md` Approve 확보
 - 위 머지 순서대로 `develop` 반영 완료
 
+---
+
+## Round 2 수정 조정 (Review Follow-up)
+
+### 조정 항목 A: Agent 2 ↔ Agent 4 (`mocks/*` 소유권)
+- 배경:
+  - Agent 2 리뷰에서 `frontend/src/mocks/*` 직접 수정이 소유권 위반(Major)으로 확인됨.
+  - 소유권 기준: `PARALLEL-WORK.md` 5.3/5.4에서 `shared/*`, `mocks/*`는 Agent 4 담당.
+- 실행:
+  1. Agent 2는 `mocks/*` 변경 제거 후 UI 범위만 유지.
+  2. Agent 4는 필요한 mock 변경을 자기 브랜치에서 반영.
+  3. Agent 2는 Agent 4 반영 커밋을 가져와 화면 회귀 검증.
+
+### 조정 항목 B: Agent 3 ↔ Agent 4 (`PUT /robots/{robotId}/location` 계약 정렬)
+- 배경:
+  - Agent 3: 위치 업데이트 권한 검증 미흡(Major)
+  - Agent 4: 위치 요청 파서의 optional 필드 처리 불일치(Major)
+- 실행:
+  1. Agent 3는 서비스 레벨 권한 검증(로봇 주체/소유권) 추가.
+  2. Agent 4는 `heading`, `timestamp` optional 처리 및 테스트 보강.
+  3. 양측은 요청 계약을 `x,y,roomId 필수 + heading,timestamp 선택`으로 동일하게 맞춘다.
+
+### Round 2 머지 게이트
+1. Agent 3 권한 이슈 수정 + 재리뷰 Approve
+2. Agent 4 계약/Mock 수정 + 재리뷰 Approve
+3. Agent 2 소유권 충돌 해소 + 재리뷰 Approve
+4. Agent 0 순차 병합 (권장: 3 → 4 → 2)
