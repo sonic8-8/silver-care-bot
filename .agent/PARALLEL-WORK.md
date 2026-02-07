@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.3
+> **버전**: v3.4
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -826,6 +826,17 @@ git worktree remove --force ../agent-N
    └── 백엔드 API 반영 후 UI 통합
 ```
 
+### 공통 마감 머지 규칙 (모든 Phase 필수)
+
+```
+1. 해당 Phase의 feature 브랜치 머지 완료
+2. Agent 0 문서 브랜치 머지:
+   management/architect → develop
+3. 포함 여부 검증:
+   git merge-base --is-ancestor origin/management/architect origin/develop
+4. 검증이 true일 때만 Phase 머지 완료로 기록
+```
+
 ---
 
 ## 8. 충돌 방지 가이드
@@ -909,7 +920,7 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] 복약 등록/조회/수정/삭제 + 복용기록 API 동작
 - [x] 일정 등록/조회/수정/삭제 + 음성 일정 API 동작
 - [x] 알림 목록/읽음/전체읽음 + 실시간 WebSocket 알림 동작
-- [ ] 대시보드 API + 대시보드 UI 실시간 반영 동작
+- [x] 대시보드 API + 대시보드 UI 실시간 반영 동작
 - [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 
@@ -923,6 +934,18 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] `feature/phase2-*` 로컬/원격 브랜치 정리 완료
 - [x] Agent 1~4 Phase 3 브랜치 생성 및 Worktree 재할당 완료
 - [x] Phase 3 작업 지시서/완료 기준(DoD) 배포 완료
+```
+
+### Phase 3 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [x] Agent 1~4 새 세션 리뷰 Approve 완료
+- [x] Phase 3 머지 순서(3 → 1 → 4 → 2)로 develop 병합 완료
+- [x] `feature/phase3-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [x] `management/architect`가 `origin/develop`에 포함됨
+- [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 
 ---

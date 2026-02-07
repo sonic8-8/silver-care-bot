@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.4
+> **버전**: v1.5
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -282,11 +282,11 @@
   - [x] voice_original, normalized_text, confidence 저장
 
 #### 2.5 일정 관리 (Schedule) - Frontend
-- [ ] 일정 관리 페이지 (`/elders/:id/schedule`)
-  - [ ] 주간 캘린더 뷰
-  - [ ] 리스트 뷰 전환
-  - [ ] 일정 추가/수정 모달
-  - [ ] 일정 유형별 색상 구분
+- [x] 일정 관리 페이지 (`/elders/:id/schedule`)
+  - [x] 주간 캘린더 뷰
+  - [x] 리스트 뷰 전환
+  - [x] 일정 추가/수정 모달
+  - [x] 일정 유형별 색상 구분
 
 #### 2.6 알림 시스템 (Notification) - Backend
 - [x] `GET /api/notifications` - 알림 목록
@@ -303,7 +303,7 @@
 
 #### 2.7 알림 시스템 (Notification) - Frontend
 - [x] 알림 페이지 (`/notifications`)
-  - [ ] 알림 목록 (무한 스크롤)
+  - [x] 알림 목록 (무한 스크롤)
   - [x] 읽음/안읽음 필터
   - [x] 전체 읽음 버튼
   - [x] 알림 클릭 시 해당 페이지 이동
@@ -329,9 +329,9 @@
     - [x] 연결 상태 (CONNECTED/DISCONNECTED)
     - [x] 현재 위치
     - [x] LCD 모드
-  - [ ] WebSocket 실시간 업데이트
-    - [ ] `/topic/robot/{robotId}/status` 구독
-    - [ ] `/topic/elder/{elderId}/status` 구독
+  - [x] WebSocket 실시간 업데이트
+    - [x] `/topic/robot/{robotId}/status` 구독
+    - [x] `/topic/elder/{elderId}/status` 구독
 
 #### 2.9 대시보드 (Dashboard) - Backend
 - [x] `GET /api/elders/{elderId}/dashboard` - 대시보드 데이터
@@ -361,18 +361,19 @@
 - [x] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
 
 Phase 2 잔여 항목 처리 원칙 (Gate):
-- [ ] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
-- [ ] 대시보드 실시간 구독(`/topic/robot/{robotId}/status`, `/topic/elder/{elderId}/status`) 반영
-- [ ] 알림 목록 무한 스크롤 UX 보강 및 검증
-- 위 3개 완료 전에는 Phase 3 도메인 본작업(3.1+) 착수 보류
+- [x] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
+- [x] 대시보드 실시간 구독(`/topic/robot/{robotId}/status`, `/topic/elder/{elderId}/status`) 반영
+- [x] 알림 목록 무한 스크롤 UX 보강 및 검증
+- [x] `management/architect` 최종 문서 변경분 `develop` 병합
+- 위 Gate 항목 완료 전에는 Phase 3 도메인 본작업(3.1+) 착수 보류
 
 #### 3.1 데이터베이스 확장
-- [ ] ACTIVITY 테이블 + Entity
-- [ ] PATROL_RESULT 테이블 + Entity
-- [ ] PATROL_ITEM 테이블 + Entity
-- [ ] CONVERSATION 테이블 + Entity
-- [ ] SEARCH_RESULT 테이블 + Entity
-- [ ] AI_REPORT 테이블 + Entity
+- [x] ACTIVITY 테이블 + Entity
+- [x] PATROL_RESULT 테이블 + Entity
+- [x] PATROL_ITEM 테이블 + Entity
+- [x] CONVERSATION 테이블 + Entity
+- [x] SEARCH_RESULT 테이블 + Entity
+- [x] AI_REPORT 테이블 + Entity
 
 #### 3.2 활동 로그 (Activity) - Backend
 - [ ] `GET /api/elders/{elderId}/activities` - 일일 로그
@@ -403,11 +404,11 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
   - [ ] AI 추천사항 카드
 
 #### 3.6 순찰 피드 (Patrol) - Backend
-- [ ] `GET /api/elders/{elderId}/patrol/latest` - 최근 순찰 결과
-- [ ] `GET /api/elders/{elderId}/patrol/history` - 순찰 히스토리
-- [ ] `POST /api/robots/{robotId}/patrol/report` - 순찰 보고
-  - [ ] 항목: GAS_VALVE, DOOR, OUTLET, WINDOW, MULTI_TAP
-  - [ ] 상태: ON, OFF, NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK
+- [x] `GET /api/elders/{elderId}/patrol/latest` - 최근 순찰 결과
+- [x] `GET /api/elders/{elderId}/patrol/history` - 순찰 히스토리
+- [x] `POST /api/robots/{robotId}/patrol/report` - 순찰 보고
+  - [x] 항목: GAS_VALVE, DOOR, OUTLET, WINDOW, MULTI_TAP
+  - [x] 상태: ON, OFF, NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK
 
 #### 3.7 순찰 피드 (Patrol) - Frontend
 - [ ] 순찰 결과 카드 (대시보드)
@@ -416,10 +417,10 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
   - [ ] 마지막 순찰 시간
 
 #### 3.8 AI 대화/검색 기록 - Backend
-- [ ] `GET /api/robots/{robotId}/conversations` - 대화 기록
-- [ ] `POST /api/robots/{robotId}/conversations` - 대화 저장
-- [ ] `GET /api/robots/{robotId}/search-results` - 검색 결과
-- [ ] `POST /api/robots/{robotId}/search-results` - 검색 결과 저장
+- [x] `GET /api/robots/{robotId}/conversations` - 대화 기록
+- [x] `POST /api/robots/{robotId}/conversations` - 대화 저장
+- [x] `GET /api/robots/{robotId}/search-results` - 검색 결과
+- [x] `POST /api/robots/{robotId}/search-results` - 검색 결과 저장
 
 ---
 
@@ -546,8 +547,8 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 |-------|------|--------|
 | Phase 0 | 🔄 진행 중 | 90% |
 | Phase 1 | ✅ 완료 (머지 기준) | 100% |
-| Phase 2 | 🔄 진행 중 (핵심 구현 완료, FE 일부 잔여) | 85% |
-| Phase 3 | 📝 계획 수립 완료 | 5% |
+| Phase 2 | 🔄 진행 중 (핵심 게이트 완료, 일부 위젯 보강 잔여) | 95% |
+| Phase 3 | 🔄 진행 중 (DB/Patrol/AI 백엔드 및 Gate 반영 완료) | 70% |
 | Phase 4 | ⏳ 대기 | 0% |
 | Phase 5 | ⏳ 대기 | 0% |
 
@@ -562,3 +563,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.2 | 2026-02-03 | Phase 0.4 추가: Playground 컴포넌트 분리 계획 (공유 UI 6개, 페이지 12개, LCD 4개, 타입 정의) |
 | v1.3 | 2026-02-06 | Phase 1 브랜치 정리 및 Phase 2 병렬 분배/브랜치 전략 반영 |
 | v1.4 | 2026-02-07 | Phase 2 구현 체크리스트 업데이트(완료/잔여 반영), Phase 3 병렬 분배 초안/브랜치 정리 계획 추가 |
+| v1.5 | 2026-02-07 | Phase 2 Gate/Phase 3 구현 체크리스트 반영, 공통 마감(`management/architect`→`develop`) 체크 항목 추가 |
