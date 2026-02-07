@@ -3,6 +3,7 @@ package site.silverbot.api.report.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -230,7 +231,21 @@ public class ReportService {
             return Map.of();
         }
         try {
-            return objectMapper.readValue(value, MAP_TYPE);
+            JsonNode node = objectMapper.readTree(value);
+            if (node.isObject()) {
+                return objectMapper.convertValue(node, MAP_TYPE);
+            }
+            if (node.isTextual()) {
+                String nested = node.asText();
+                if (nested == null || nested.isBlank()) {
+                    return Map.of();
+                }
+                JsonNode nestedNode = objectMapper.readTree(nested);
+                if (nestedNode.isObject()) {
+                    return objectMapper.convertValue(nestedNode, MAP_TYPE);
+                }
+            }
+            throw new IllegalStateException("Invalid metrics json");
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Invalid metrics json", ex);
         }
@@ -241,7 +256,21 @@ public class ReportService {
             return List.of();
         }
         try {
-            return objectMapper.readValue(value, STRING_LIST_TYPE);
+            JsonNode node = objectMapper.readTree(value);
+            if (node.isArray()) {
+                return objectMapper.convertValue(node, STRING_LIST_TYPE);
+            }
+            if (node.isTextual()) {
+                String nested = node.asText();
+                if (nested == null || nested.isBlank()) {
+                    return List.of();
+                }
+                JsonNode nestedNode = objectMapper.readTree(nested);
+                if (nestedNode.isArray()) {
+                    return objectMapper.convertValue(nestedNode, STRING_LIST_TYPE);
+                }
+            }
+            throw new IllegalStateException("Invalid json array");
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Invalid json array", ex);
         }
