@@ -53,6 +53,10 @@ export const ROBOT_EVENT_ACTIONS = ['TAKE', 'LATER', 'CONFIRM', 'EMERGENCY'] as 
 
 export type RobotEventAction = (typeof ROBOT_EVENT_ACTIONS)[number];
 
+const ROBOT_EVENT_TYPE_ALIASES: Partial<Record<string, RobotEventType>> = {
+    LCD_BUTTON: 'BUTTON',
+};
+
 export interface RobotEventPayload {
     type: RobotEventType;
     detectedAt: string;
@@ -121,6 +125,21 @@ const readEnum = <T extends string>(value: unknown, allowed: readonly T[], field
     return text as T;
 };
 
+const normalizeContractEnumText = (value: string): string => {
+    return value.trim().toUpperCase();
+};
+
+const parseRobotEventType = (value: unknown): RobotEventType => {
+    const normalized = normalizeContractEnumText(readString(value, 'robotEvent.type'));
+    const aliased = ROBOT_EVENT_TYPE_ALIASES[normalized] ?? normalized;
+    return readEnum(aliased, ROBOT_EVENT_TYPES, 'robotEvent.type');
+};
+
+const parseRobotEventAction = (value: unknown): RobotEventAction => {
+    const normalized = normalizeContractEnumText(readString(value, 'robotEvent.action'));
+    return readEnum(normalized, ROBOT_EVENT_ACTIONS, 'robotEvent.action');
+};
+
 const parseRobotLcdNextSchedule = (value: unknown, field: string): RobotLcdNextSchedule => {
     if (!isRecord(value)) {
         throw new Error(`[contract] ${field} must be object`);
@@ -185,7 +204,7 @@ const parseRobotEventPayload = (value: unknown): RobotEventPayload => {
         throw new Error('[contract] robot event must be object');
     }
 
-    const type = readEnum(value.type, ROBOT_EVENT_TYPES, 'robotEvent.type');
+    const type = parseRobotEventType(value.type);
     const detectedAt = value.detectedAt ?? value.timestamp;
     if (detectedAt === undefined) {
         throw new Error('[contract] robotEvent.detectedAt is required');
@@ -195,7 +214,7 @@ const parseRobotEventPayload = (value: unknown): RobotEventPayload => {
     const action =
         actionText === null
             ? null
-            : readEnum(actionText, ROBOT_EVENT_ACTIONS, 'robotEvent.action');
+            : parseRobotEventAction(actionText);
     const medicationId = readNullableNumber(value.medicationId, 'robotEvent.medicationId');
 
     if (type === 'BUTTON' && action === null) {

@@ -12,6 +12,8 @@ import {
 interface ApiEnvelope {
   data?: unknown
   payload?: unknown
+  result?: unknown
+  body?: unknown
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -44,6 +46,18 @@ function normalizeText(rawText: unknown): string {
   return typeof rawText === 'string' ? rawText : ''
 }
 
+function pickField(
+  payload: Record<string, unknown>,
+  keys: readonly string[],
+): unknown {
+  for (const key of keys) {
+    if (key in payload) {
+      return payload[key]
+    }
+  }
+  return undefined
+}
+
 function normalizeMedicationId(raw: unknown): number | null {
   if (typeof raw === 'number' && Number.isFinite(raw)) {
     return raw
@@ -62,8 +76,8 @@ function normalizeSchedule(raw: unknown): LcdSchedulePreview | null {
     return null
   }
 
-  const label = normalizeText(raw.label)
-  const time = normalizeText(raw.time)
+  const label = normalizeText(pickField(raw, ['label', 'title', 'name']))
+  const time = normalizeText(pickField(raw, ['time', 'at']))
 
   if (!label && !time) {
     return null
@@ -89,23 +103,46 @@ function extractPayload(raw: unknown): Record<string, unknown> {
     return envelope.payload
   }
 
+  if (isRecord(envelope.result)) {
+    return envelope.result
+  }
+
+  if (isRecord(envelope.body)) {
+    if (isRecord(envelope.body.data)) {
+      return envelope.body.data
+    }
+
+    if (isRecord(envelope.body.payload)) {
+      return envelope.body.payload
+    }
+  }
+
   return raw
 }
 
 export function normalizeLcdState(raw: unknown): LcdState {
   const payload = extractPayload(raw)
+  const mode = pickField(payload, ['mode', 'lcdMode'])
+  const emotion = pickField(payload, ['emotion', 'lcdEmotion'])
+  const message = pickField(payload, ['message', 'mainMessage'])
+  const subMessage = pickField(payload, ['subMessage', 'sub_message', 'subtitle'])
+  const medicationId = pickField(payload, ['medicationId', 'medication_id'])
+  const nextSchedule = pickField(payload, ['nextSchedule', 'next_schedule'])
+  const lastUpdatedAt = pickField(payload, [
+    'lastUpdatedAt',
+    'last_updated_at',
+    'updatedAt',
+    'timestamp',
+  ])
 
   return {
-    mode: normalizeMode(payload.mode),
-    emotion: normalizeEmotion(payload.emotion),
-    message: normalizeText(payload.message),
-    subMessage: normalizeText(payload.subMessage),
-    medicationId: normalizeMedicationId(payload.medicationId),
-    nextSchedule: normalizeSchedule(payload.nextSchedule),
-    lastUpdatedAt:
-      normalizeText(payload.lastUpdatedAt) ||
-      normalizeText(payload.updatedAt) ||
-      null,
+    mode: normalizeMode(mode),
+    emotion: normalizeEmotion(emotion),
+    message: normalizeText(message),
+    subMessage: normalizeText(subMessage),
+    medicationId: normalizeMedicationId(medicationId),
+    nextSchedule: normalizeSchedule(nextSchedule),
+    lastUpdatedAt: normalizeText(lastUpdatedAt) || null,
   }
 }
 

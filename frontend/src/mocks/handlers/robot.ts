@@ -104,6 +104,17 @@ const applyButtonEvent = (
         });
     }
 
+    if (event.action === 'CONFIRM') {
+        return parseRobotLcdStatePayload({
+            ...current,
+            mode: 'IDLE',
+            emotion: 'neutral',
+            message: '확인했어요.',
+            subMessage: '필요하면 다시 불러 주세요.',
+            lastUpdatedAt: at,
+        });
+    }
+
     return parseRobotLcdStatePayload({
         ...current,
         mode: 'IDLE',

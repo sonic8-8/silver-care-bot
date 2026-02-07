@@ -5,7 +5,10 @@ import {
   isMissingAuthTokenError,
 } from '../auth/authToken'
 import { getRobotLcdState } from '../api/lcdApi'
-import { postLcdActionEvent } from '../api/lcdEventApi'
+import {
+  isMissingMedicationIdForTakeError,
+  postLcdActionEvent,
+} from '../api/lcdEventApi'
 import {
   DEFAULT_LCD_STATE,
   type LcdActionType,
@@ -85,6 +88,13 @@ export function useLcdController(robotId: string) {
       } catch (error: unknown) {
         if (isMissingAuthTokenError(error)) {
           setErrorMessage('인증 토큰이 없어 버튼 요청을 전송할 수 없습니다. URL token을 확인해 주세요.')
+          return
+        }
+
+        if (isMissingMedicationIdForTakeError(error)) {
+          setErrorMessage(
+            '복약 정보가 확인되지 않아 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          )
           return
         }
 
