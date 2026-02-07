@@ -1,4 +1,4 @@
-# Fix Instruction - P3 Agent 4 (Round 6)
+# Fix Instruction - P3 Agent 4 (Round 7)
 
 ## 대상 브랜치
 - `feature/phase3-contract-realtime`
@@ -11,11 +11,14 @@
 - 대상:
   - `frontend/src/shared/types/history.types.ts`
 - 문제:
-  - 프론트는 `APPLIANCE`를 허용하지만 백엔드/계약 기준은 `MULTI_TAP`
+  - 소스 문서 기준 계약이 이원화되어 있음:
+    - `api-embedded.md` (`/patrol/report`): `APPLIANCE`
+    - `api-ai.md` (`/patrol-results`): `MULTI_TAP`
+  - 현재 파서는 `MULTI_TAP` 응답을 놓치거나 `APPLIANCE`를 과도 배제할 수 있음
 - 조치:
-  - `PATROL_TARGETS`를 `MULTI_TAP` 기준으로 정렬
-  - 필요 시 하위호환(`APPLIANCE`)을 임시 허용하되, 파싱 결과는 `MULTI_TAP`로 정규화
-  - 기준 문서: `agent-0/docs/api-specification.md` v1.3.2
+  - `PATROL_TARGETS`에서 `APPLIANCE`와 `MULTI_TAP`를 모두 허용
+  - UI 소비 모델은 가능한 한 `MULTI_TAP`으로 정규화(legacy `APPLIANCE` 입력 허용)
+  - 기준 문서: `agent-0/docs/api-specification.md` v1.3.3 (3.8, 3.13, 6.2)
 
 2. `lastPatrolAt` nullable 허용 (Major, Blocking)
 - 대상:
@@ -39,6 +42,7 @@
 - 대상:
   - `frontend/src/shared/types/history.types.test.ts`
 - 조치:
+  - `APPLIANCE` 허용 케이스
   - `MULTI_TAP` 허용 케이스
   - `lastPatrolAt: null` 케이스
   - `activity.title: null` 케이스 추가
