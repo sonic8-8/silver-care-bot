@@ -2,6 +2,7 @@ package site.silverbot.api.common.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
@@ -22,6 +23,9 @@ public class CurrentUserService {
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
             throw new AuthenticationCredentialsNotFoundException("User not authenticated");
+        }
+        if (hasRole(authentication, "ROLE_ROBOT")) {
+            throw new AccessDeniedException("Robot principal cannot be treated as user principal");
         }
 
         String principal = authentication.getName();
@@ -45,5 +49,10 @@ public class CurrentUserService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private boolean hasRole(Authentication authentication, String role) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> role.equals(authority.getAuthority()));
     }
 }
