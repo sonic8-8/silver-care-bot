@@ -4,6 +4,7 @@
 - 브랜치: `feature/phase2-db-schedule`
 - 작업 범위: Phase 2 수정 라운드 (`COORDINATION-P2.md`, `FIX-INSTRUCTION-P2-AGENT3.md` 반영)
 - 기준 리뷰: `agent-3/.agent/reviews/REVIEW-RESULT-P2-AGENT3.md` (Request Changes 블로커 해소)
+- 원격 반영 커밋: `origin/feature/phase2-db-schedule` -> `e604e595ce43a1cc94ab8981c90d53125d14ac84` (`e604e59`)
 
 ### 변경 파일
 | 파일 | 변경 유형 | 설명 |
@@ -29,7 +30,7 @@
 2. **`medication_record` 교차 엔터티 무결성 강화**
 - DB 레벨: `medication_record (medication_id, elder_id)` -> `medication (id, elder_id)` 복합 FK
 - 코드 레벨: `MedicationRecord` 빌더에서 elder-medication 불일치 방어
-- 서비스 레벨: `MedicationValidationService#getOwnedMedication`으로 소유권 검증 표준화
+- 서비스 레벨: `MedicationValidationService#getOwnedMedication`에서 `findByIdAndElderId` 우선 조회 + fallback 예외 분기 적용
 
 3. **테스트 보강**
 - 무결성/소유권 관련 단위·통합 테스트 추가
@@ -51,13 +52,18 @@
 ### 테스트 명령어
 ```bash
 cd backend
+GRADLE_USER_HOME='/mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/.gradle-cache' \
+./gradlew test --tests 'site.silverbot.api.medication.service.MedicationValidationServiceTest' --rerun-tasks
+
 AGENT3_FLYWAY_PG_URL='jdbc:postgresql://localhost:5432/silverbot' \
 AGENT3_FLYWAY_PG_USER='postgres' \
 AGENT3_FLYWAY_PG_PASSWORD='postgres' \
+GRADLE_USER_HOME='/mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/.gradle-cache' \
 ./gradlew test --tests 'site.silverbot.migration.FlywayMigrationVerificationTest' --rerun-tasks
 ```
 
 ### 테스트 실행 결과
+- `MedicationValidationServiceTest` 강제 재실행 → **PASSED**
 - `AGENT3_FLYWAY_PG_*` 설정 + `FlywayMigrationVerificationTest` 강제 재실행 → **PASSED**
   - `cleanDb_validateAndMigrate_succeeds` PASS
   - `legacyHistory_validateRepairMigrate_succeeds` PASS
