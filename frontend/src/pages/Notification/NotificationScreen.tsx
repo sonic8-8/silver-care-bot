@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GuardianAppContainer from '@/pages/_components/GuardianAppContainer';
 import { useNotifications } from '@/features/notification/hooks/useNotifications';
@@ -37,6 +37,8 @@ function NotificationScreen() {
     const [filter, setFilter] = useState<NotificationFilter>('all');
     const isRead = useMemo(() => resolveReadFilter(filter), [filter]);
     const navigate = useNavigate();
+    const loadMoreTargetRef = useRef<HTMLDivElement | null>(null);
+    const loadLockRef = useRef(false);
 
     const {
         listQuery,
@@ -46,6 +48,42 @@ function NotificationScreen() {
         isMarkingRead,
         isMarkingAllRead,
     } = useNotifications({ isRead, pageSize: 10 });
+
+    const fetchNextPage = useCallback(async () => {
+        if (!listQuery.hasNextPage || listQuery.isFetchingNextPage || loadLockRef.current) {
+            return;
+        }
+
+        loadLockRef.current = true;
+        try {
+            await listQuery.fetchNextPage();
+        } finally {
+            loadLockRef.current = false;
+        }
+    }, [listQuery]);
+
+    useEffect(() => {
+        if (!loadMoreTargetRef.current || !listQuery.hasNextPage || listQuery.isLoading || listQuery.isError) {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) {
+                    void fetchNextPage();
+                }
+            },
+            {
+                rootMargin: '200px 0px',
+            }
+        );
+
+        observer.observe(loadMoreTargetRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [fetchNextPage, listQuery.hasNextPage, listQuery.isError, listQuery.isLoading]);
 
     const onNotificationClick = async (notification: NotificationItem) => {
         if (!notification.isRead) {
@@ -149,13 +187,18 @@ function NotificationScreen() {
                 <div className="mt-4">
                     <button
                         type="button"
-                        onClick={() => void listQuery.fetchNextPage()}
+                        onClick={() => void fetchNextPage()}
                         disabled={listQuery.isFetchingNextPage || isMarkingRead}
                         className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:border-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {listQuery.isFetchingNextPage ? '불러오는 중...' : '더 보기'}
                     </button>
+                    <div ref={loadMoreTargetRef} className="h-1 w-full" aria-hidden />
                 </div>
+            ) : null}
+
+            {!listQuery.isLoading && notifications.length > 0 && !listQuery.hasNextPage ? (
+                <p className="mt-4 text-center text-xs text-gray-400">모든 알림을 확인했습니다.</p>
             ) : null}
         </GuardianAppContainer>
     );

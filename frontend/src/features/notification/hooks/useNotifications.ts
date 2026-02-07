@@ -10,6 +10,28 @@ import {
 import { notificationKeys } from '@/features/notification/queryKeys';
 import type { NotificationItem, NotificationListPayload, UnreadCountPayload } from '@/shared/types';
 
+export const mergeUniqueNotifications = (pages: NotificationListPayload[] | undefined): NotificationItem[] => {
+    if (!pages) {
+        return [];
+    }
+
+    const seen = new Set<number>();
+    const merged: NotificationItem[] = [];
+
+    pages.forEach((page) => {
+        page.notifications.forEach((notification) => {
+            if (seen.has(notification.id)) {
+                return;
+            }
+
+            seen.add(notification.id);
+            merged.push(notification);
+        });
+    });
+
+    return merged;
+};
+
 const patchReadInPages = (
     oldData: InfiniteData<NotificationListPayload> | undefined,
     notificationId: number,
@@ -79,7 +101,7 @@ export const useNotifications = ({ isRead, pageSize = 10 }: UseNotificationsOpti
     });
 
     const notifications = useMemo(
-        () => listQuery.data?.pages.flatMap((page) => page.notifications) ?? [],
+        () => mergeUniqueNotifications(listQuery.data?.pages),
         [listQuery.data?.pages]
     );
 
