@@ -1,8 +1,8 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.3
+> **버전**: v1.5
 > **작성일**: 2026-02-02
-> **최종 수정일**: 2026-02-06
+> **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
 
 ---
@@ -90,10 +90,10 @@
 - [x] `BottomNavigation.tsx` - 하단 탭바 컴포넌트
 
 ##### 0.4.4 LCD 컴포넌트 (`/frontend/src/features/robot-lcd/` 또는 `/frontend-lcd/`)
-- [ ] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
-- [ ] `Eye.tsx` - 눈 애니메이션 컴포넌트
-- [ ] `InfoChip.tsx` - 상태 정보 칩
-- [ ] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
+- [x] `RobotLCD.tsx` - 로봇 LCD 메인 컴포넌트 (이미 분리됨)
+- [x] `Eye.tsx` - 눈 애니메이션 컴포넌트
+- [x] `InfoChip.tsx` - 상태 정보 칩
+- [x] `SimControls.tsx` - 시뮬레이션 컨트롤 (개발용)
 
 ##### 0.4.5 타입 정의 (`/frontend/src/shared/types/`)
 - [x] `ui.types.ts` - UI 컴포넌트 공통 타입 (ButtonVariant, BadgeStatus 등)
@@ -248,110 +248,132 @@
 | Agent 4 | `feature/phase2-notification-realtime` | Notification Backend/Frontend + WebSocket 실시간 연동 |
 
 #### 2.1 데이터베이스 확장
-- [ ] MEDICATION 테이블 + Entity
-- [ ] MEDICATION_RECORD 테이블 + Entity
-- [ ] SCHEDULE 테이블 + Entity
-- [ ] NOTIFICATION 테이블 + Entity
+- [x] MEDICATION 테이블 + Entity
+- [x] MEDICATION_RECORD 테이블 + Entity
+- [x] SCHEDULE 테이블 + Entity
+- [x] NOTIFICATION 테이블 + Entity
 
 #### 2.2 복약 관리 (Medication) - Backend
-- [ ] `POST /api/elders/{elderId}/medications` - 약 등록
-- [ ] `GET /api/elders/{elderId}/medications` - 복용 현황
-  - [ ] 주간 복용률 계산
-  - [ ] 일별 상태 포함
-- [ ] `GET /api/elders/{elderId}/medications/{id}` - 약 상세
-- [ ] `PUT /api/elders/{elderId}/medications/{id}` - 약 수정
-- [ ] `DELETE /api/elders/{elderId}/medications/{id}` - 약 삭제
-- [ ] `POST /api/elders/{elderId}/medications/records` - 복용 기록
-  - [ ] 로봇에서 호출 (TAKEN/MISSED)
+- [x] `POST /api/elders/{elderId}/medications` - 약 등록
+- [x] `GET /api/elders/{elderId}/medications` - 복용 현황
+  - [x] 주간 복용률 계산
+  - [x] 일별 상태 포함
+- [x] `GET /api/elders/{elderId}/medications/{id}` - 약 상세
+- [x] `PUT /api/elders/{elderId}/medications/{id}` - 약 수정
+- [x] `DELETE /api/elders/{elderId}/medications/{id}` - 약 삭제
+- [x] `POST /api/elders/{elderId}/medications/records` - 복용 기록
+  - [x] 로봇에서 호출 (TAKEN/MISSED)
 
 #### 2.3 복약 관리 (Medication) - Frontend
-- [ ] 약 관리 페이지 (`/elders/:id/medications`)
-  - [ ] 주간 복용률 차트
-  - [ ] 약 목록 카드
-  - [ ] 약 추가/수정 모달
-  - [ ] 일별 복용 상태 캘린더
+- [x] 약 관리 페이지 (`/elders/:id/medications`)
+  - [x] 주간 복용률 차트
+  - [x] 약 목록 카드
+  - [x] 약 추가/수정 모달
+  - [x] 일별 복용 상태 캘린더
 
 #### 2.4 일정 관리 (Schedule) - Backend
-- [ ] `POST /api/elders/{elderId}/schedules` - 일정 등록
-- [ ] `GET /api/elders/{elderId}/schedules` - 일정 목록
-  - [ ] Query: startDate, endDate, type
-- [ ] `GET /api/elders/{elderId}/schedules/{id}` - 일정 상세
-- [ ] `PUT /api/elders/{elderId}/schedules/{id}` - 일정 수정
-- [ ] `DELETE /api/elders/{elderId}/schedules/{id}` - 일정 삭제
-- [ ] `POST /api/elders/{elderId}/schedules/voice` - 음성 일정 등록
-  - [ ] voice_original, normalized_text, confidence 저장
+- [x] `POST /api/elders/{elderId}/schedules` - 일정 등록
+- [x] `GET /api/elders/{elderId}/schedules` - 일정 목록
+  - [x] Query: startDate, endDate, type
+- [x] `GET /api/elders/{elderId}/schedules/{id}` - 일정 상세
+- [x] `PUT /api/elders/{elderId}/schedules/{id}` - 일정 수정
+- [x] `DELETE /api/elders/{elderId}/schedules/{id}` - 일정 삭제
+- [x] `POST /api/elders/{elderId}/schedules/voice` - 음성 일정 등록
+  - [x] voice_original, normalized_text, confidence 저장
 
 #### 2.5 일정 관리 (Schedule) - Frontend
-- [ ] 일정 관리 페이지 (`/elders/:id/schedule`)
-  - [ ] 주간 캘린더 뷰
-  - [ ] 리스트 뷰 전환
-  - [ ] 일정 추가/수정 모달
-  - [ ] 일정 유형별 색상 구분
+- [x] 일정 관리 페이지 (`/elders/:id/schedule`)
+  - [x] 주간 캘린더 뷰
+  - [x] 리스트 뷰 전환
+  - [x] 일정 추가/수정 모달
+  - [x] 일정 유형별 색상 구분
 
 #### 2.6 알림 시스템 (Notification) - Backend
-- [ ] `GET /api/notifications` - 알림 목록
-  - [ ] 페이지네이션
-  - [ ] 읽음/안읽음 필터
-- [ ] `GET /api/notifications/unread-count` - 안읽음 개수
-- [ ] `PATCH /api/notifications/{id}/read` - 읽음 처리
-- [ ] `PATCH /api/notifications/read-all` - 전체 읽음
-- [ ] `GET /api/users/me/settings` - 사용자 설정 조회
-- [ ] `PATCH /api/users/me/settings` - 알림 설정 변경
-- [ ] 알림 생성 서비스
-  - [ ] 긴급, 복약, 일정, 활동, 시스템 유형별 생성
-- [ ] WebSocket 실시간 알림 발송
+- [x] `GET /api/notifications` - 알림 목록
+  - [x] 페이지네이션
+  - [x] 읽음/안읽음 필터
+- [x] `GET /api/notifications/unread-count` - 안읽음 개수
+- [x] `PATCH /api/notifications/{id}/read` - 읽음 처리
+- [x] `PATCH /api/notifications/read-all` - 전체 읽음
+- [x] `GET /api/users/me/settings` - 사용자 설정 조회
+- [x] `PATCH /api/users/me/settings` - 알림 설정 변경
+- [x] 알림 생성 서비스
+  - [x] 긴급, 복약, 일정, 활동, 시스템 유형별 생성
+- [x] WebSocket 실시간 알림 발송
 
 #### 2.7 알림 시스템 (Notification) - Frontend
-- [ ] 알림 페이지 (`/notifications`)
-  - [ ] 알림 목록 (무한 스크롤)
-  - [ ] 읽음/안읽음 필터
-  - [ ] 전체 읽음 버튼
-  - [ ] 알림 클릭 시 해당 페이지 이동
-- [ ] 알림 벨 컴포넌트 (헤더)
-  - [ ] 안읽음 개수 뱃지
-  - [ ] 드롭다운 미리보기 (최근 5개)
-  - [ ] WebSocket 실시간 업데이트
-- [ ] 설정 페이지 (`/settings`)
-  - [ ] 프로필 정보 수정
-  - [ ] 알림 유형별 ON/OFF
-  - [ ] 테마 설정 (SYSTEM/LIGHT/DARK)
+- [x] 알림 페이지 (`/notifications`)
+  - [x] 알림 목록 (무한 스크롤)
+  - [x] 읽음/안읽음 필터
+  - [x] 전체 읽음 버튼
+  - [x] 알림 클릭 시 해당 페이지 이동
+- [x] 알림 벨 컴포넌트 (헤더)
+  - [x] 안읽음 개수 뱃지
+  - [x] 드롭다운 미리보기 (최근 5개)
+  - [x] WebSocket 실시간 업데이트
+- [x] 설정 페이지 (`/settings`)
+  - [x] 프로필 정보 수정
+  - [x] 알림 유형별 ON/OFF
+  - [x] 테마 설정 (SYSTEM/LIGHT/DARK)
 
 #### 2.8 대시보드 (Dashboard) - Frontend
-- [ ] 홈 대시보드 (`/elders/:id`)
-  - [ ] 오늘의 요약 카드
-    - [ ] 기상 시간
+- [x] 홈 대시보드 (`/elders/:id`)
+  - [x] 오늘의 요약 카드
+    - [x] 기상 시간
     - [ ] 복용 현황 (아침/저녁)
-    - [ ] 활동 상태
-  - [ ] 최근 알림 (5개)
-  - [ ] 주간 캘린더 위젯
-  - [ ] 로봇 상태 카드
-    - [ ] 배터리 (아이콘 + %)
-    - [ ] 연결 상태 (CONNECTED/DISCONNECTED)
-    - [ ] 현재 위치
-    - [ ] LCD 모드
-  - [ ] WebSocket 실시간 업데이트
-    - [ ] `/topic/robot/{robotId}/status` 구독
-    - [ ] `/topic/elder/{elderId}/status` 구독
+    - [x] 활동 상태
+  - [x] 최근 알림 (5개)
+  - [x] 주간 캘린더 위젯
+  - [x] 로봇 상태 카드
+    - [x] 배터리 (아이콘 + %)
+    - [x] 연결 상태 (CONNECTED/DISCONNECTED)
+    - [x] 현재 위치
+    - [x] LCD 모드
+  - [x] WebSocket 실시간 업데이트
+    - [x] `/topic/robot/{robotId}/status` 구독
+    - [x] `/topic/elder/{elderId}/status` 구독
 
 #### 2.9 대시보드 (Dashboard) - Backend
-- [ ] `GET /api/elders/{elderId}/dashboard` - 대시보드 데이터
-  - [ ] 오늘의 요약
-  - [ ] 최근 알림
-  - [ ] 주간 일정
-  - [ ] 로봇 상태
+- [x] `GET /api/elders/{elderId}/dashboard` - 대시보드 데이터
+  - [x] 오늘의 요약
+  - [x] 최근 알림
+  - [x] 주간 일정
+  - [x] 로봇 상태
 
 ---
 
 ### Phase 3: 부가 기능 (Medium)
 > 서비스 완성도를 높이는 기능
 
+#### 3.0 Phase 3 병렬 작업 분배 초안 (2026-02-07)
+
+| Agent | 제안 브랜치 | 담당 범위 |
+|-------|------------|-----------|
+| Agent 1 | `feature/phase3-activity-report-be` | Activity API + Weekly AI Report API + Report Scheduler |
+| Agent 2 | `feature/phase3-history-report-fe` | History 페이지(타임라인/리포트 탭) + 대시보드 순찰 결과 카드 |
+| Agent 3 | `feature/phase3-db-patrol-ai` | Phase 3 DB 마이그레이션(Activity/Patrol/Conversation/Search/AI Report) + Patrol/Conversation/Search Backend |
+| Agent 4 | `feature/phase3-contract-realtime` | Phase 3 API 계약 동기화 + FE 공통 훅/쿼리 + 통합 검증(WebSocket/알림 연계) |
+
+선행 정리 작업:
+- [x] `feature/phase2-*` 브랜치 로컬/원격 정리
+- [x] `management/architect`를 `develop` 기준 최신화
+- [x] Agent 1~4 Phase 3 브랜치 생성 및 워크트리 재할당
+- [x] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
+
+Phase 2 잔여 항목 처리 원칙 (Gate):
+- [x] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
+- [x] 대시보드 실시간 구독(`/topic/robot/{robotId}/status`, `/topic/elder/{elderId}/status`) 반영
+- [x] 알림 목록 무한 스크롤 UX 보강 및 검증
+- [x] `management/architect` 최종 문서 변경분 `develop` 병합
+- 위 Gate 항목 완료 전에는 Phase 3 도메인 본작업(3.1+) 착수 보류
+
 #### 3.1 데이터베이스 확장
-- [ ] ACTIVITY 테이블 + Entity
-- [ ] PATROL_RESULT 테이블 + Entity
-- [ ] PATROL_ITEM 테이블 + Entity
-- [ ] CONVERSATION 테이블 + Entity
-- [ ] SEARCH_RESULT 테이블 + Entity
-- [ ] AI_REPORT 테이블 + Entity
+- [x] ACTIVITY 테이블 + Entity
+- [x] PATROL_RESULT 테이블 + Entity
+- [x] PATROL_ITEM 테이블 + Entity
+- [x] CONVERSATION 테이블 + Entity
+- [x] SEARCH_RESULT 테이블 + Entity
+- [x] AI_REPORT 테이블 + Entity
 
 #### 3.2 활동 로그 (Activity) - Backend
 - [ ] `GET /api/elders/{elderId}/activities` - 일일 로그
@@ -382,11 +404,11 @@
   - [ ] AI 추천사항 카드
 
 #### 3.6 순찰 피드 (Patrol) - Backend
-- [ ] `GET /api/elders/{elderId}/patrol/latest` - 최근 순찰 결과
-- [ ] `GET /api/elders/{elderId}/patrol/history` - 순찰 히스토리
-- [ ] `POST /api/robots/{robotId}/patrol/report` - 순찰 보고
-  - [ ] 항목: GAS_VALVE, DOOR, OUTLET, WINDOW, MULTI_TAP
-  - [ ] 상태: ON, OFF, NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK
+- [x] `GET /api/elders/{elderId}/patrol/latest` - 최근 순찰 결과
+- [x] `GET /api/elders/{elderId}/patrol/history` - 순찰 히스토리
+- [x] `POST /api/robots/{robotId}/patrol/report` - 순찰 보고
+  - [x] 항목: GAS_VALVE, DOOR, OUTLET, WINDOW, MULTI_TAP
+  - [x] 상태: ON, OFF, NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK
 
 #### 3.7 순찰 피드 (Patrol) - Frontend
 - [ ] 순찰 결과 카드 (대시보드)
@@ -395,10 +417,10 @@
   - [ ] 마지막 순찰 시간
 
 #### 3.8 AI 대화/검색 기록 - Backend
-- [ ] `GET /api/robots/{robotId}/conversations` - 대화 기록
-- [ ] `POST /api/robots/{robotId}/conversations` - 대화 저장
-- [ ] `GET /api/robots/{robotId}/search-results` - 검색 결과
-- [ ] `POST /api/robots/{robotId}/search-results` - 검색 결과 저장
+- [x] `GET /api/robots/{robotId}/conversations` - 대화 기록
+- [x] `POST /api/robots/{robotId}/conversations` - 대화 저장
+- [x] `GET /api/robots/{robotId}/search-results` - 검색 결과
+- [x] `POST /api/robots/{robotId}/search-results` - 검색 결과 저장
 
 ---
 
@@ -525,8 +547,8 @@
 |-------|------|--------|
 | Phase 0 | 🔄 진행 중 | 90% |
 | Phase 1 | ✅ 완료 (머지 기준) | 100% |
-| Phase 2 | 🚧 시작 | 0% |
-| Phase 3 | ⏳ 대기 | 0% |
+| Phase 2 | 🔄 진행 중 (핵심 게이트 완료, 일부 위젯 보강 잔여) | 95% |
+| Phase 3 | 🔄 진행 중 (DB/Patrol/AI 백엔드 및 Gate 반영 완료) | 70% |
 | Phase 4 | ⏳ 대기 | 0% |
 | Phase 5 | ⏳ 대기 | 0% |
 
@@ -540,3 +562,5 @@
 | v1.1 | 2026-02-02 | PRD 대비 누락 항목 보완: WebSocket 토픽 5개 명시, Framer Motion 추가, 오프라인 판정/알림 로직, 긴급연락처 API 상세화, 접근성 검증 계획, Flyway 명시, 역할별 라우팅 상세화, 대시보드 Backend API 추가 |
 | v1.2 | 2026-02-03 | Phase 0.4 추가: Playground 컴포넌트 분리 계획 (공유 UI 6개, 페이지 12개, LCD 4개, 타입 정의) |
 | v1.3 | 2026-02-06 | Phase 1 브랜치 정리 및 Phase 2 병렬 분배/브랜치 전략 반영 |
+| v1.4 | 2026-02-07 | Phase 2 구현 체크리스트 업데이트(완료/잔여 반영), Phase 3 병렬 분배 초안/브랜치 정리 계획 추가 |
+| v1.5 | 2026-02-07 | Phase 2 Gate/Phase 3 구현 체크리스트 반영, 공통 마감(`management/architect`→`develop`) 체크 항목 추가 |

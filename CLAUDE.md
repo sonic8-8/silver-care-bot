@@ -735,6 +735,24 @@ feat(ws): WebSocket 토픽 설정 [Agent 4]
 4. Agent 2 (MEDICATION-FE + DASHBOARD-FE) → develop
 ```
 
+#### Phase 3 (순서 중요)
+```
+1. Agent 3 (DB + PATROL/AI-DATA-BE) → develop
+2. Agent 1 (ACTIVITY + REPORT-BE) → develop
+3. Agent 4 (CONTRACT + REALTIME-INTEGRATION) → develop
+4. Agent 2 (HISTORY + REPORT-FE) → develop
+```
+
+#### 공통 마감 머지 규칙 (필수)
+```
+1. 해당 Phase의 feature 브랜치 머지 완료
+2. Agent 0 문서 브랜치도 최종 머지:
+   management/architect → develop
+3. 포함 여부 검증:
+   git merge-base --is-ancestor origin/management/architect origin/develop
+4. 검증 결과가 true일 때만 "Phase 병합 완료"로 간주
+```
+
 ### 싱크 포인트 (동기화 시점)
 
 #### Phase 0 완료 체크리스트
