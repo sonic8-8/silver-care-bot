@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.5
+> **버전**: v3.6
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -959,6 +959,25 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] Agent 1 계약 고정 완료
 - [x] Agent 4 계약 정렬 완료
 - [x] Round 2 구현/리뷰/머지 완료
+```
+
+### Phase 4 착수 준비 기준
+
+```markdown
+## 브랜치/워크트리 재할당 준비
+
+- [x] `origin/develop`에 Phase 3 feature 머지 반영 확인
+- [x] `origin/develop`에 `management/architect` 포함 확인
+- [x] merge 완료된 `feature/phase3-*` 원격 브랜치 정리 완료
+- [x] `feature/phase3-*` 로컬 브랜치 및 기존 Worktree(`agent-1~4`) 정리
+- [x] Agent 1~4용 `feature/phase4-*` 브랜치 생성 (`origin/develop` 기준)
+- [x] Agent 1~4 Worktree를 `feature/phase4-*`로 재할당
+- [x] 권장 브랜치명 확정 및 배포
+  - Agent 1: `feature/phase4-map-room-be`
+  - Agent 2: `feature/phase4-map-video-fe`
+  - Agent 3: `feature/phase4-video-location-be`
+  - Agent 4: `feature/phase4-contract-realtime-map`
+- [x] Phase 4 작업 지시서/DoD 배포 (`COORDINATION-P4`, `WORK-INSTRUCTION-P4-AGENT*`)
 ```
 
 ---
