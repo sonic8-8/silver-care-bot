@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import site.silverbot.api.dashboard.repository.DashboardJdbcRepository;
 import site.silverbot.api.dashboard.response.DashboardNotificationResponse;
+import site.silverbot.api.dashboard.response.DashboardMedicationPeriodStatusResponse;
+import site.silverbot.api.dashboard.response.DashboardMedicationStatusResponse;
 import site.silverbot.api.dashboard.response.DashboardResponse;
 import site.silverbot.api.dashboard.response.DashboardRobotStatusResponse;
 import site.silverbot.api.dashboard.response.DashboardScheduleResponse;
@@ -52,7 +54,7 @@ public class DashboardService {
                         today.atStartOfDay(),
                         today.plusDays(1).atStartOfDay().minusNanos(1)
                 ),
-                resolveMedicationStatus(elderId, today),
+                buildMedicationStatus(elderId, today),
                 elder.getStatus().name()
         );
 
@@ -95,57 +97,85 @@ public class DashboardService {
         return new DashboardResponse(todaySummary, notifications, schedules, robotStatus);
     }
 
-    private String resolveMedicationStatus(Long elderId, LocalDate today) {
+    private DashboardMedicationStatusResponse buildMedicationStatus(Long elderId, LocalDate today) {
         List<MedicationJdbcRepository.MedicationData> medications = medicationJdbcRepository
                 .findActiveMedicationsByElderId(elderId)
                 .stream()
                 .filter(medication -> isActiveToday(medication, today))
                 .toList();
         if (medications.isEmpty()) {
-            return "등록된 약 없음";
+            return new DashboardMedicationStatusResponse(
+                    new DashboardMedicationPeriodStatusResponse(0, 0, "NONE"),
+                    new DashboardMedicationPeriodStatusResponse(0, 0, "NONE"),
+                    0,
+                    0,
+                    "등록된 약 없음"
+            );
         }
 
         List<MedicationJdbcRepository.MedicationRecordData> records = medicationJdbcRepository
                 .findMedicationRecords(elderId, today, today);
 
-        int expectedTotal = medications.stream()
-                .mapToInt(this::expectedDoseCount)
-                .sum();
-        if (expectedTotal == 0) {
-            return "오늘 복약 없음";
+        PeriodSummary morning = buildPeriodSummary(medications, records, MedicationTimeOfDay.MORNING);
+        PeriodSummary evening = buildPeriodSummary(medications, records, MedicationTimeOfDay.EVENING);
+        int total = morning.total() + evening.total();
+        int taken = morning.taken() + evening.taken();
+        int missed = morning.missed() + evening.missed();
+
+        String label;
+        if (total == 0) {
+            label = "오늘 복약 없음";
+        } else if (taken == total) {
+            label = "복약 완료";
+        } else if (missed > 0) {
+            label = "복약 누락 발생";
+        } else if (taken > 0) {
+            label = String.format("%d/%d 복용 완료", taken, total);
+        } else {
+            label = "복약 대기";
         }
 
-        int takenCount = 0;
-        int missedCount = 0;
+        return new DashboardMedicationStatusResponse(
+                new DashboardMedicationPeriodStatusResponse(morning.taken(), morning.total(), morning.status()),
+                new DashboardMedicationPeriodStatusResponse(evening.taken(), evening.total(), evening.status()),
+                taken,
+                total,
+                label
+        );
+    }
+
+    private PeriodSummary buildPeriodSummary(
+            List<MedicationJdbcRepository.MedicationData> medications,
+            List<MedicationJdbcRepository.MedicationRecordData> records,
+            MedicationTimeOfDay timeOfDay
+    ) {
+        int total = 0;
+        int taken = 0;
+        int missed = 0;
         for (MedicationJdbcRepository.MedicationData medication : medications) {
-            if (medication.frequency().includes(MedicationTimeOfDay.MORNING)) {
-                MedicationStatus morningStatus = findStatus(records, medication.id(), MedicationTimeOfDay.MORNING);
-                if (morningStatus == MedicationStatus.TAKEN) {
-                    takenCount++;
-                } else if (morningStatus == MedicationStatus.MISSED) {
-                    missedCount++;
-                }
+            if (!medication.frequency().includes(timeOfDay)) {
+                continue;
             }
-            if (medication.frequency().includes(MedicationTimeOfDay.EVENING)) {
-                MedicationStatus eveningStatus = findStatus(records, medication.id(), MedicationTimeOfDay.EVENING);
-                if (eveningStatus == MedicationStatus.TAKEN) {
-                    takenCount++;
-                } else if (eveningStatus == MedicationStatus.MISSED) {
-                    missedCount++;
-                }
+            total++;
+            MedicationStatus status = findStatus(records, medication.id(), timeOfDay);
+            if (status == MedicationStatus.TAKEN) {
+                taken++;
+            } else if (status == MedicationStatus.MISSED) {
+                missed++;
             }
         }
 
-        if (takenCount == expectedTotal) {
-            return "복약 완료";
+        String status;
+        if (total == 0) {
+            status = "NONE";
+        } else if (taken == total) {
+            status = "TAKEN";
+        } else if (missed > 0) {
+            status = "MISSED";
+        } else {
+            status = "PENDING";
         }
-        if (missedCount > 0) {
-            return "복약 누락 발생";
-        }
-        if (takenCount > 0) {
-            return String.format("%d/%d 복용 완료", takenCount, expectedTotal);
-        }
-        return "복약 대기";
+        return new PeriodSummary(taken, total, missed, status);
     }
 
     private MedicationStatus findStatus(
@@ -159,13 +189,6 @@ public class DashboardService {
                 .map(MedicationJdbcRepository.MedicationRecordData::status)
                 .findFirst()
                 .orElse(MedicationStatus.PENDING);
-    }
-
-    private int expectedDoseCount(MedicationJdbcRepository.MedicationData medication) {
-        return switch (medication.frequency()) {
-            case MORNING, EVENING -> 1;
-            case BOTH -> 2;
-        };
     }
 
     private boolean isActiveToday(MedicationJdbcRepository.MedicationData medication, LocalDate today) {
@@ -215,5 +238,13 @@ public class DashboardService {
         } catch (NumberFormatException ex) {
             throw new EntityNotFoundException("User not found");
         }
+    }
+
+    private record PeriodSummary(
+            int taken,
+            int total,
+            int missed,
+            String status
+    ) {
     }
 }
