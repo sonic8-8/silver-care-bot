@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -39,12 +38,5 @@ public record ReportRobotEventsRequest(
 
             Map<String, Object> payload
     ) {
-        @AssertTrue(message = "medicationId is required when action is TAKE")
-        public boolean isMedicationIdPresentForTake() {
-            if (action == null) {
-                return true;
-            }
-            return !"TAKE".equalsIgnoreCase(action.trim()) || medicationId != null;
-        }
     }
 }

@@ -404,7 +404,8 @@ class RobotControllerTest extends RestDocsSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
 
         Integer takenRecordCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM medication_record WHERE status = 'TAKEN'",
@@ -420,6 +421,108 @@ class RobotControllerTest extends RestDocsSupport {
         assertThat(medicationTakenActivityCount).isZero();
 
         assertThat(robotLcdEventRepository.count()).isZero();
+    }
+
+    @Test
+    void reportRobotEvents_invalidAction_badRequest() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "LCD_BUTTON",
+                        "action", "INVALID",
+                        "timestamp", "2026-02-08T08:15:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
+
+        assertThat(robotLcdEventRepository.count()).isZero();
+    }
+
+    @Test
+    void reportRobotEvents_invalidActionTypeCombination_badRequest() throws Exception {
+        Medication medication = createMedication("아침약");
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "WAKE_UP",
+                        "action", "TAKE",
+                        "medicationId", medication.getId(),
+                        "timestamp", "2026-02-08T08:15:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
+
+        assertThat(robotLcdEventRepository.count()).isZero();
+    }
+
+    @Test
+    void reportRobotEvents_confirmAction_recordsEventWithoutMedicationSideEffect() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "LCD_BUTTON",
+                        "action", "CONFIRM",
+                        "timestamp", "2026-02-08T19:15:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.processedCount").value(1))
+                .andExpect(jsonPath("$.data.medicationTakenCount").value(0))
+                .andExpect(jsonPath("$.data.medicationDeferredCount").value(0));
+
+        RobotLcdEvent savedEvent = robotLcdEventRepository.findAll().get(0);
+        assertThat(savedEvent.getEventType()).isEqualTo("LCD_BUTTON");
+        assertThat(savedEvent.getEventAction()).isEqualTo("CONFIRM");
+
+        Integer takenRecordCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM medication_record WHERE status = 'TAKEN'",
+                Integer.class
+        );
+        assertThat(takenRecordCount).isZero();
+    }
+
+    @Test
+    void reportRobotEvents_emergencyAction_createsEmergencyActivity() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "LCD_BUTTON",
+                        "action", "EMERGENCY",
+                        "timestamp", "2026-02-08T21:05:00+09:00",
+                        "location", "거실"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.processedCount").value(1))
+                .andExpect(jsonPath("$.data.medicationTakenCount").value(0))
+                .andExpect(jsonPath("$.data.medicationDeferredCount").value(0));
+
+        Integer emergencyActivityCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE robot_id = ? AND type = 'EMERGENCY'",
+                Integer.class,
+                robot.getId()
+        );
+        assertThat(emergencyActivityCount).isEqualTo(1);
     }
 
     @Test
