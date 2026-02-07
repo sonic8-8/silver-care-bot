@@ -43,3 +43,5 @@ npm run lint
 ### Agent 0 전달 메모
 - Fix Round 7 Major(날짜 파싱 타임존) 이슈 수정 완료.
 - 리뷰 결과서의 Request Changes 사유를 해소하는 커밋 기준으로 재리뷰 요청합니다.
+- 구현 커밋: `372262d`
+- 원격 브랜치: `origin/feature/phase3-history-report-fe`
