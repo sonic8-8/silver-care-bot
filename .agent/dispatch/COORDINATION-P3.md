@@ -57,3 +57,20 @@ Phase 3(Medium) 착수 전, Phase 2 잔여 3개 게이트를 먼저 종료하고
 - 프론트: `npm run test -- --run` + `npm run build`
 - API 계약/타입 정합성 확인
 - 리뷰 요청서에 변경 파일/테스트 결과/우려사항 기록
+
+## Fix Round 1 협업 지시 (2026-02-07)
+P3 1차 리뷰 결과 기준으로 아래 항목은 Agent 간 계약 정렬이 필요하다.
+
+1. Activity/Report 계약 기준 고정 (Agent 1 ↔ Agent 3)
+- 기준 소스는 Agent 3의 Phase 3 DDL(`activity_type`, `ai_report`)로 고정한다.
+- Agent 1은 해당 기준으로 enum/SQL/DTO/테스트를 일괄 정렬한다.
+- Agent 3는 DDL 계약 변경이 필요하면 먼저 Agent 0 승인 후 문서(`docs/api-specification.md`)를 동기화한다.
+
+2. Dashboard Realtime + Mock 소유권 정렬 (Agent 2 ↔ Agent 4)
+- `frontend/src/shared/websocket/**`, `frontend/src/mocks/**`는 Agent 4 계약을 기준으로 사용한다.
+- Agent 2는 대시보드 실시간 로직을 Agent 4 공통 훅에 맞춰 연동하고, mock 변경은 Agent 4 반영본을 소비한다.
+- Agent 4는 필요한 공통 훅 API(구독 이벤트/중복제거 규칙)와 mock 동작(null 초기화 처리 포함)을 명시/반영한다.
+
+3. 보안 경계 공통 원칙 (Agent 1, Agent 3 공통)
+- `ROLE_ROBOT` principal은 보호자/요양보호사 전용 조회 경로의 사용자 소유권 검사로 해석하면 안 된다.
+- 사용자 principal 해석은 USER role에서만 허용하고, 로봇 토큰은 전용 서비스 경로로만 처리한다.
