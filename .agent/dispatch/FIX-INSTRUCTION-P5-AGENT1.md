@@ -1,37 +1,17 @@
-# Phase 5 Round 2 수정 지시 [Agent 1]
+# Phase 5 수정 지시 [Agent 1]
 
 ## 브랜치
 - `feature/phase5-lcd-backend-be`
 
 ## 리뷰 결과
-- `REVIEW-RESULT-P5-AGENT1.md`: **Request Changes (Major 1)**
+- `agent-1/.agent/reviews/REVIEW-RESULT-P5-AGENT1.md`: **Approve**
 
-## 필수 수정
-1. LCD 응답 계약에서 `message/subMessage` non-null 보장
-- 대상:
-  - `backend/src/main/java/site/silverbot/api/robot/service/RobotService.java`
-  - `backend/src/main/java/site/silverbot/api/robot/request/UpdateRobotLcdModeRequest.java` (필요 시)
-- 요구:
-  - `GET /api/robots/{robotId}/lcd` 응답에서 `message`, `subMessage`가 `null`이면 `""`로 정규화
-  - `POST /api/robots/{robotId}/lcd-mode` 응답도 동일 규칙 적용
-  - WebSocket `LCD_MODE_CHANGE` payload도 동일 규칙 적용
+## 지시 사항
+1. 추가 코드 수정 없음
+- Round 1 Major 이슈(`message/subMessage` 문자열 정규화)가 해결되어 재작업 불필요.
 
-2. 테스트 보강
-- 대상:
-  - `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java`
-  - `backend/src/test/java/site/silverbot/api/robot/service/RobotServiceTest.java` (필요 시)
-- 케이스:
-  - 기본 LCD 조회 응답에서 `message/subMessage` non-null 보장
-  - LCD 모드 변경 응답 및 브로드캐스트 payload non-null 보장
+2. 병합 대기
+- Agent 0 병합 순서에 따라 대기.
 
-## 검증
-```bash
-cd backend
-./gradlew --no-daemon test --console=plain \
-  --tests 'site.silverbot.api.robot.RobotControllerTest' \
-  --tests 'site.silverbot.api.robot.service.RobotServiceTest'
-```
-
-## 산출물
-- 수정 커밋/푸시
-- `agent-1/.agent/reviews/REVIEW-REQUEST-P5-AGENT1.md` 갱신
+## 참고
+- 확인 커밋: `08591bd`
