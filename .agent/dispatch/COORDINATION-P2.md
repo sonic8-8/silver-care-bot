@@ -34,13 +34,13 @@ Phase 2(High) 기능을 4개 병렬 트랙으로 구현하고, 충돌 최소화/
 
 ---
 
-## P2 리뷰 라운드 3 상태 (2026-02-06)
+## P2 리뷰 라운드 4 상태 (2026-02-07)
 
 | Agent | 리뷰 상태 | 병합 가능 여부 | 메모 |
 |---|---|---|---|
 | Agent 1 | ✅ Approve | 조건부 가능 | Agent 3 선행 머지 후 병합 |
 | Agent 2 | ✅ Approve | 조건부 가능 | Agent 4 선행 머지 후 최종 병합 |
-| Agent 3 | ⚠️ Request Changes | 불가 | 코드 이슈 해소됨, PostgreSQL 실환경 Flyway 증빙 블로커 미해소 |
+| Agent 3 | ⚠️ Request Changes | 불가 | 실환경 Flyway 증빙 + 원격 브랜치 코드 미반영(`origin`이 `b7eb871`) |
 | Agent 4 | ✅ Approve | 조건부 가능 | Agent 3, Agent 1 선행 머지 후 병합 |
 
 ---
@@ -49,9 +49,10 @@ Phase 2(High) 기능을 4개 병렬 트랙으로 구현하고, 충돌 최소화/
 목표: 중복 버전(`V3`, `V4`) 충돌을 제거하고 병합 가능한 단일 마이그레이션 체인을 확정한다.
 
 실행 순서:
-1. Agent 3가 PostgreSQL 실환경에서 `FlywayMigrationVerificationTest` 2건을 skip 없이 PASS로 증빙한다.
-2. Agent 4는 Agent 3의 `V5` 기준으로 `V6` 결합 검증을 재확인한다.
-3. Agent 3 Approve 획득 후 머지 순서(3 -> 1 -> 4 -> 2)로 통합한다.
+1. Agent 3가 구현 코드를 원격 브랜치(`feature/phase2-db-schedule`)에 먼저 반영한다.
+2. Agent 3가 PostgreSQL 실환경에서 `FlywayMigrationVerificationTest` 2건을 skip 없이 PASS로 증빙한다.
+3. Agent 4는 Agent 3의 `V5` 기준으로 `V6` 결합 검증을 재확인한다.
+4. Agent 3 Approve 획득 후 머지 순서(3 -> 1 -> 4 -> 2)로 통합한다.
 
 완료 조건:
 - 최종 코드베이스에 동일 버전 번호를 가진 서로 다른 스크립트가 존재하지 않는다.
