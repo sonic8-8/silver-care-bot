@@ -355,10 +355,16 @@
 | Agent 4 | `feature/phase3-contract-realtime` | Phase 3 API 계약 동기화 + FE 공통 훅/쿼리 + 통합 검증(WebSocket/알림 연계) |
 
 선행 정리 작업:
-- [ ] `feature/phase2-*` 브랜치 로컬/원격 정리
-- [ ] `management/architect`를 `develop` 기준 최신화
-- [ ] Agent 1~4 Phase 3 브랜치 생성 및 워크트리 재할당
+- [x] `feature/phase2-*` 브랜치 로컬/원격 정리
+- [x] `management/architect`를 `develop` 기준 최신화
+- [x] Agent 1~4 Phase 3 브랜치 생성 및 워크트리 재할당
 - [ ] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
+
+Phase 2 잔여 항목 처리 원칙 (Gate):
+- [ ] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료
+- [ ] 대시보드 실시간 구독(`/topic/robot/{robotId}/status`, `/topic/elder/{elderId}/status`) 반영
+- [ ] 알림 목록 무한 스크롤 UX 보강 및 검증
+- 위 3개 완료 전에는 Phase 3 도메인 본작업(3.1+) 착수 보류
 
 #### 3.1 데이터베이스 확장
 - [ ] ACTIVITY 테이블 + Entity
