@@ -14,13 +14,15 @@ describe('buildLcdActionEventRequest', () => {
     expect(request).toEqual({
       events: [
         {
-          type: 'LCD_BUTTON',
+          type: 'BUTTON',
           action: 'TAKE',
-          mode: 'MEDICATION',
           detectedAt: '2026-02-08T00:00:00.000Z',
-          source: 'LCD_WEB',
-          message: '복약 확인',
           medicationId: 91,
+          payload: {
+            source: 'LCD_WEB',
+            mode: 'MEDICATION',
+            message: '복약 확인',
+          },
         },
       ],
     })
@@ -35,5 +37,23 @@ describe('buildLcdActionEventRequest', () => {
     })
 
     expect(request.events[0]).not.toHaveProperty('medicationId')
+    expect(request.events[0]).toMatchObject({
+      type: 'BUTTON',
+      action: 'LATER',
+      payload: {
+        source: 'LCD_WEB',
+        mode: 'MEDICATION',
+      },
+    })
+  })
+
+  it('TAKE 액션에 medicationId가 없으면 즉시 실패한다', () => {
+    expect(() =>
+      buildLcdActionEventRequest({
+        action: 'TAKE',
+        mode: 'MEDICATION',
+        occurredAt: '2026-02-08T00:00:00.000Z',
+      }),
+    ).toThrow('TAKE 액션에는 medicationId가 필요합니다.')
   })
 })

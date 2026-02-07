@@ -49,4 +49,52 @@ describe('normalizeLcdState', () => {
 
     expect(normalized.medicationId).toBe(27)
   })
+
+  it('WebSocket/레거시 변형 필드명을 허용해 정규화한다', () => {
+    const normalized = normalizeLcdState({
+      type: 'LCD_MODE_CHANGE',
+      payload: {
+        lcdMode: 'SCHEDULE',
+        lcdEmotion: 'neutral',
+        mainMessage: '일정을 안내해드릴게요.',
+        sub_message: '오후 2시 병원 방문',
+        medication_id: '31',
+        next_schedule: {
+          title: '병원 방문',
+          at: '14:00',
+        },
+        timestamp: '2026-02-08T09:30:00+09:00',
+      },
+    })
+
+    expect(normalized).toMatchObject({
+      mode: 'SCHEDULE',
+      emotion: 'neutral',
+      message: '일정을 안내해드릴게요.',
+      subMessage: '오후 2시 병원 방문',
+      medicationId: 31,
+      nextSchedule: {
+        label: '병원 방문',
+        time: '14:00',
+      },
+      lastUpdatedAt: '2026-02-08T09:30:00+09:00',
+    })
+  })
+
+  it('중첩 body.data 응답도 파싱한다', () => {
+    const normalized = normalizeLcdState({
+      body: {
+        data: {
+          mode: 'LISTENING',
+          emotion: 'happy',
+          message: '듣고 있어요.',
+          subMessage: '말씀해주세요.',
+          updatedAt: '2026-02-08T09:31:00+09:00',
+        },
+      },
+    })
+
+    expect(normalized.mode).toBe('LISTENING')
+    expect(normalized.lastUpdatedAt).toBe('2026-02-08T09:31:00+09:00')
+  })
 })
