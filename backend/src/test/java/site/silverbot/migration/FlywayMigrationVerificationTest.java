@@ -27,7 +27,7 @@ class FlywayMigrationVerificationTest {
         MigrateResult migrateResult = flyway.migrate();
         assertThat(migrateResult.success).isTrue();
         assertThat(migrateResult.targetSchemaVersion).isNotNull();
-        assertThat(migrateResult.targetSchemaVersion).isEqualTo("9");
+        assertThat(migrateResult.targetSchemaVersion).isEqualTo("10");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {
@@ -89,7 +89,7 @@ class FlywayMigrationVerificationTest {
 
         MigrateResult migrated = flyway.migrate();
         assertThat(migrated.success).isTrue();
-        assertThat(migrated.targetSchemaVersion).isEqualTo("9");
+        assertThat(migrated.targetSchemaVersion).isEqualTo("10");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {

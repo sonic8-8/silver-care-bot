@@ -1,12 +1,16 @@
 package site.silverbot.api.robot.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import site.silverbot.api.robot.request.RobotSyncRequest;
@@ -14,8 +18,11 @@ import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
+import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
+import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
@@ -25,6 +32,9 @@ import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotCommand;
 import site.silverbot.domain.robot.RobotCommandRepository;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.user.User;
+import site.silverbot.domain.user.UserRepository;
+import site.silverbot.domain.user.UserRole;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -49,6 +59,9 @@ class RobotServiceTest {
     @Autowired
     private EmergencyRepository emergencyRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private Robot robot;
 
     @BeforeEach
@@ -58,8 +71,32 @@ class RobotServiceTest {
         robotRepository.deleteAllInBatch();
         emergencyContactRepository.deleteAllInBatch();
         elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+
+        User owner = userRepository.save(User.builder()
+                .name("김복지")
+                .email("worker@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        userRepository.save(User.builder()
+                .name("다른 사용자")
+                .email("other@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        Elder elder = elderRepository.save(Elder.builder()
+                .user(owner)
+                .name("김옥분")
+                .birthDate(LocalDate.of(1946, 5, 15))
+                .gender(Gender.FEMALE)
+                .status(ElderStatus.SAFE)
+                .build());
 
         robot = robotRepository.save(Robot.builder()
+                .elder(elder)
                 .serialNumber("ROBOT-2026-X82")
                 .authCode("A1B2C3")
                 .batteryLevel(90)
@@ -112,6 +149,7 @@ class RobotServiceTest {
     }
 
     @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateLocationUpdatesRobotPosition() {
         RobotLocationUpdateResponse response = robotService.updateLocation(
                 robot.getId(),
@@ -125,5 +163,25 @@ class RobotServiceTest {
         assertThat(updated.getCurrentX()).isEqualTo(14.2f);
         assertThat(updated.getCurrentY()).isEqualTo(25.8f);
         assertThat(updated.getCurrentHeading()).isEqualTo(270);
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void updateLocation_nonOwnerUser_throwsAccessDeniedException() {
+        assertThrows(AccessDeniedException.class,
+                () -> robotService.updateLocation(
+                        robot.getId(),
+                        new UpdateRobotLocationRequest(14.2f, 25.8f, "KITCHEN", 270, null)
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "999999", roles = {"ROBOT"})
+    void updateLocation_robotPrincipalMismatch_throwsAccessDeniedException() {
+        assertThrows(AccessDeniedException.class,
+                () -> robotService.updateLocation(
+                        robot.getId(),
+                        new UpdateRobotLocationRequest(14.2f, 25.8f, "KITCHEN", 270, null)
+                ));
     }
 }

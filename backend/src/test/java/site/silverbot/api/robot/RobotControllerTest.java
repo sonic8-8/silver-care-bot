@@ -7,9 +7,11 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.requestF
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
+import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
+import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
@@ -30,6 +35,9 @@ import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotCommand;
 import site.silverbot.domain.robot.RobotCommandRepository;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.user.User;
+import site.silverbot.domain.user.UserRepository;
+import site.silverbot.domain.user.UserRole;
 import site.silverbot.support.RestDocsSupport;
 
 class RobotControllerTest extends RestDocsSupport {
@@ -49,6 +57,9 @@ class RobotControllerTest extends RestDocsSupport {
     @Autowired
     private EmergencyRepository emergencyRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private Robot robot;
 
     @BeforeEach
@@ -58,8 +69,32 @@ class RobotControllerTest extends RestDocsSupport {
         robotRepository.deleteAllInBatch();
         emergencyContactRepository.deleteAllInBatch();
         elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+
+        User owner = userRepository.save(User.builder()
+                .name("김복지")
+                .email("worker@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        userRepository.save(User.builder()
+                .name("다른 보호자")
+                .email("other@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        Elder elder = elderRepository.save(Elder.builder()
+                .user(owner)
+                .name("김옥분")
+                .birthDate(LocalDate.of(1946, 5, 15))
+                .gender(Gender.FEMALE)
+                .status(ElderStatus.SAFE)
+                .build());
 
         robot = robotRepository.save(Robot.builder()
+                .elder(elder)
                 .serialNumber("ROBOT-2026-X82")
                 .authCode("A1B2C3")
                 .batteryLevel(85)
@@ -245,7 +280,7 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateRobotLocation() throws Exception {
         Map<String, Object> request = Map.of(
                 "x", 42.1,
@@ -286,5 +321,35 @@ class RobotControllerTest extends RestDocsSupport {
         assertThat(updated.getCurrentX()).isEqualTo(42.1f);
         assertThat(updated.getCurrentY()).isEqualTo(128.4f);
         assertThat(updated.getCurrentHeading()).isEqualTo(135);
+    }
+
+    @Test
+    void updateRobotLocation_roleRobotWithMismatchedPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "x", 10.0,
+                "y", 20.0,
+                "roomId", "KITCHEN"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void updateRobotLocation_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "x", 10.0,
+                "y", 20.0,
+                "roomId", "KITCHEN"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
     }
 }
