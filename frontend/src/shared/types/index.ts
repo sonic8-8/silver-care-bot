@@ -6,4 +6,5 @@ export * from './emergency.types';
 export * from './notification.types';
 export * from './history.types';
 export * from './map.types';
+export * from './lcd.types';
 export * from './map.query-keys';

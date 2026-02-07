@@ -32,6 +32,44 @@ const { robotStatus, elderStatus, isConnected } = useDashboardRealtime({
 - `robotStatus`: 최근 로봇 상태 이벤트 (없으면 `null`)
 - `elderStatus`: 최근 어르신 상태 이벤트 (없으면 `null`)
 
+## `useRobotLcdRealtime`
+LCD 화면 앱에서 모드 전환 토픽을 구독하기 위한 공통 훅입니다.
+
+- LCD 토픽: `/topic/robot/{robotId}/lcd`
+- 메시지 형식:
+  - 권장 envelope: `type: "LCD_MODE_CHANGE"` + `payload`
+  - 호환 payload: envelope 없이 payload 단독 수신도 허용
+- 중복 이벤트 방지: 동일 메시지(`message.body`)는 1회만 반영
+
+### LCD payload 계약
+```json
+{
+  "robotId": 1,
+  "mode": "MEDICATION",
+  "emotion": "happy",
+  "message": "할머니~ 약 드실 시간이에요!",
+  "subMessage": "아침약 2정",
+  "nextSchedule": {
+    "label": "병원 방문",
+    "time": "14:00"
+  },
+  "updatedAt": "2026-02-08T08:30:00+09:00"
+}
+```
+
+### 사용 예시
+```tsx
+import { useRobotLcdRealtime } from '@/shared/websocket';
+
+const { lcdState, isConnected } = useRobotLcdRealtime({
+  token: accessToken,
+  robotId,
+  onLcdChange: (next) => {
+    setCurrentMode(next.mode);
+  },
+});
+```
+
 ## `useRobotLocationRealtime`
 지도 화면에서 로봇 좌표를 실시간 반영하기 위한 공통 훅입니다.
 
