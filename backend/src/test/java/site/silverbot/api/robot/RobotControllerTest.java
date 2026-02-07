@@ -388,6 +388,81 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
+    void reportRobotEvents_takeWithoutMedicationId_badRequest() throws Exception {
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "MEDICATION",
+                        "action", "TAKE",
+                        "timestamp", "2026-02-08T08:15:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
+
+        Integer takenRecordCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM medication_record WHERE status = 'TAKEN'",
+                Integer.class
+        );
+        assertThat(takenRecordCount).isZero();
+
+        Integer medicationTakenActivityCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM activity WHERE robot_id = ? AND type = 'MEDICATION_TAKEN'",
+                Integer.class,
+                robot.getId()
+        );
+        assertThat(medicationTakenActivityCount).isZero();
+
+        assertThat(robotLcdEventRepository.count()).isZero();
+    }
+
+    @Test
+    void reportRobotEvents_laterAction_createsMedicationNotification() throws Exception {
+        Medication medication = createMedication("저녁약");
+        Map<String, Object> request = Map.of(
+                "events", List.of(Map.of(
+                        "type", "MEDICATION",
+                        "action", "LATER",
+                        "medicationId", medication.getId(),
+                        "timestamp", "2026-02-08T19:15:00+09:00"
+                ))
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/events", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.medicationTakenCount").value(0))
+                .andExpect(jsonPath("$.data.medicationDeferredCount").value(1));
+
+        NotificationProjection projection = jdbcTemplate.queryForObject(
+                """
+                SELECT type, title, message, target_path
+                FROM notification
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (rs, rowNum) -> new NotificationProjection(
+                        rs.getString("type"),
+                        rs.getString("title"),
+                        rs.getString("message"),
+                        rs.getString("target_path")
+                )
+        );
+
+        assertThat(projection).isNotNull();
+        assertThat(projection.type()).isEqualTo("MEDICATION");
+        assertThat(projection.title()).isEqualTo("복약 알림 연기");
+        assertThat(projection.message()).contains("저녁약");
+        assertThat(projection.targetPath()).isEqualTo("/elders/" + robot.getElder().getId() + "/medications");
+    }
+
+    @Test
     void reportRobotEvents_mismatchedRobotPrincipal_forbidden() throws Exception {
         Map<String, Object> request = Map.of(
                 "events", List.of(Map.of(
@@ -503,5 +578,13 @@ class RobotControllerTest extends RestDocsSupport {
                 .color("#00C471")
                 .isActive(true)
                 .build());
+    }
+
+    private record NotificationProjection(
+            String type,
+            String title,
+            String message,
+            String targetPath
+    ) {
     }
 }

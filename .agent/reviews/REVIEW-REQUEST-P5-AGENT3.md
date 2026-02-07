@@ -2,51 +2,40 @@
 
 ### 작업 정보
 - 브랜치: `feature/phase5-lcd-events-be`
-- 작업 라운드: Phase 5 Round 1
+- 작업 라운드: Phase 5 Round 2 (Fix)
 - 기준 지시서:
-  - `agent-0/.agent/dispatch/COORDINATION-P5.md`
-  - `agent-0/.agent/dispatch/WORK-INSTRUCTION-P5-AGENT3.md`
+  - `agent-0/.agent/dispatch/COORDINATION-P5.md` (Round 2 조정 포함)
+  - `agent-0/.agent/dispatch/FIX-INSTRUCTION-P5-AGENT3.md`
+- 선행 리뷰 결과:
+  - `agent-3/.agent/reviews/REVIEW-RESULT-P5-AGENT3.md` (Request Changes: Major 1, Minor 1)
 
-### 작업 목표 반영 요약
-1. `POST /api/robots/{robotId}/events` 엔드포인트 신규 구현
-2. LCD 상호작용 이벤트(`type/action/timestamp`) 저장 경로 추가
-3. 복약 액션 연계
-- `TAKE`: 복약 기록(TAKEN, BUTTON) upsert 경로 연결
-- `LATER`: 보호자 복약 알림 생성 경로 연결
-4. 이벤트 저장용 Flyway 마이그레이션 추가 (비파괴)
+### 리뷰 반영 사항
+1. **Major 반영**: `action=TAKE` + `medicationId` 누락 시 `400` 실패
+- 요청 DTO에 조건부 검증 추가
+- 서비스 레이어에도 동일 가드 추가(무음 성공 차단)
 
-### 변경 파일
+2. **Major 반영**: 처리 순서 정합성 보장
+- `TAKE`는 복약기록 upsert 성공 후에만
+  - `MEDICATION_TAKEN` activity 기록
+  - `medicationTakenCount` 증가
+- 기존처럼 카운트/활동 로그만 먼저 증가하는 흐름 제거
+
+3. **Minor 반영**: 테스트 보강
+- `TAKE + medicationId 누락` -> `400` 검증 추가
+- `LATER` 요청 시 `notification` 생성(타입/메시지/targetPath) 검증 추가
+
+### 변경 파일 (Round 2)
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
-| `backend/src/main/java/site/silverbot/api/robot/controller/RobotController.java` | 수정 | `/api/robots/{robotId}/events` 엔드포인트 추가 |
-| `backend/src/main/java/site/silverbot/api/robot/request/ReportRobotEventsRequest.java` | 신규 | 이벤트 수신 요청 DTO 추가 |
-| `backend/src/main/java/site/silverbot/api/robot/response/RobotEventsReportResponse.java` | 신규 | 이벤트 수신 응답 DTO 추가 |
-| `backend/src/main/java/site/silverbot/api/robot/service/RobotEventService.java` | 신규 | 이벤트 저장/권한 검증/복약 액션 처리 로직 구현 |
-| `backend/src/main/java/site/silverbot/domain/robot/RobotLcdEvent.java` | 신규 | LCD 이벤트 엔티티 추가 |
-| `backend/src/main/java/site/silverbot/domain/robot/RobotLcdEventRepository.java` | 신규 | LCD 이벤트 리포지토리 추가 |
-| `backend/src/main/resources/db/migration/V11__create_robot_lcd_event_table.sql` | 신규 | `robot_lcd_event` 테이블/인덱스 추가 |
-| `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java` | 수정 | `/events` 성공/권한 케이스 및 복약 연계 검증 테스트 추가 |
-| `backend/src/test/java/site/silverbot/migration/FlywayMigrationVerificationTest.java` | 수정 | Flyway target version `11`, 신규 테이블 검증 반영 |
-
-### 주요 구현 포인트
-1. 접근 제어
-- `ROLE_ROBOT`은 principal robotId와 path robotId 일치 시에만 허용
-- 사용자 토큰은 해당 로봇 소유 보호자 계정만 허용
-
-2. 이벤트 저장
-- `robot_lcd_event`에 `event_type`, `event_action`, `occurred_at`, `payload` 저장
-- 기존 `detectedAt` 필드도 호환 입력으로 처리
-
-3. 액션 처리
-- `TAKE`: `medication_record`에 TAKEN/BUTTON upsert
-- `LATER`: 보호자에게 MEDICATION 타입 알림 생성
+| `backend/src/main/java/site/silverbot/api/robot/request/ReportRobotEventsRequest.java` | 수정 | `TAKE` 시 `medicationId` 조건부 필수 검증 추가 |
+| `backend/src/main/java/site/silverbot/api/robot/service/RobotEventService.java` | 수정 | `TAKE` 검증/처리 순서 정합성 수정, 카운트 증가 시점 조정 |
+| `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java` | 수정 | `TAKE 누락 400`, `LATER 알림 생성` 테스트 추가 |
 
 ### 검증 포인트 (리뷰어 확인 요청)
-- [ ] `/events` 엔드포인트 권한 검증이 우회되지 않는지
-- [ ] `TAKE` 처리 시 복약 기록이 의도대로 upsert되는지
-- [ ] `LATER` 처리 시 기존 알림 흐름과 충돌 없는지
-- [ ] 신규 마이그레이션(`V11`)이 기존 스키마와 충돌 없는지
-- [ ] REST Docs 스니펫/테스트가 요구 기능을 충분히 커버하는지
+- [ ] `TAKE + medicationId` 누락 요청이 확실히 `400`으로 차단되는지
+- [ ] `TAKE`에서 복약기록 실패 시 카운트/활동 로그가 증가하지 않는지
+- [ ] `LATER` 처리 시 알림 생성이 의도한 타입/메시지/경로로 저장되는지
+- [ ] 기존 권한 검증 및 `/events` 기본 플로우에 회귀가 없는지
 
 ### 테스트 명령어
 ```bash

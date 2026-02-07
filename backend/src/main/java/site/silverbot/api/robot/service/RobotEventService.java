@@ -61,6 +61,7 @@ public class RobotEventService {
             String normalizedType = normalizeRequired(event.type(), "type");
             String normalizedAction = normalizeOptional(event.action());
             LocalDateTime occurredAt = resolveOccurredAt(event.timestamp(), event.detectedAt());
+            validateActionRequirements(normalizedAction, event.medicationId());
 
             robotLcdEventRepository.save(RobotLcdEvent.builder()
                     .robot(robot)
@@ -74,14 +75,17 @@ public class RobotEventService {
                     .occurredAt(occurredAt)
                     .build());
 
-            applySideEffects(robot, normalizedType, normalizedAction, event.medicationId(), occurredAt, event.location());
+            SideEffectResult sideEffectResult = applySideEffects(
+                    robot,
+                    normalizedType,
+                    normalizedAction,
+                    event.medicationId(),
+                    occurredAt,
+                    event.location()
+            );
             processedCount++;
-            if (ACTION_TAKE.equals(normalizedAction)) {
-                medicationTakenCount++;
-            }
-            if (ACTION_LATER.equals(normalizedAction)) {
-                medicationDeferredCount++;
-            }
+            medicationTakenCount += sideEffectResult.medicationTakenCount();
+            medicationDeferredCount += sideEffectResult.medicationDeferredCount();
         }
 
         return new RobotEventsReportResponse(
@@ -93,7 +97,7 @@ public class RobotEventService {
         );
     }
 
-    private void applySideEffects(
+    private SideEffectResult applySideEffects(
             Robot robot,
             String eventType,
             String action,
@@ -101,27 +105,26 @@ public class RobotEventService {
             LocalDateTime occurredAt,
             String location
     ) {
-        ActivityType activityType = resolveActivityType(eventType, action);
-        if (activityType != null && robot.getElder() != null) {
-            activityJdbcRepository.insert(
-                    robot.getElder().getId(),
-                    robot.getId(),
-                    activityType,
-                    activityTitle(activityType),
-                    null,
-                    location,
-                    occurredAt
-            );
-        }
-
         if (ACTION_TAKE.equals(action)) {
             handleMedicationTaken(robot, medicationId, occurredAt);
-            return;
+            insertActivity(robot, ActivityType.MEDICATION_TAKEN, occurredAt, location);
+            return SideEffectResult.taken();
         }
 
         if (ACTION_LATER.equals(action)) {
             handleMedicationDeferred(robot, medicationId);
+            ActivityType activityType = resolveActivityType(eventType, action);
+            if (activityType != null) {
+                insertActivity(robot, activityType, occurredAt, location);
+            }
+            return SideEffectResult.later();
         }
+
+        ActivityType activityType = resolveActivityType(eventType, action);
+        if (activityType != null) {
+            insertActivity(robot, activityType, occurredAt, location);
+        }
+        return SideEffectResult.none();
     }
 
     private void handleMedicationTaken(Robot robot, Long medicationId, LocalDateTime occurredAt) {
@@ -220,10 +223,22 @@ public class RobotEventService {
         return elder;
     }
 
-    private ActivityType resolveActivityType(String eventType, String action) {
-        if (ACTION_TAKE.equals(action)) {
-            return ActivityType.MEDICATION_TAKEN;
+    private void insertActivity(Robot robot, ActivityType activityType, LocalDateTime occurredAt, String location) {
+        if (activityType == null || robot.getElder() == null) {
+            return;
         }
+        activityJdbcRepository.insert(
+                robot.getElder().getId(),
+                robot.getId(),
+                activityType,
+                activityTitle(activityType),
+                null,
+                location,
+                occurredAt
+        );
+    }
+
+    private ActivityType resolveActivityType(String eventType, String action) {
         if (ACTION_EMERGENCY.equals(action)) {
             return ActivityType.EMERGENCY;
         }
@@ -253,6 +268,12 @@ public class RobotEventService {
             throw new IllegalArgumentException(fieldName + " is required");
         }
         return value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void validateActionRequirements(String action, Long medicationId) {
+        if (ACTION_TAKE.equals(action) && medicationId == null) {
+            throw new IllegalArgumentException("medicationId is required when action is TAKE");
+        }
     }
 
     private String normalizeOptional(String value) {
@@ -296,6 +317,20 @@ public class RobotEventService {
             return Long.parseLong(value);
         } catch (NumberFormatException ex) {
             return null;
+        }
+    }
+
+    private record SideEffectResult(int medicationTakenCount, int medicationDeferredCount) {
+        private static SideEffectResult none() {
+            return new SideEffectResult(0, 0);
+        }
+
+        private static SideEffectResult taken() {
+            return new SideEffectResult(1, 0);
+        }
+
+        private static SideEffectResult later() {
+            return new SideEffectResult(0, 1);
         }
     }
 }
