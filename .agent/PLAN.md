@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.8
+> **버전**: v1.9
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -452,23 +452,36 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | Agent 4 | `feature/phase4-contract-realtime-map` | API 계약/Mock/WebSocket 위치 브로드캐스트 |
 
 #### 4.1 안심 지도 (Map)
-- [ ] `GET /api/robots/{robotId}/map` - SLAM 맵 이미지 조회
-- [ ] `GET /api/robots/{robotId}/rooms` - 방 목록 CRUD
-- [ ] `POST /api/robots/{robotId}/rooms` - 방 등록
-- [ ] `PUT /api/robots/{robotId}/rooms/{roomId}` - 방 수정
-- [ ] `DELETE /api/robots/{robotId}/rooms/{roomId}` - 방 삭제
-- [ ] Frontend: Canvas 기반 맵 렌더링
-- [ ] Frontend: 로봇 위치 실시간 표시 (WebSocket)
+- [x] `GET /api/elders/{elderId}/map` - 안심 지도 데이터 조회
+- [x] `GET /api/robots/{robotId}/rooms` - 방 목록 조회
+- [x] `POST /api/robots/{robotId}/rooms` - 방 등록
+- [x] `PUT /api/robots/{robotId}/rooms/{roomId}` - 방 수정
+- [x] `DELETE /api/robots/{robotId}/rooms/{roomId}` - 방 삭제
+- [x] `PUT /api/robots/{robotId}/location` - 로봇 위치 업데이트
+- [x] Frontend: Canvas 기반 맵 렌더링
+- [x] Frontend: 로봇 위치 실시간 표시 (WebSocket)
 
 #### 4.2 영상 스냅샷 (Video)
-- [ ] 순찰 시 이미지 캡처 저장
-- [ ] `GET /api/patrol/{patrolId}/snapshots` - 스냅샷 목록
-- [ ] Frontend: 스냅샷 갤러리 UI
+- [x] 순찰 시 이미지 캡처 저장
+- [x] `GET /api/patrol/{patrolId}/snapshots` - 스냅샷 목록
+- [x] Frontend: 스냅샷 갤러리 UI
+
+#### 4.3 계약/Mock/실시간 정렬
+- [x] Map/Video shared 타입 및 파서 정렬
+- [x] Map/Video MSW 핸들러 정렬
+- [x] 로봇 위치 실시간 훅 및 테스트 정렬
 
 ---
 
 ### Phase 5: 로봇 LCD 화면
 > Robot React App (별도 빌드)
+
+#### 5.0 Phase 5 착수 준비 계획 (2026-02-07)
+- [ ] merge 완료된 `feature/phase4-*` 원격 브랜치 정리
+- [ ] `feature/phase4-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
+- [ ] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
+- [ ] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 
 #### 5.1 LCD 프로젝트 설정
 - [ ] Vite 프로젝트 설정 (별도 디렉토리: `/frontend-lcd`)
@@ -573,7 +586,7 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | Phase 1 | ✅ 완료 (머지 기준) | 100% |
 | Phase 2 | 🔄 진행 중 (핵심 게이트 완료, 일부 위젯 보강 잔여) | 95% |
 | Phase 3 | ✅ 구현 완료 (동기화/운영 정리 대기) | 100% |
-| Phase 4 | 🔄 착수 준비 완료 | 5% |
+| Phase 4 | ✅ 구현 완료 (Map/Room/Location/Snapshot + 계약 정렬) | 100% |
 | Phase 5 | ⏳ 대기 | 0% |
 
 ---
@@ -591,3 +604,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.6 | 2026-02-07 | Phase 3 Round 2 착수 체크리스트 및 재분배 계획 반영 (브랜치 정리/재사용 정책 포함) |
 | v1.7 | 2026-02-07 | Phase 3 Round 2 완료 반영: 3.2~3.5/3.7 체크 완료, Round 2 계약 고정/정렬/병합 완료 체크 반영 |
 | v1.8 | 2026-02-07 | Phase 4 착수 준비 체크리스트(브랜치 정리/재할당/지시서 배포) 반영 및 진행률 정합화 |
+| v1.9 | 2026-02-07 | Phase 4 구현 완료 체크 반영(Map/Room/Location/Snapshot/계약 정렬), Phase 5 착수 준비 계획(브랜치 정리/재할당) 추가 |

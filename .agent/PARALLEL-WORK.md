@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.6
+> **버전**: v3.7
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -299,10 +299,10 @@ git worktree list
 # 예상 출력 (5인 체제):
 # /mnt/c/.../sh/main     abc1234 [develop]
 # /mnt/c/.../sh/agent-0  xyz0000 [management/architect]
-# /mnt/c/.../sh/agent-1  def5678 [feature/phase3-activity-report-be]
-# /mnt/c/.../sh/agent-2  ghi9012 [feature/phase3-history-report-fe]
-# /mnt/c/.../sh/agent-3  jkl3456 [feature/phase3-db-patrol-ai]
-# /mnt/c/.../sh/agent-4  mno7890 [feature/phase3-contract-realtime]
+# /mnt/c/.../sh/agent-1  def5678 [feature/phase5-lcd-backend-be]
+# /mnt/c/.../sh/agent-2  ghi9012 [feature/phase5-lcd-ui-fe]
+# /mnt/c/.../sh/agent-3  jkl3456 [feature/phase5-lcd-events-be]
+# /mnt/c/.../sh/agent-4  mno7890 [feature/phase5-lcd-contract-realtime]
 ```
 
 ### 2.8 Worktree 정리 (Phase 완료 후)
@@ -317,6 +317,59 @@ git worktree remove ../agent-4
 
 # 또는 강제 제거 (변경사항 있을 경우)
 git worktree remove --force ../agent-N
+```
+
+### 2.9 Phase 5용 Worktree 전환 (다음 단계)
+
+```bash
+# ============================================
+# develop 최신화 + management 브랜치 동기화
+# ============================================
+cd /mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-0
+git fetch origin
+git checkout management/architect
+git merge --ff-only origin/develop
+git push origin management/architect
+
+# ============================================
+# Agent 1~4: Phase 5 브랜치 생성 및 체크아웃
+# ============================================
+
+# Agent 1: LCD Backend API/보안
+cd ../agent-1
+git fetch origin
+git checkout -B feature/phase5-lcd-backend-be origin/develop
+
+# Agent 2: LCD Frontend UI
+cd ../agent-2
+git fetch origin
+git checkout -B feature/phase5-lcd-ui-fe origin/develop
+
+# Agent 3: LCD 이벤트/상호작용 Backend
+cd ../agent-3
+git fetch origin
+git checkout -B feature/phase5-lcd-events-be origin/develop
+
+# Agent 4: LCD 계약/Mock/WebSocket 정렬
+cd ../agent-4
+git fetch origin
+git checkout -B feature/phase5-lcd-contract-realtime origin/develop
+```
+
+### 2.10 Phase 4 브랜치 정리 (Phase 5 전환 직후)
+
+```bash
+# remote phase4 브랜치 정리 (모두 develop 머지 확인 후)
+cd /mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-0
+git push origin --delete \
+  feature/phase4-map-room-be \
+  feature/phase4-map-video-fe \
+  feature/phase4-video-location-be \
+  feature/phase4-contract-realtime-map
+
+# local phase4 브랜치 정리
+git branch -D feature/phase4-map-room-be feature/phase4-map-video-fe
+git branch -D feature/phase4-video-location-be feature/phase4-contract-realtime-map
 ```
 
 ---
@@ -362,12 +415,12 @@ git worktree remove --force ../agent-N
 
 ### 실무 Agent (1~4) Phase별 역할
 
-| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 3 역할 (계획) | 다음 브랜치 |
-|-------|-------------|-------------|--------------------|---------------------|-------------|
-| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Activity + AI Report Backend | `feature/phase3-activity-report-be` |
-| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | History + AI Report Frontend | `feature/phase3-history-report-fe` |
-| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | DB 확장 + Patrol/AI Data Backend | `feature/phase3-db-patrol-ai` |
-| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | Contract/Realtime 통합 + 공통 훅 | `feature/phase3-contract-realtime` |
+| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 4 역할 (완료) | Phase 5 역할 (계획) | 다음 브랜치 |
+|-------|-------------|-------------|--------------------|---------------------|---------------------|-------------|
+| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Map 조회/Room CRUD BE | LCD 제어/액션 Backend API + 권한 검증 | `feature/phase5-lcd-backend-be` |
+| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | 지도 Canvas + Snapshot 갤러리 FE | LCD React UI(모드 화면/상호작용) | `feature/phase5-lcd-ui-fe` |
+| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | Snapshot 저장/조회 + Location BE | LCD 이벤트 저장/조회 + 필요한 스키마 확장 | `feature/phase5-lcd-events-be` |
+| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | 계약/Mock/WebSocket 위치 정렬 | LCD 계약/Mock/WebSocket 토픽 정렬 | `feature/phase5-lcd-contract-realtime` |
 
 ---
 
@@ -826,6 +879,26 @@ git worktree remove --force ../agent-N
    └── 백엔드 API 반영 후 UI 통합
 ```
 
+### 머지 순서 (Phase 4)
+
+```
+1. Agent 1 (MAP/ROOM-BE) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── Room CRUD/Map 조회 기반 선반영
+
+2. Agent 3 (VIDEO/LOCATION-BE) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── Snapshot + Location API/DB 반영
+
+3. Agent 4 (CONTRACT/REALTIME-MAP) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── shared 타입/Mock/WebSocket 정렬
+
+4. Agent 2 (MAP/VIDEO-FE) → develop
+   └── 새 세션 리뷰 Approve → Agent 0 승인
+   └── 백엔드/계약 정렬 후 화면 통합
+```
+
 ### 공통 마감 머지 규칙 (모든 Phase 필수)
 
 ```
@@ -848,16 +921,16 @@ git worktree remove --force ../agent-N
 ```
 ❌ 금지되는 상황:
 
-sh/agent-1/ → feature/phase3-activity-report-be (체크아웃 중)
-sh/agent-2/ → feature/phase3-activity-report-be (체크아웃 시도) → ERROR!
+sh/agent-1/ → feature/phase5-lcd-backend-be (체크아웃 중)
+sh/agent-2/ → feature/phase5-lcd-backend-be (체크아웃 시도) → ERROR!
 
 ✅ 올바른 상황:
 
 sh/agent-0/ → management/architect
-sh/agent-1/ → feature/phase3-activity-report-be
-sh/agent-2/ → feature/phase3-history-report-fe
-sh/agent-3/ → feature/phase3-db-patrol-ai
-sh/agent-4/ → feature/phase3-contract-realtime
+sh/agent-1/ → feature/phase5-lcd-backend-be
+sh/agent-2/ → feature/phase5-lcd-ui-fe
+sh/agent-3/ → feature/phase5-lcd-events-be
+sh/agent-4/ → feature/phase5-lcd-contract-realtime
 ```
 
 ### 8.2 충돌 발생 시 대응
@@ -978,6 +1051,30 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
   - Agent 3: `feature/phase4-video-location-be`
   - Agent 4: `feature/phase4-contract-realtime-map`
 - [x] Phase 4 작업 지시서/DoD 배포 (`COORDINATION-P4`, `WORK-INSTRUCTION-P4-AGENT*`)
+```
+
+### Phase 4 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [x] Agent 1~4 새 세션 리뷰 Approve 완료
+- [x] `feature/phase4-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [x] `management/architect`가 `origin/develop`에 포함됨
+- [x] Phase 4 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P4-AGENT*`, `COORDINATION-P4`)
+- [ ] sync.sh 실행하여 Team Repo 동기화
+```
+
+### Phase 5 착수 준비 기준
+
+```markdown
+## 브랜치 정리 및 재할당 계획
+
+- [ ] merge 완료된 `feature/phase4-*` 원격 브랜치 정리
+- [ ] `feature/phase4-*` 로컬 브랜치 정리
+- [ ] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
+- [ ] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
+- [ ] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 ```
 
 ---
