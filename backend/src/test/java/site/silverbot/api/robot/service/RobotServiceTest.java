@@ -52,8 +52,8 @@ class RobotServiceTest {
     @BeforeEach
     void setUp() {
         robotCommandRepository.deleteAllInBatch();
-        robotRepository.deleteAllInBatch();
         emergencyRepository.deleteAllInBatch();
+        robotRepository.deleteAllInBatch();
         emergencyContactRepository.deleteAllInBatch();
         elderRepository.deleteAllInBatch();
 

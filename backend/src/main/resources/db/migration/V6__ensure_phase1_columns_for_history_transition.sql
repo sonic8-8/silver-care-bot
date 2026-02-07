@@ -1,0 +1,5 @@
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS refresh_token VARCHAR(500);
+
+ALTER TABLE robot
+    ADD COLUMN IF NOT EXISTS offline_notified_at TIMESTAMP;
