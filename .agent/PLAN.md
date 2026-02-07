@@ -1,8 +1,8 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.12
+> **버전**: v1.13
 > **작성일**: 2026-02-02
-> **최종 수정일**: 2026-02-07
+> **최종 수정일**: 2026-02-08
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
 
 ---
@@ -537,6 +537,32 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] `feature/phase5-*` 4개 브랜치 `origin/develop` 반영 완료
 - [x] `management/architect` 최신 지시서 반영 후 `origin/develop` 반영 완료
 
+### Phase 6: 출시 안정화 및 마감
+> Phase 5 LCD 기능을 운영 가능한 수준으로 하드닝하고 브랜치/워크트리를 최종 정리
+
+#### 6.0 Phase 6 착수 준비 (2026-02-08)
+- [ ] merge 완료된 `feature/phase5-*` 원격 브랜치 정리
+- [x] `feature/phase5-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [x] Agent 1~4용 `feature/phase6-*` 브랜치 생성 (`origin/develop` 기준)
+- [x] Agent 1~4 Worktree를 `feature/phase6-*`로 전환
+- [x] Phase 6 작업 지시서/DoD 배포 (`COORDINATION-P6`, `WORK-INSTRUCTION-P6-AGENT*`)
+
+#### 6.1 LCD UI 접근성/표현 고도화 (Frontend-LCD)
+- [ ] 1024x600 우선 레이아웃 + 모바일 fallback 정리
+- [ ] WCAG AAA 대비율/가독성 점검 및 색상 토큰 보정
+- [ ] `RobotFace`(blink/emotion) 및 `StatusBar`(시계/WiFi/배터리) 컴포넌트 도입
+- [ ] `GREETING/EMERGENCY` 모드 표현 보강(날씨 슬롯/119 버튼 등)
+
+#### 6.2 LCD Backend 안정화 (Backend)
+- [ ] `/api/robots/{robotId}/lcd`, `/lcd-mode`, `/events` 회귀 테스트 보강
+- [ ] LCD 이벤트 처리(특히 `TAKE/LATER`) 에러 시나리오 정합성 점검
+- [ ] REST Docs/테스트 스냅샷 최신화
+
+#### 6.3 계약/Mock/통합 검증
+- [ ] `frontend/src/shared/*`, `frontend/src/mocks/*` LCD 계약 타입/파서 회귀 점검
+- [ ] LCD WebSocket payload 파서/훅 통합 테스트 보강
+- [ ] Phase 6 머지 전 교차 검증 체크리스트(Agent 2/4, Agent 1/3) 완료
+
 ---
 
 ## 3. 테스트 전략
@@ -600,6 +626,7 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | Phase 3 | ✅ 구현 완료 (동기화/운영 정리 대기) | 100% |
 | Phase 4 | ✅ 구현 완료 (Map/Room/Location/Snapshot + 계약 정렬) | 100% |
 | Phase 5 | 🔄 진행 중 (핵심 기능 구현/머지 완료, UI 접근성·표현 고도화 잔여) | 80% |
+| Phase 6 | 🔄 착수 준비 중 (브랜치 전환 완료, 작업 지시/원격 정리 진행) | 15% |
 
 ---
 
@@ -620,3 +647,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.10 | 2026-02-07 | Phase 5 착수 준비 실제 반영: Phase 4 브랜치 정리(로컬/원격), Phase 5 브랜치 생성 및 Worktree 전환 체크 완료 |
 | v1.11 | 2026-02-07 | Phase 5 지시서 배포 완료 반영(`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`) |
 | v1.12 | 2026-02-07 | Phase 5 구현/머지 반영: LCD UI/API/이벤트/계약 체크리스트 갱신, 진행률 및 남은 고도화 항목 업데이트 |
+| v1.13 | 2026-02-08 | Phase 6 착수 반영: Phase 5 브랜치 로컬 정리/Worktree 재할당 완료, Phase 6 하드닝 계획 및 체크리스트 추가 |
