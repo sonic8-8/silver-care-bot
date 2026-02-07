@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record DashboardTodaySummaryResponse(
         LocalDateTime wakeUpTime,
-        String medicationStatus,
+        DashboardMedicationStatusResponse medicationStatus,
         String activityStatus
 ) {
 }

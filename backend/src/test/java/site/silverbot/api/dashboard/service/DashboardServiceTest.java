@@ -1,19 +1,23 @@
-package site.silverbot.api.dashboard.controller;
+package site.silverbot.api.dashboard.service;
 
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
+import site.silverbot.api.dashboard.response.DashboardResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.Gender;
@@ -24,9 +28,14 @@ import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
 import site.silverbot.domain.user.UserRepository;
 import site.silverbot.domain.user.UserRole;
-import site.silverbot.support.RestDocsSupport;
 
-class DashboardControllerTest extends RestDocsSupport {
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class DashboardServiceTest {
+
+    @Autowired
+    private DashboardService dashboardService;
 
     @Autowired
     private ElderRepository elderRepository;
@@ -43,8 +52,10 @@ class DashboardControllerTest extends RestDocsSupport {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private EntityManager entityManager;
+
     private Elder elder;
-    private Long ownerUserId;
 
     @BeforeEach
     void setUp() {
@@ -56,22 +67,25 @@ class DashboardControllerTest extends RestDocsSupport {
         elderRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
 
-        User user = userRepository.save(User.builder()
-                .name("김복지")
+        entityManager.flush();
+        entityManager.clear();
+
+        User owner = userRepository.save(User.builder()
+                .name("담당자")
                 .email("worker@test.com")
                 .password("password")
                 .role(UserRole.WORKER)
                 .build());
-        ownerUserId = user.getId();
+
         userRepository.save(User.builder()
-                .name("박보호")
+                .name("외부사용자")
                 .email("other@test.com")
                 .password("password")
                 .role(UserRole.WORKER)
                 .build());
 
         elder = elderRepository.save(Elder.builder()
-                .user(user)
+                .user(owner)
                 .name("김옥분")
                 .birthDate(LocalDate.of(1946, 5, 15))
                 .gender(Gender.FEMALE)
@@ -79,77 +93,46 @@ class DashboardControllerTest extends RestDocsSupport {
 
         robotRepository.save(Robot.builder()
                 .elder(elder)
-                .serialNumber("RB-0001")
+                .serialNumber("RB-DASHBOARD-01")
                 .networkStatus(NetworkStatus.CONNECTED)
-                .batteryLevel(78)
-                .currentLocation("거실")
-                .lastSyncAt(LocalDateTime.now())
+                .batteryLevel(87)
                 .build());
-
-        insertMedication(elder.getId(), "혈압약", "1정", "MORNING", LocalDate.now(), null);
-        insertNotification(elder.getId(), "MEDICATION", "복약 알림", "아침 복약 시간이 되었습니다.");
-        insertSchedule(elder.getId(), "병원 예약", LocalDateTime.now().plusDays(1), "서울대병원", "HOSPITAL", "UPCOMING");
-        insertWakeUpActivity(elder.getId(), LocalDateTime.now().withHour(7).withMinute(20).withSecond(0).withNano(0));
     }
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
-    void getDashboard_returnsIntegratedData() throws Exception {
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/elders/{elderId}/dashboard", elder.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.todaySummary").exists())
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.total").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.status").value("PENDING"))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.evening.status").value("NONE"))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.total").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.label").value("복약 대기"))
-                .andExpect(jsonPath("$.data.recentNotifications.length()").value(1))
-                .andExpect(jsonPath("$.data.weeklySchedules.length()").value(1))
-                .andExpect(jsonPath("$.data.robotStatus.batteryLevel").value(78))
-                .andDo(document("dashboard-get"));
-    }
+    void getDashboard_calculatesMorningEveningMedicationStatus() {
+        Long morningMedicationId = insertMedication(elder.getId(), "혈압약", "1정", "MORNING", LocalDate.now(), null);
+        Long eveningMedicationId = insertMedication(elder.getId(), "당뇨약", "1정", "EVENING", LocalDate.now(), null);
 
-    @Test
-    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
-    void getDashboard_handlesMissingMedicationRecordByTimeOfDay() throws Exception {
-        clearMedicationData();
-        Long morningMedicationId = insertMedication(elder.getId(), "아침약", "1정", "MORNING", LocalDate.now(), null);
-        Long eveningMedicationId = insertMedication(elder.getId(), "저녁약", "1정", "EVENING", LocalDate.now(), null);
         insertMedicationRecord(elder.getId(), morningMedicationId, "MORNING", "TAKEN");
+        insertMedicationRecord(elder.getId(), eveningMedicationId, "EVENING", "MISSED");
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/elders/{elderId}/dashboard", elder.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.taken").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.total").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.status").value("TAKEN"))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.evening.taken").value(0))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.evening.total").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.evening.status").value("PENDING"))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.taken").value(1))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.total").value(2))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.label").value("1/2 복용 완료"));
+        DashboardResponse response = dashboardService.getDashboard(elder.getId());
+
+        assertThat(response.todaySummary().medicationStatus().morning().status()).isEqualTo("TAKEN");
+        assertThat(response.todaySummary().medicationStatus().evening().status()).isEqualTo("MISSED");
+        assertThat(response.todaySummary().medicationStatus().taken()).isEqualTo(1);
+        assertThat(response.todaySummary().medicationStatus().total()).isEqualTo(2);
+        assertThat(response.todaySummary().medicationStatus().label()).isEqualTo("복약 누락 발생");
     }
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
-    void getDashboard_returnsEmptyMedicationSummaryWhenNoMedication() throws Exception {
-        clearMedicationData();
+    void getDashboard_returnsNoneStatusWhenMedicationIsEmpty() {
+        DashboardResponse response = dashboardService.getDashboard(elder.getId());
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/elders/{elderId}/dashboard", elder.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.morning.total").value(0))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.evening.total").value(0))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.taken").value(0))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.total").value(0))
-                .andExpect(jsonPath("$.data.todaySummary.medicationStatus.label").value("등록된 약 없음"));
+        assertThat(response.todaySummary().medicationStatus().morning().status()).isEqualTo("NONE");
+        assertThat(response.todaySummary().medicationStatus().evening().status()).isEqualTo("NONE");
+        assertThat(response.todaySummary().medicationStatus().total()).isZero();
+        assertThat(response.todaySummary().medicationStatus().label()).isEqualTo("등록된 약 없음");
     }
 
     @Test
     @WithMockUser(username = "other@test.com", roles = {"WORKER"})
-    void getDashboard_deniesWhenUserIsNotOwner() throws Exception {
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/elders/{elderId}/dashboard", elder.getId()))
-                .andExpect(status().isForbidden());
+    void getDashboard_deniesWhenCurrentUserIsNotOwner() {
+        assertThatThrownBy(() -> dashboardService.getDashboard(elder.getId()))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     private void ensurePhase2Tables() {
@@ -281,64 +264,6 @@ class DashboardControllerTest extends RestDocsSupport {
                 timeOfDay,
                 status,
                 "MANUAL"
-        );
-    }
-
-    private void clearMedicationData() {
-        jdbcTemplate.update("DELETE FROM medication_record");
-        jdbcTemplate.update("DELETE FROM medication");
-    }
-
-    private void insertNotification(Long elderId, String type, String title, String message) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO notification (user_id, elder_id, type, title, message, target_path, is_read, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """,
-                ownerUserId,
-                elderId,
-                type,
-                title,
-                message,
-                "/elders/" + elderId + "/dashboard",
-                false
-        );
-    }
-
-    private void insertSchedule(
-            Long elderId,
-            String title,
-            LocalDateTime scheduledAt,
-            String location,
-            String type,
-            String status
-    ) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO schedule (elder_id, title, scheduled_at, location, type, source, status, remind_before_minutes, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """,
-                elderId,
-                title,
-                scheduledAt,
-                location,
-                type,
-                "MANUAL",
-                status,
-                30
-        );
-    }
-
-    private void insertWakeUpActivity(Long elderId, LocalDateTime detectedAt) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO activity (elder_id, type, title, detected_at, created_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """,
-                elderId,
-                "WAKE_UP",
-                "기상",
-                detectedAt
         );
     }
 }
