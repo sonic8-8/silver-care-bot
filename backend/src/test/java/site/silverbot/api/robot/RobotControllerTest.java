@@ -1,14 +1,17 @@
 package site.silverbot.api.robot;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.elder.ElderRepository;
+import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
+import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
@@ -29,6 +35,9 @@ import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotCommand;
 import site.silverbot.domain.robot.RobotCommandRepository;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.user.User;
+import site.silverbot.domain.user.UserRepository;
+import site.silverbot.domain.user.UserRole;
 import site.silverbot.support.RestDocsSupport;
 
 class RobotControllerTest extends RestDocsSupport {
@@ -48,6 +57,9 @@ class RobotControllerTest extends RestDocsSupport {
     @Autowired
     private EmergencyRepository emergencyRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private Robot robot;
 
     @BeforeEach
@@ -57,8 +69,32 @@ class RobotControllerTest extends RestDocsSupport {
         robotRepository.deleteAllInBatch();
         emergencyContactRepository.deleteAllInBatch();
         elderRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+
+        User owner = userRepository.save(User.builder()
+                .name("김복지")
+                .email("worker@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        userRepository.save(User.builder()
+                .name("다른 보호자")
+                .email("other@test.com")
+                .password("password")
+                .role(UserRole.WORKER)
+                .build());
+
+        Elder elder = elderRepository.save(Elder.builder()
+                .user(owner)
+                .name("김옥분")
+                .birthDate(LocalDate.of(1946, 5, 15))
+                .gender(Gender.FEMALE)
+                .status(ElderStatus.SAFE)
+                .build());
 
         robot = robotRepository.save(Robot.builder()
+                .elder(elder)
                 .serialNumber("ROBOT-2026-X82")
                 .authCode("A1B2C3")
                 .batteryLevel(85)
@@ -241,5 +277,79 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
                         )
                 ));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLocation() throws Exception {
+        Map<String, Object> request = Map.of(
+                "x", 42.1,
+                "y", 128.4,
+                "roomId", "LIVING_ROOM",
+                "heading", 135,
+                "timestamp", "2026-02-07T10:23:00+09:00"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.received").value(true))
+                .andDo(document("robot-location-update",
+                        pathParameters(
+                                parameterWithName("robotId").description("로봇 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("x").type(JsonFieldType.NUMBER).description("좌표 X"),
+                                fieldWithPath("y").type(JsonFieldType.NUMBER).description("좌표 Y"),
+                                fieldWithPath("roomId").type(JsonFieldType.STRING).description("방 ID"),
+                                fieldWithPath("heading").type(JsonFieldType.NUMBER).description("로봇 헤딩").optional(),
+                                fieldWithPath("timestamp").type(JsonFieldType.STRING).description("로봇 기준 측정 시각").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
+                                fieldWithPath("data.received").type(JsonFieldType.BOOLEAN).description("수신 여부"),
+                                fieldWithPath("data.serverTime").type(JsonFieldType.STRING).description("서버 수신 시각"),
+                                fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
+                        )
+                ));
+
+        Robot updated = robotRepository.findById(robot.getId()).orElseThrow();
+        assertThat(updated.getCurrentLocation()).isEqualTo("LIVING_ROOM");
+        assertThat(updated.getCurrentX()).isEqualTo(42.1f);
+        assertThat(updated.getCurrentY()).isEqualTo(128.4f);
+        assertThat(updated.getCurrentHeading()).isEqualTo(135);
+    }
+
+    @Test
+    void updateRobotLocation_roleRobotWithMismatchedPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "x", 10.0,
+                "y", 20.0,
+                "roomId", "KITCHEN"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void updateRobotLocation_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "x", 10.0,
+                "y", 20.0,
+                "roomId", "KITCHEN"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/api/robots/{robotId}/location", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
     }
 }

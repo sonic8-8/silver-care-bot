@@ -2,20 +2,32 @@ package site.silverbot.api.robot.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.RobotLcdResponse;
+import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
+import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
 import site.silverbot.domain.robot.NetworkStatus;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.user.User;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +38,7 @@ public class RobotService {
     private final RobotRepository robotRepository;
     private final RobotCommandService robotCommandService;
     private final RobotStatusNotifier robotStatusNotifier;
+    private final CurrentUserService currentUserService;
 
     public RobotStatusResponse getStatus(Long robotId) {
         Robot robot = getRobot(robotId);
@@ -103,6 +116,14 @@ public class RobotService {
         return statusChanged;
     }
 
+    @Transactional
+    public RobotLocationUpdateResponse updateLocation(Long robotId, UpdateRobotLocationRequest request) {
+        Robot robot = getRobot(robotId);
+        validateLocationWriteAccess(robot);
+        robot.updateLocation(request.roomId(), request.x(), request.y(), request.heading());
+        return new RobotLocationUpdateResponse(true, OffsetDateTime.now());
+    }
+
     private Robot getRobot(Long robotId) {
         return robotRepository.findById(robotId)
                 .orElseThrow(() -> new EntityNotFoundException("Robot not found"));
@@ -134,6 +155,45 @@ public class RobotService {
         RobotSyncRequest.Dispenser dispenser = request.dispenser();
         if (dispenser != null) {
             robot.updateDispenserRemaining(dispenser.remaining());
+        }
+    }
+
+    private void validateLocationWriteAccess(Robot robot) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
+        }
+
+        if (hasRole(authentication, "ROLE_ROBOT")) {
+            Long robotPrincipalId = parseLong(authentication.getName());
+            if (robotPrincipalId == null || !robot.getId().equals(robotPrincipalId)) {
+                throw new AccessDeniedException("Robot location update access denied");
+            }
+            return;
+        }
+
+        Elder elder = robot.getElder();
+        User user = currentUserService.getCurrentUser();
+        if (elder == null || elder.getUser() == null || !elder.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Robot location update access denied");
+        }
+    }
+
+    private boolean hasRole(Authentication authentication, String role) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> role.equals(authority.getAuthority()));
+    }
+
+    private Long parseLong(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 

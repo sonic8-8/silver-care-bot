@@ -5,14 +5,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.silverbot.api.common.ApiResponse;
 import site.silverbot.api.robot.request.RobotCommandRequest;
 import site.silverbot.api.robot.request.RobotSyncRequest;
+import site.silverbot.api.robot.request.UpdateRobotLocationRequest;
 import site.silverbot.api.robot.response.CommandResponse;
 import site.silverbot.api.robot.response.RobotLcdResponse;
+import site.silverbot.api.robot.response.RobotLocationUpdateResponse;
 import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
 import site.silverbot.api.robot.service.RobotCommandService;
@@ -44,6 +47,14 @@ public class RobotController {
             @RequestBody(required = false) RobotSyncRequest request
     ) {
         return ApiResponse.success(robotService.sync(robotId, request));
+    }
+
+    @PutMapping("/{robotId}/location")
+    public ApiResponse<RobotLocationUpdateResponse> updateLocation(
+            @PathVariable Long robotId,
+            @Valid @RequestBody UpdateRobotLocationRequest request
+    ) {
+        return ApiResponse.success(robotService.updateLocation(robotId, request));
     }
 
     @GetMapping("/{robotId}/lcd")
