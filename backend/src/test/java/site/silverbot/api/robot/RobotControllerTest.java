@@ -259,6 +259,8 @@ class RobotControllerTest extends RestDocsSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.mode").value("IDLE"))
+                .andExpect(jsonPath("$.data.message").value(""))
+                .andExpect(jsonPath("$.data.subMessage").value(""))
                 .andDo(document("robot-lcd",
                         pathParameters(
                                 parameterWithName("robotId").description("로봇 ID")
@@ -268,8 +270,8 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
                                 fieldWithPath("data.mode").type(JsonFieldType.STRING).description("LCD 모드"),
                                 fieldWithPath("data.emotion").type(JsonFieldType.STRING).description("표정"),
-                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메시지").optional(),
-                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지").optional(),
+                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지"),
                                 fieldWithPath("data.nextSchedule").type(JsonFieldType.OBJECT).description("다음 일정").optional(),
                                 fieldWithPath("data.nextSchedule.label").type(JsonFieldType.STRING).description("일정 제목").optional(),
                                 fieldWithPath("data.nextSchedule.time").type(JsonFieldType.STRING).description("일정 시간").optional(),
@@ -311,12 +313,29 @@ class RobotControllerTest extends RestDocsSupport {
                                 fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
                                 fieldWithPath("data.mode").type(JsonFieldType.STRING).description("LCD 모드"),
                                 fieldWithPath("data.emotion").type(JsonFieldType.STRING).description("LCD 감정"),
-                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메인 메시지").optional(),
-                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지").optional(),
+                                fieldWithPath("data.message").type(JsonFieldType.STRING).description("메인 메시지"),
+                                fieldWithPath("data.subMessage").type(JsonFieldType.STRING).description("보조 메시지"),
                                 fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("업데이트 시각"),
                                 fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
                         )
                 ));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotLcdMode_whenMessageFieldsOmitted_returnsEmptyStrings() throws Exception {
+        Map<String, Object> request = Map.of(
+                "mode", "IDLE",
+                "emotion", "neutral"
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/lcd-mode", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value(""))
+                .andExpect(jsonPath("$.data.subMessage").value(""));
     }
 
     @Test

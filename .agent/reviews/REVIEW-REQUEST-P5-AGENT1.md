@@ -2,32 +2,28 @@
 
 ### 작업 정보
 - 브랜치: `feature/phase5-lcd-backend-be`
-- 작업 범위: P5 Round 1 (`agent-0/.agent/dispatch/WORK-INSTRUCTION-P5-AGENT1.md`)
-- 연계 문서: `agent-0/.agent/dispatch/COORDINATION-P5.md`
-- PR 링크: 없음
+- 작업 범위: P5 Round 2 (`agent-0/.agent/dispatch/FIX-INSTRUCTION-P5-AGENT1.md`)
+- 연계 문서: `agent-0/.agent/dispatch/COORDINATION-P5.md` (Round 2 수정 조정 포함)
+- 배경: `REVIEW-RESULT-P5-AGENT1.md` Major 1 (`message/subMessage` null 계약 불일치) 후속 수정
 
 ### 변경 파일
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
-| `backend/src/main/java/site/silverbot/api/robot/controller/RobotController.java` | 수정 | `POST /api/robots/{robotId}/lcd-mode` 엔드포인트 추가 |
-| `backend/src/main/java/site/silverbot/api/robot/service/RobotService.java` | 수정 | LCD 조회 접근검증 추가, LCD 모드 변경/저장/WebSocket 브로드캐스트 구현 |
-| `backend/src/main/java/site/silverbot/api/robot/request/UpdateRobotLcdModeRequest.java` | 신규 | LCD 모드 변경 요청 DTO 추가 |
-| `backend/src/main/java/site/silverbot/api/robot/response/UpdateRobotLcdModeResponse.java` | 신규 | LCD 모드 변경 응답 DTO 추가 |
-| `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java` | 수정 | `GET /lcd` 소유권 기준 정렬, `POST /lcd-mode` 정상/403 케이스 추가 |
-| `backend/src/test/java/site/silverbot/api/robot/service/RobotServiceTest.java` | 수정 | `updateLcdMode` 상태 갱신/브로드캐스트/권한 검증 테스트 추가 |
+| `backend/src/main/java/site/silverbot/api/robot/service/RobotService.java` | 수정 | `GET /lcd`, `POST /lcd-mode`, `LCD_MODE_CHANGE` payload에서 `message/subMessage`를 `null -> ""`로 정규화 |
+| `backend/src/test/java/site/silverbot/api/robot/RobotControllerTest.java` | 수정 | 기본 LCD 조회의 non-null 문자열 보장 검증 및 `lcd-mode` message/subMessage 생략 케이스 검증 추가 |
+| `backend/src/test/java/site/silverbot/api/robot/service/RobotServiceTest.java` | 수정 | `updateLcdMode` null 입력 시 응답/브로드캐스트 payload가 빈 문자열로 정규화되는지 검증 |
 
 ### 주요 변경 사항
-1. `POST /api/robots/{robotId}/lcd-mode`를 구현해 `mode`, `emotion`, `message`, `subMessage` 입력을 DB에 반영하고 `updatedAt`을 응답하도록 추가했습니다.
-2. LCD 관련 API(`GET /lcd`, `POST /lcd-mode`)에 서비스 레벨 접근검증을 적용했습니다.  
-로봇 토큰(`ROLE_ROBOT`)은 `principal robotId == path robotId`만 허용하고, 사용자 토큰은 로봇 소유 사용자만 허용합니다.
-3. LCD 모드 변경 시 DB flush 후 `/topic/robot/{robotId}/lcd`로 `LCD_MODE_CHANGE`를 항상 브로드캐스트하도록 보장했습니다.
-4. 컨트롤러/서비스 테스트를 확장해 성공, 비소유자 접근(403), 로봇 principal 불일치(403), WebSocket payload 정합을 검증했습니다.
+1. `RobotService`에 LCD 문자열 정규화 메서드(`normalizeLcdText`)를 추가하고, LCD 조회/변경 응답에서 `message/subMessage`를 항상 문자열로 반환하도록 수정했습니다.
+2. `POST /api/robots/{robotId}/lcd-mode`에서 요청 `message/subMessage`가 `null`이어도 DB에는 `""`를 저장하고, 응답/브로드캐스트도 `""`로 고정되도록 정렬했습니다.
+3. WebSocket `LCD_MODE_CHANGE` payload 생성 시에도 동일 정규화 값을 사용해 Agent 4 strict parser(`string` 필수)와 충돌이 없도록 맞췄습니다.
+4. 컨트롤러/서비스 테스트를 보강해 REST 응답과 WebSocket payload의 non-null 계약을 회귀 검증합니다.
 
 ### 검증 포인트 (리뷰어 확인 요청)
-- [ ] `POST /lcd-mode` 요청/응답 필드(`mode`, `emotion`, `message`, `subMessage`, `updatedAt`)가 Agent 4 계약과 충돌 없는지
-- [ ] `ROLE_ROBOT` principal 검증(임의 `robotId` 변경 차단) 로직에 우회 가능성이 없는지
-- [ ] LCD 모드 변경 시 WebSocket 브로드캐스트 시점(DB 반영 후)이 의도대로 동작하는지
-- [ ] 기존 로봇 API 동작(특히 location/status/sync)에 회귀 영향이 없는지
+- [ ] `GET /api/robots/{robotId}/lcd`에서 `message/subMessage`가 항상 string(`""` 포함)으로 내려오는지
+- [ ] `POST /api/robots/{robotId}/lcd-mode`에서 요청 필드 생략 시에도 응답/브로드캐스트가 string으로 유지되는지
+- [ ] Agent 4 LCD 파서 strict mode에서 런타임 파싱 오류가 발생하지 않는지
+- [ ] 기존 권한 검증(`ROLE_ROBOT` robotId 일치, 소유 사용자 검증) 동작에 회귀가 없는지
 
 ### 테스트 명령어
 ```bash
@@ -41,4 +37,4 @@ cd backend
 - `BUILD SUCCESSFUL` (2026-02-08, 로컬 `agent-1/backend`)
 
 ### 우려 사항 / 특별 검토 요청
-- `@MockBean`이 Spring Boot 테스트에서 deprecate 경고를 출력합니다. 현재 검증 목적에는 문제 없지만 추후 `@MockitoBean` 전환 검토가 필요합니다.
+- `@MockBean` deprecation 경고는 기존과 동일하며, 이번 수정 범위에서는 동작 검증 우선으로 유지했습니다.

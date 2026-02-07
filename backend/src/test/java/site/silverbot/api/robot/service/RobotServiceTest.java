@@ -232,6 +232,34 @@ class RobotServiceTest {
     }
 
     @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateLcdMode_whenMessageFieldsNull_normalizesToEmptyAndBroadcasts() {
+        UpdateRobotLcdModeResponse response = robotService.updateLcdMode(
+                robot.getId(),
+                new UpdateRobotLcdModeRequest(
+                        "IDLE",
+                        "neutral",
+                        null,
+                        null
+                )
+        );
+
+        Robot updated = robotRepository.findById(robot.getId()).orElseThrow();
+        assertThat(updated.getLcdMessage()).isEqualTo("");
+        assertThat(updated.getLcdSubMessage()).isEqualTo("");
+        assertThat(response.message()).isEqualTo("");
+        assertThat(response.subMessage()).isEqualTo("");
+
+        verify(webSocketMessageService).sendLcdMode(
+                eq(robot.getId()),
+                argThat((LcdModeMessage.Payload payload) ->
+                        payload.message().equals("")
+                                && payload.subMessage().equals("")
+                )
+        );
+    }
+
+    @Test
     @WithMockUser(username = "other@test.com", roles = {"WORKER"})
     void updateLcdMode_nonOwnerUser_throwsAccessDeniedException() {
         assertThrows(AccessDeniedException.class,

@@ -86,11 +86,14 @@ public class RobotService {
     public RobotLcdResponse getLcd(Long robotId) {
         Robot robot = getRobot(robotId);
         validateLcdAccess(robot);
+
+        String message = normalizeLcdText(robot.getLcdMessage());
+        String subMessage = normalizeLcdText(robot.getLcdSubMessage());
         return new RobotLcdResponse(
                 robot.getLcdMode().name(),
                 robot.getLcdEmotion().name().toLowerCase(Locale.ROOT),
-                robot.getLcdMessage(),
-                robot.getLcdSubMessage(),
+                message,
+                subMessage,
                 null,
                 robot.getUpdatedAt()
         );
@@ -103,28 +106,32 @@ public class RobotService {
 
         LcdMode mode = parseMode(request.mode());
         LcdEmotion emotion = parseEmotion(request.emotion());
+        String message = normalizeLcdText(request.message());
+        String subMessage = normalizeLcdText(request.subMessage());
 
-        robot.updateLcdState(mode, emotion, request.message(), request.subMessage());
+        robot.updateLcdState(mode, emotion, message, subMessage);
         robotRepository.flush();
 
         String modeName = robot.getLcdMode().name();
         String emotionName = robot.getLcdEmotion().name().toLowerCase(Locale.ROOT);
+        String normalizedMessage = normalizeLcdText(robot.getLcdMessage());
+        String normalizedSubMessage = normalizeLcdText(robot.getLcdSubMessage());
         webSocketMessageService.sendLcdMode(
                 robotId,
                 new LcdModeMessage.Payload(
                         robotId,
                         modeName,
                         emotionName,
-                        robot.getLcdMessage(),
-                        robot.getLcdSubMessage()
+                        normalizedMessage,
+                        normalizedSubMessage
                 )
         );
 
         return new UpdateRobotLcdModeResponse(
                 modeName,
                 emotionName,
-                robot.getLcdMessage(),
-                robot.getLcdSubMessage(),
+                normalizedMessage,
+                normalizedSubMessage,
                 robot.getUpdatedAt()
         );
     }
@@ -242,6 +249,10 @@ public class RobotService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private String normalizeLcdText(String value) {
+        return value == null ? "" : value;
     }
 
     private LcdMode parseMode(String mode) {
