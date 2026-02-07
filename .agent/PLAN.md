@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.10
+> **버전**: v1.11
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -481,7 +481,7 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] `feature/phase4-*` 로컬 브랜치 정리 및 Worktree 재할당
 - [x] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
 - [x] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
-- [ ] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
+- [x] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 
 #### 5.1 LCD 프로젝트 설정
 - [ ] Vite 프로젝트 설정 (별도 디렉토리: `/frontend-lcd`)
@@ -606,3 +606,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.8 | 2026-02-07 | Phase 4 착수 준비 체크리스트(브랜치 정리/재할당/지시서 배포) 반영 및 진행률 정합화 |
 | v1.9 | 2026-02-07 | Phase 4 구현 완료 체크 반영(Map/Room/Location/Snapshot/계약 정렬), Phase 5 착수 준비 계획(브랜치 정리/재할당) 추가 |
 | v1.10 | 2026-02-07 | Phase 5 착수 준비 실제 반영: Phase 4 브랜치 정리(로컬/원격), Phase 5 브랜치 생성 및 Worktree 전환 체크 완료 |
+| v1.11 | 2026-02-07 | Phase 5 지시서 배포 완료 반영(`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`) |

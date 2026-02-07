@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.8
+> **버전**: v3.9
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-07
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -1074,7 +1074,7 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] `feature/phase4-*` 로컬 브랜치 정리
 - [x] Agent 1~4용 `feature/phase5-*` 브랜치 생성 (`origin/develop` 기준)
 - [x] Agent 1~4 Worktree를 `feature/phase5-*`로 전환
-- [ ] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
+- [x] Phase 5 작업 지시서/DoD 배포 (`COORDINATION-P5`, `WORK-INSTRUCTION-P5-AGENT*`)
 ```
 
 ---
