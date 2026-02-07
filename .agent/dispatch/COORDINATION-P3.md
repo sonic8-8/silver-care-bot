@@ -84,3 +84,15 @@
 3. 브랜치 정렬 후 병합 (Agent 1~4 공통)
 - `origin/develop` 기준점 정렬(rebase/reset) 후에만 재리뷰/병합 진행
 - push는 `--force-with-lease` 사용
+
+## Round 8 병합 지시 (2026-02-07)
+1. 추가 수정 작업 없음
+- Agent 1~4 모두 최신 `REVIEW-RESULT-P3-AGENT{N}.md` 기준 `Approve`
+- Agent 2/4의 Round 7 수정사항 반영 완료로 추가 코드 수정 지시는 종료
+
+2. Agent 0 병합 실행
+- 병합 순서: `feature/phase3-activity-report-be` → `feature/phase3-contract-realtime` → `feature/phase3-history-report-fe`
+- `feature/phase3-db-patrol-ai`는 원격 기준 `origin/develop` 대비 추가 커밋 없음으로 병합 생략
+
+3. 운영 유의
+- Agent 4 리뷰에서 보고된 lint(`playwright.config.js`, `vite.config.js`, `vitest.config.js`의 기존 `no-undef`)는 기존 이슈로 분리 관리
