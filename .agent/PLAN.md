@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.15
+> **버전**: v1.16
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -567,8 +567,8 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] Agent 1~4 P6 리뷰 Approve 및 FIX 지시서 반영 완료
 - [x] `feature/phase6-*` 4개 브랜치가 `origin/develop`에 포함됨
 - [x] `management/architect`가 `origin/develop`에 포함됨
-- [ ] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
-- [ ] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [x] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
+- [x] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
 - [ ] sync.sh 실행하여 Team Repo 동기화
 
 ---
@@ -658,3 +658,4 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.13 | 2026-02-08 | Phase 6 착수 반영: Phase 5 브랜치 로컬 정리/Worktree 재할당 완료, Phase 6 하드닝 계획 및 체크리스트 추가 |
 | v1.14 | 2026-02-08 | Phase 6 완료 반영: UI/Backend/계약 하드닝 체크 완료, `origin/develop` 병합 상태 및 운영 잔여 작업(브랜치 정리/동기화) 갱신 |
 | v1.15 | 2026-02-08 | develop 코드 기준 미체크 항목 정리: Phase 1/5 구현 완료 체크 보강 및 부분 구현 항목(예: 긴급연락처 목록, Framer Motion)은 미체크 유지 |
+| v1.16 | 2026-02-08 | 운영 마감 반영: `feature/phase6-*` 원격/로컬 브랜치 정리 및 Worktree 재할당 체크 완료 (`sync.sh`는 보류) |

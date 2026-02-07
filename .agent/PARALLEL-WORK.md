@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.13
+> **버전**: v3.14
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -1149,8 +1149,8 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] `feature/phase6-*` 4개 브랜치가 `origin/develop`에 포함됨
 - [x] `management/architect`가 `origin/develop`에 포함됨
 - [x] Phase 6 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P6-AGENT*`, `COORDINATION-P6`)
-- [ ] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
-- [ ] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [x] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
+- [x] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
 - [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 
