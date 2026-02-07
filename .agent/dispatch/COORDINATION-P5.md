@@ -67,3 +67,32 @@
 - Agent 1~4 각자 `REVIEW-REQUEST-P5-AGENT{N}.md` 작성 완료
 - 새 세션 리뷰 `REVIEW-RESULT-P5-AGENT{N}.md` Approve 확보
 - 위 머지 순서대로 `develop` 반영 완료
+
+---
+
+## Round 2 수정 조정 (Review Follow-up)
+
+### 조정 항목 A: Agent 1 ↔ Agent 4 (LCD 문자열 계약 고정)
+- 배경:
+  - Agent 1 리뷰에서 `GET /lcd`, `POST /lcd-mode`, `LCD_MODE_CHANGE` payload의
+    `message/subMessage`가 `null`로 내려갈 수 있는 이슈 확인.
+  - Agent 4 LCD 계약 파서는 `message/subMessage`를 string 필수로 파싱.
+- 실행:
+  1. Agent 1은 응답/브로드캐스트에서 `null -> ""` 정규화.
+  2. Agent 4는 계약 파서 strict 유지(문자열 필수).
+
+### 조정 항목 B: Agent 2 ↔ Agent 3 ↔ Agent 4 (`TAKE + medicationId`)
+- 배경:
+  - Agent 3 리뷰에서 `action=TAKE` + `medicationId` 누락 시 무음 성공 이슈 확인.
+  - Round 2에서 `TAKE` 요청은 `medicationId` 필수로 고정 필요.
+- 실행:
+  1. Agent 3은 `TAKE` + `medicationId` 누락 시 `400` 실패 처리 및 정합성 수정.
+  2. Agent 4는 이벤트 계약 타입/파서에 `medicationId`와 조건부 필수 규칙 반영.
+  3. Agent 2는 `TAKE` 전송 시 `medicationId`를 포함하도록 payload 경로 보강.
+
+### Round 2 머지 게이트
+1. Agent 3 정합성 이슈 수정 + 재리뷰 Approve
+2. Agent 1 LCD 문자열 계약 수정 + 재리뷰 Approve
+3. Agent 4 계약/Mock 정렬 + 재리뷰 Approve
+4. Agent 2 이벤트 payload 정렬 + 재리뷰 Approve
+5. Agent 0 순차 병합 (권장: 3 -> 1 -> 4 -> 2)
