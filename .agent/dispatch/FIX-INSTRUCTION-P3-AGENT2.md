@@ -1,4 +1,4 @@
-# Fix Instruction - P3 Agent 2 (Round 6)
+# Fix Instruction - P3 Agent 2 (Round 7)
 
 ## 대상 브랜치
 - `feature/phase3-history-report-fe`
@@ -16,7 +16,7 @@
 - 조치:
   - 날짜 문자열은 `new Date(year, month - 1, day)` 방식으로 로컬 파싱 통일
   - 주 시작/종료일 계산도 동일 로컬 파싱 기준 적용
-  - 명세 기준: `date` Query는 로컬 날짜 기준 (`agent-0/docs/api-specification.md` 3.7 섹션)
+  - 명세 기준: `date` Query는 로컬 날짜 기준 (`agent-0/docs/api-specification.md` v1.3.3, 3.7 섹션)
 
 2. 회귀 테스트 보강 (Required)
 - 대상:

@@ -67,3 +67,20 @@
   - `git rebase origin/develop` 또는 `git checkout -B <same-branch> origin/develop` 후 Round2 커밋 재적용
   - `git push -u origin <branch> --force-with-lease`
 - Agent 0는 위 정렬 완료 브랜치만 병합 대상으로 처리
+
+## Fix Round 7 협업 지시 (2026-02-07)
+> 아래 규칙이 Round 6의 "PatrolTarget 단일화" 지시를 대체합니다.
+
+1. 순찰 target 계약 병행 허용 (Agent 3 ↔ Agent 4 ↔ Agent 2)
+- 기준 문서 우선순위: `api-embedded.md`, `api-ai.md` → `api-specification.md`
+- `APPLIANCE`(embedded `patrol/report`)와 `MULTI_TAP`(ai `patrol-results`)를 모두 허용
+- 프론트 파서는 둘 다 수용하고, 화면 모델에서는 `MULTI_TAP`으로 정규화 권장
+
+2. nullable/날짜 규칙 유지 (Agent 2 ↔ Agent 4)
+- `patrolLatest.lastPatrolAt`: nullable
+- `activity.title`: nullable
+- `date=YYYY-MM-DD`: 로컬 날짜 기준 파싱 (`new Date('YYYY-MM-DD')` 금지)
+
+3. 브랜치 정렬 후 병합 (Agent 1~4 공통)
+- `origin/develop` 기준점 정렬(rebase/reset) 후에만 재리뷰/병합 진행
+- push는 `--force-with-lease` 사용

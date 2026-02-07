@@ -1,4 +1,4 @@
-# Fix Instruction - P3 Agent 1 (Round 6)
+# Fix Instruction - P3 Agent 1 (Round 7)
 
 ## 대상 브랜치
 - `feature/phase3-activity-report-be`
@@ -14,4 +14,4 @@
 
 ## 완료 기준
 - 본 브랜치는 현재 기능 기준 머지 가능
-- Round 6 병합 전 최신 `origin/develop` 기준으로 충돌 재점검 권장
+- Round 7 병합 전 최신 `origin/develop` 기준으로 충돌 재점검 권장

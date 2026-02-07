@@ -1,6 +1,6 @@
 # 📡 AI 반려로봇 API 명세서
 
-> **버전**: v1.3.2  
+> **버전**: v1.3.3  
 > **작성일**: 2026-01-29  
 > **대상**: 백엔드, 프론트엔드, 임베디드, AI 개발자
 
@@ -103,6 +103,7 @@
 
 | 기능 | Intent | CommandType | 설명 |
 |------|--------|-------------|------|
+| **LCD 화면 전환** | - | - | 호출어 감지 시 화면 전환 |
 | 일반 대화 | `CHAT` | `null` | 일상 대화, 감정 분석 (대부분 NEUTRAL) |
 | 웹 검색/날씨 | `COMMAND` | `SEARCH` | 날씨, 웹 검색 결과 조회 |
 | 일정 등록 | `COMMAND` | `SCHEDULE` | 음성으로 일정 등록 |
@@ -987,7 +988,10 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
 | `DOOR` | 현관문 |
 | `OUTLET` | 콘센트 |
 | `WINDOW` | 창문 |
+| `APPLIANCE` | 전열기구 (임베디드 `patrol/report` 계약) |
 | `MULTI_TAP` | 멀티탭 |
+
+> `APPLIANCE`(임베디드 순찰 보고)와 `MULTI_TAP`(Vision AI 정찰 결과)가 병행될 수 있으므로 소비 측 파서는 둘 다 허용해야 합니다.
 
 | status | 설명 |
 |--------|------|
@@ -1023,6 +1027,21 @@ LIVING_ROOM, KITCHEN, BEDROOM, BATHROOM, ENTRANCE, DOCK
   ]
 }
 ```
+
+| target | 설명 |
+|--------|------|
+| `GAS_VALVE` | 가스밸브 |
+| `DOOR` | 현관문 |
+| `OUTLET` | 콘센트 |
+| `WINDOW` | 창문 |
+| `APPLIANCE` | 전열기구 |
+
+| status | 설명 |
+|--------|------|
+| `NORMAL` | 정상 |
+| `LOCKED` | 잠김 |
+| `UNLOCKED` | 열림 |
+| `NEEDS_CHECK` | 확인 필요 |
 
 ---
 
@@ -1746,17 +1765,22 @@ const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
       "confidence": 0.88
     },
     {
-      "type": "CONVERSATION",
-      "detectedAt": "2026-01-29T07:45:00+09:00",
-      "data": {
-        "duration": 120,
-        "sentiment": "POSITIVE",
-        "keywords": ["좋은 아침", "날씨"]
-      }
+      "type": "OUT_DETECTED",
+      "detectedAt": "2026-01-29T10:00:00+09:00",
+      "location": "현관"
     }
   ]
 }
 ```
+
+| type | 설명 |
+|------|------|
+| `WAKE_UP` | 기상 감지 |
+| `SLEEP` | 취침 감지 |
+| `OUT_DETECTED` | 외출 감지 |
+| `RETURN_DETECTED` | 귀가 감지 |
+
+> 대화 기록은 `POST /api/robots/{robotId}/conversations` API를 사용합니다.
 
 ---
 
@@ -1822,8 +1846,11 @@ const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
 | `ScheduleSource` | MANUAL, VOICE, SYSTEM |
 | `NotificationType` | EMERGENCY, MEDICATION, SCHEDULE, ACTIVITY, SYSTEM |
 | `ActivityType` | WAKE_UP, SLEEP, MEDICATION_TAKEN, MEDICATION_MISSED, PATROL_COMPLETE, OUT_DETECTED, RETURN_DETECTED, CONVERSATION, EMERGENCY |
-| `PatrolTarget` | GAS_VALVE, WINDOW, MULTI_TAP |
-| `PatrolStatus` | ON, OFF |
+| `PatrolReportTarget` | GAS_VALVE, DOOR, OUTLET, WINDOW, APPLIANCE |
+| `PatrolResultTarget` | GAS_VALVE, WINDOW, MULTI_TAP |
+| `PatrolFeedTarget` | GAS_VALVE, DOOR, OUTLET, WINDOW, APPLIANCE, MULTI_TAP |
+| `PatrolReportStatus` | NORMAL, LOCKED, UNLOCKED, NEEDS_CHECK |
+| `PatrolResultStatus` | ON, OFF |
 | `PatrolOverallStatus` | SAFE, WARNING |
 | `EmergencyType` | FALL_DETECTED, NO_RESPONSE, SOS_BUTTON, UNUSUAL_PATTERN |
 | `CommandType` | MOVE_TO, START_PATROL, RETURN_TO_DOCK, SPEAK, CHANGE_LCD_MODE |
@@ -1846,7 +1873,8 @@ const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
 | 1.2.0 | 2026-01-30 | MVP 단순화: Emotion을 neutral, happy, sleep 3가지로 축소 |
 | 1.3.0 | 2026-01-30 | LCD 화면 전환 아키텍처 수정: REST API + WebSocket 기반으로 변경, `POST /api/robots/{robotId}/lcd-mode` API 추가, WebSocket 토픽 `/topic/robot/{robotId}/lcd` 명세 추가 |
 | 1.3.1 | 2026-01-30 | Speech AI API에 `normalizedText` 필드 추가 (STT 원본 → 정규화된 텍스트) |
-| 1.3.2 | 2026-02-07 | Phase 3 계약 정합성 보정: `PatrolTarget` 값을 `MULTI_TAP`으로 통일, `lastPatrolAt`/`activities` nullable 규칙 명시, `date` 쿼리 로컬 날짜 해석 기준 추가 |
+| 1.3.2 | 2026-02-07 | Phase 3 계약 정합성 보정: `lastPatrolAt`/`activities` nullable 규칙 명시, `date` 쿼리 로컬 날짜 해석 기준 추가 |
+| 1.3.3 | 2026-02-07 | `api-embedded.md`/`api-ai.md` 우선 기준 반영: Speech AI 기능표에 LCD 전환 추가, 로봇 이벤트 타입 정렬, 순찰 target 계약(`APPLIANCE`/`MULTI_TAP`) 병행 규칙 명시, 임베디드 담당 API 목록 보강 |
 
 ---
 
@@ -1857,8 +1885,16 @@ const ws = new WebSocket('wss://i14c104.p.ssafy.io/ws?token=eyJhbG...');
 - `POST /api/robots/{robotId}/sync`
 - `POST /api/robots/{robotId}/events`
 - `POST /api/robots/{robotId}/emergency`
+- `POST /api/elders/{elderId}/medications/records`
+- `POST /api/robots/{robotId}/patrol/report`
 - `PUT /api/robots/{robotId}/location`
+- `POST /api/robots/{robotId}/map`
+- `GET /api/robots/{robotId}/rooms`
+- `POST /api/robots/{robotId}/rooms`
+- `PUT /api/robots/{robotId}/rooms/{roomId}`
+- `DELETE /api/robots/{robotId}/rooms/{roomId}`
 - `POST /api/robots/{robotId}/commands/{commandId}/ack`
+- `POST /api/robots/{robotId}/lcd-mode`
 - WebSocket 연결 및 수신
 
 ### AI (Jetson Orin) - Vision AI
