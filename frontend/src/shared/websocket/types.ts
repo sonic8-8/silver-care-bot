@@ -1,3 +1,5 @@
+import type { RobotConnectionStatus, RobotLcdMode } from '@/shared/types/robot.types';
+
 export type WebSocketMessageType =
     | 'ROBOT_STATUS_UPDATE'
     | 'LCD_MODE_CHANGE'
@@ -15,11 +17,11 @@ export type WebSocketStatus = 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED';
 
 export type RobotStatusPayload = {
     robotId: number;
-    elderId?: number;
-    batteryLevel?: number;
-    networkStatus?: string;
-    currentLocation?: string;
-    lcdMode?: string;
+    elderId?: number | null;
+    batteryLevel?: number | null;
+    networkStatus?: RobotConnectionStatus | string | null;
+    currentLocation?: string | null;
+    lcdMode?: RobotLcdMode | string | null;
 };
 
 export type LcdModePayload = {
@@ -33,8 +35,8 @@ export type LcdModePayload = {
 export type ElderStatusPayload = {
     elderId: number;
     status: string;
-    lastActivity?: string;
-    location?: string;
+    lastActivity?: string | null;
+    location?: string | null;
 };
 
 export type NotificationPayload = {
@@ -53,4 +55,22 @@ export type EmergencyPayload = {
     type: string;
     location?: string;
     detectedAt?: string;
+};
+
+export type DashboardRobotRealtimeState = {
+    robotId: number;
+    elderId: number | null;
+    batteryLevel: number | null;
+    networkStatus: RobotConnectionStatus | null;
+    currentLocation: string | null;
+    lcdMode: RobotLcdMode | null;
+    timestamp?: string;
+};
+
+export type DashboardElderRealtimeState = {
+    elderId: number;
+    status: string;
+    lastActivity: string | null;
+    location: string | null;
+    timestamp?: string;
 };

@@ -9,16 +9,9 @@ import type {
     NotificationType,
     UnreadCountPayload,
 } from '@/shared/types';
-import type { WebSocketEnvelope } from '@/shared/websocket/types';
+import type { NotificationPayload, WebSocketEnvelope } from '@/shared/websocket/types';
 
-type NotificationSocketPayload = {
-    id: number;
-    type: string;
-    title: string;
-    message: string;
-    elderId?: number;
-    targetPath?: string;
-};
+const RECENT_MESSAGE_LIMIT = 200;
 
 const parseNotificationType = (value: string): NotificationType => {
     if (value === 'EMERGENCY') return 'EMERGENCY';
@@ -29,7 +22,7 @@ const parseNotificationType = (value: string): NotificationType => {
 };
 
 const toNotificationItem = (
-    envelope: WebSocketEnvelope<NotificationSocketPayload>
+    envelope: WebSocketEnvelope<NotificationPayload>
 ): NotificationItem => ({
     id: envelope.payload.id,
     type: parseNotificationType(envelope.payload.type),
@@ -63,12 +56,18 @@ export const useNotificationRealtime = () => {
     });
 
     const handleMessage = useCallback(
-        (payload: WebSocketEnvelope<NotificationSocketPayload>) => {
+        (payload: WebSocketEnvelope<NotificationPayload>) => {
             const item = toNotificationItem(payload);
             if (receivedIdsRef.current.has(item.id)) {
                 return;
             }
             receivedIdsRef.current.add(item.id);
+            if (receivedIdsRef.current.size > RECENT_MESSAGE_LIMIT) {
+                const first = receivedIdsRef.current.values().next().value;
+                if (first !== undefined) {
+                    receivedIdsRef.current.delete(first);
+                }
+            }
 
             queryClient.setQueryData(notificationKeys.recent, (oldData: NotificationItem[] | undefined) => {
                 const existing = oldData ?? [];
@@ -88,7 +87,7 @@ export const useNotificationRealtime = () => {
         [queryClient]
     );
 
-    useSubscription<WebSocketEnvelope<NotificationSocketPayload>>({
+    useSubscription<WebSocketEnvelope<NotificationPayload>>({
         client,
         destination,
         enabled: Boolean(destination),
