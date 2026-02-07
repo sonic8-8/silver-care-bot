@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'activity_type') THEN
+    IF to_regtype(current_schema() || '.activity_type') IS NULL THEN
         CREATE TYPE activity_type AS ENUM (
             'WAKE_UP',
             'SLEEP',
@@ -17,49 +17,49 @@ END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'patrol_target') THEN
+    IF to_regtype(current_schema() || '.patrol_target') IS NULL THEN
         CREATE TYPE patrol_target AS ENUM ('GAS_VALVE', 'DOOR', 'OUTLET', 'WINDOW', 'MULTI_TAP');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'patrol_item_status') THEN
+    IF to_regtype(current_schema() || '.patrol_item_status') IS NULL THEN
         CREATE TYPE patrol_item_status AS ENUM ('ON', 'OFF', 'NORMAL', 'LOCKED', 'UNLOCKED', 'NEEDS_CHECK');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'patrol_overall_status') THEN
+    IF to_regtype(current_schema() || '.patrol_overall_status') IS NULL THEN
         CREATE TYPE patrol_overall_status AS ENUM ('SAFE', 'WARNING');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'conversation_intent') THEN
+    IF to_regtype(current_schema() || '.conversation_intent') IS NULL THEN
         CREATE TYPE conversation_intent AS ENUM ('CHAT', 'COMMAND');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'conversation_command_type') THEN
+    IF to_regtype(current_schema() || '.conversation_command_type') IS NULL THEN
         CREATE TYPE conversation_command_type AS ENUM ('SEARCH', 'SCHEDULE', 'MOVE');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'conversation_sentiment') THEN
+    IF to_regtype(current_schema() || '.conversation_sentiment') IS NULL THEN
         CREATE TYPE conversation_sentiment AS ENUM ('POSITIVE', 'NEUTRAL', 'NEGATIVE');
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'search_type') THEN
+    IF to_regtype(current_schema() || '.search_type') IS NULL THEN
         CREATE TYPE search_type AS ENUM ('WEATHER', 'WEB_SEARCH');
     END IF;
 END $$;
