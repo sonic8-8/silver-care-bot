@@ -104,10 +104,10 @@ public class RobotService {
         Robot robot = getRobot(robotId);
         validateLcdAccess(robot);
 
-        LcdMode mode = parseMode(request.mode());
-        LcdEmotion emotion = parseEmotion(request.emotion());
-        String message = normalizeLcdText(request.message());
-        String subMessage = normalizeLcdText(request.subMessage());
+        LcdMode mode = parseRequiredMode(request.normalizedMode());
+        LcdEmotion emotion = parseRequiredEmotion(request.normalizedEmotion());
+        String message = request.normalizedMessage();
+        String subMessage = request.normalizedSubMessage();
 
         robot.updateLcdState(mode, emotion, message, subMessage);
         robotRepository.flush();
@@ -255,23 +255,39 @@ public class RobotService {
         return value == null ? "" : value;
     }
 
+    private LcdMode parseRequiredMode(String mode) {
+        LcdMode parsedMode = parseMode(mode);
+        if (parsedMode == null) {
+            throw new IllegalArgumentException("Invalid lcd mode");
+        }
+        return parsedMode;
+    }
+
     private LcdMode parseMode(String mode) {
-        if (mode == null) {
+        if (!StringUtils.hasText(mode)) {
             return null;
         }
         try {
-            return LcdMode.valueOf(mode.toUpperCase(Locale.ROOT));
+            return LcdMode.valueOf(mode.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid lcd mode");
         }
     }
 
+    private LcdEmotion parseRequiredEmotion(String emotion) {
+        LcdEmotion parsedEmotion = parseEmotion(emotion);
+        if (parsedEmotion == null) {
+            throw new IllegalArgumentException("Invalid lcd emotion");
+        }
+        return parsedEmotion;
+    }
+
     private LcdEmotion parseEmotion(String emotion) {
-        if (emotion == null) {
+        if (!StringUtils.hasText(emotion)) {
             return null;
         }
         try {
-            return LcdEmotion.valueOf(emotion.toUpperCase(Locale.ROOT));
+            return LcdEmotion.valueOf(emotion.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid lcd emotion");
         }
