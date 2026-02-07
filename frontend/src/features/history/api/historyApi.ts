@@ -74,6 +74,31 @@ export const formatDate = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+export const parseLocalDateString = (dateString: string): Date | null => {
+    const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+    if (!matched) {
+        return null;
+    }
+
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+        return null;
+    }
+
+    const parsed = new Date(year, month - 1, day);
+    if (
+        parsed.getFullYear() !== year
+        || parsed.getMonth() !== month - 1
+        || parsed.getDate() !== day
+    ) {
+        return null;
+    }
+
+    return parsed;
+};
+
 export const toWeekStartDate = (baseDate: Date) => {
     const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
     const day = date.getDay();
@@ -82,11 +107,12 @@ export const toWeekStartDate = (baseDate: Date) => {
     return date;
 };
 
-const buildWeekEndDate = (weekStartDate: string) => {
-    const parsed = new Date(weekStartDate);
-    if (Number.isNaN(parsed.getTime())) {
+export const getWeekEndDate = (weekStartDate: string) => {
+    const parsed = parseLocalDateString(weekStartDate);
+    if (!parsed) {
         return weekStartDate;
     }
+
     const endDate = new Date(parsed);
     endDate.setDate(parsed.getDate() + 6);
     return formatDate(endDate);
@@ -127,7 +153,7 @@ const normalizeWeeklyReport = (raw: unknown, weekStartDate: string): WeeklyRepor
         weekEndDate:
             typeof payload.weekEndDate === 'string'
                 ? payload.weekEndDate
-                : buildWeekEndDate(weekStartDate),
+                : getWeekEndDate(weekStartDate),
         medicationRate: Math.max(0, Math.min(100, Number(toFiniteNumber(payload.medicationRate, 0).toFixed(1)))),
         activityCount: Math.max(0, Math.trunc(toFiniteNumber(payload.activityCount, 0))),
         conversationKeywords: toStringArray(payload.conversationKeywords),

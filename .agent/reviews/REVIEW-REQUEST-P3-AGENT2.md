@@ -4,40 +4,28 @@
 - 브랜치: `feature/phase3-history-report-fe`
 - 작업 범위:
   - Phase 3 Round 2 Frontend 구현 (PLAN 3.3, 3.5, 3.7)
-  - History 화면(활동 로그/AI 리포트) + Dashboard 순찰 피드 연동
+  - Fix Round 7: 날짜 파싱 타임존 이슈(Major) 수정
 - 기준 문서:
   - `agent-0/.agent/dispatch/COORDINATION-P3.md`
-  - `agent-0/.agent/dispatch/WORK-INSTRUCTION-P3-AGENT2.md`
+  - `agent-0/.agent/dispatch/FIX-INSTRUCTION-P3-AGENT2.md`
 
-### 구현 완료 항목
-- [x] 3.3 활동 로그 Frontend
-  - `/elders/:elderId/history` 탭 UI(활동 로그/AI 리포트)
-  - 날짜 선택 + 활동 타임라인 + 유형별 아이콘/색상
-- [x] 3.5 AI 리포트 Frontend
-  - 주차 이동(이전 주/다음 주)
-  - 복약률/활동량 시각화, 키워드 클라우드형 칩, 추천사항 카드
-- [x] 3.7 순찰 피드 Frontend
-  - 대시보드 순찰 카드 추가
-  - 경고 항목 하이라이트 + 마지막 순찰 시각 표시
+### Fix Round 7 반영 항목
+- [x] `new Date('YYYY-MM-DD')` 제거
+- [x] 로컬 날짜 파싱 유틸(`new Date(year, month - 1, day)`) 적용
+- [x] 주 시작/종료일 계산 로컬 날짜 기준 통일
+- [x] UTC-시간대 회귀 시나리오 테스트 추가
 
 ### 주요 변경 파일
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
-| `frontend/src/features/history/types.ts` | 추가 | 활동 로그/주간 리포트 타입 정의 |
-| `frontend/src/features/history/api/historyApi.ts` | 추가 | Activity/Weekly Report API 연동 + 404/501 fallback |
-| `frontend/src/features/history/hooks/useHistory.ts` | 추가 | 활동/리포트 Query 훅 |
-| `frontend/src/pages/History/HistoryScreen.tsx` | 수정 | 탭/타임라인/리포트 시각화 전면 구현 |
-| `frontend/src/features/dashboard/types.ts` | 수정 | `latestPatrol` 타입/필드 추가 |
-| `frontend/src/features/dashboard/api/dashboardApi.ts` | 수정 | `/patrol/latest` 연동 및 정규화 |
-| `frontend/src/pages/Dashboard/DashboardScreen.tsx` | 수정 | 순찰 결과 카드 UI 및 경고 하이라이트 |
-| `frontend/src/features/history/api/historyApi.test.ts` | 추가 | 날짜/주차/fallback 헬퍼 테스트 |
-| `frontend/src/features/dashboard/hooks/useDashboard.test.tsx` | 수정 | `latestPatrol` 필드 반영 |
+| `frontend/src/features/history/api/historyApi.ts` | 수정 | `parseLocalDateString`, `getWeekEndDate` 추가 및 로컬 날짜 기준 계산 적용 |
+| `frontend/src/pages/History/HistoryScreen.tsx` | 수정 | 날짜 라벨/주간 범위 계산 시 로컬 파서 유틸 사용 |
+| `frontend/src/features/history/api/historyApi.test.ts` | 수정 | 로컬 파싱/주간 범위/UTC-시간대 회귀 테스트 추가 |
 
 ### 검증 포인트 (리뷰어 확인 요청)
-- [ ] History 화면에서 활동/리포트 탭 전환 시 쿼리 enabled 조건이 의도대로 동작하는지
-- [ ] 활동 로그 아이템의 유형별 라벨/색상/아이콘 매핑이 계약(ActivityType)과 일치하는지
-- [ ] Dashboard 순찰 카드의 경고 하이라이트(OFF/UNLOCKED/NEEDS_CHECK)가 적절한지
-- [ ] `frontend/src/shared/**`, `frontend/src/mocks/**` 직접 수정 없이 구현되었는지
+- [ ] `YYYY-MM-DD`가 UTC-시간대에서도 전일로 밀리지 않는지
+- [ ] `weekStartDate=YYYY-MM-DD` 기준 `weekEndDate`가 +6일로 정확히 계산되는지
+- [ ] `new Date('YYYY-MM-DD')` 패턴이 대상 파일에서 제거되었는지
 
 ### 테스트 명령어
 ```bash
@@ -48,11 +36,10 @@ npm run lint
 ```
 
 ### 테스트 실행 결과
-- `npm run test -- --run` ✅ PASS (18 files, 44 tests)
+- `npm run test -- --run` ✅ PASS (18 files, 47 tests)
 - `npm run build` ✅ PASS (Vite chunk size warning 1건, 실패 아님)
 - `npm run lint` ✅ PASS
 
 ### Agent 0 전달 메모
-- Work Instruction Round 2 기준(3.3/3.5/3.7) 구현 완료 상태입니다.
-- 구현 커밋: `b95ae04`
-- 원격 브랜치 반영: `origin/feature/phase3-history-report-fe`
+- Fix Round 7 Major(날짜 파싱 타임존) 이슈 수정 완료.
+- 리뷰 결과서의 Request Changes 사유를 해소하는 커밋 기준으로 재리뷰 요청합니다.

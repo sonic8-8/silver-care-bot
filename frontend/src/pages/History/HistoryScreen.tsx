@@ -16,7 +16,12 @@ import {
 } from 'lucide-react';
 import GuardianAppContainer from '@/pages/_components/GuardianAppContainer';
 import { Button } from '@/shared/ui/Button';
-import { formatDate, toWeekStartDate } from '@/features/history/api/historyApi';
+import {
+    formatDate,
+    getWeekEndDate,
+    parseLocalDateString,
+    toWeekStartDate,
+} from '@/features/history/api/historyApi';
 import { useActivities, useWeeklyReport } from '@/features/history/hooks/useHistory';
 import type { ActivityType, WeeklyReportSource } from '@/features/history/types';
 
@@ -76,8 +81,8 @@ const keywordClassNames = [
 ];
 
 const formatDateLabel = (date: string) => {
-    const parsed = new Date(date);
-    if (Number.isNaN(parsed.getTime())) {
+    const parsed = parseLocalDateString(date);
+    if (!parsed) {
         return date;
     }
 
@@ -121,11 +126,7 @@ function HistoryScreen() {
     const [reportBaseDate, setReportBaseDate] = useState(() => toWeekStartDate(new Date()));
 
     const weekStartDate = useMemo(() => formatDate(reportBaseDate), [reportBaseDate]);
-    const weekEndDate = useMemo(() => {
-        const end = new Date(reportBaseDate);
-        end.setDate(end.getDate() + 6);
-        return formatDate(end);
-    }, [reportBaseDate]);
+    const weekEndDate = useMemo(() => getWeekEndDate(weekStartDate), [weekStartDate]);
 
     const activityQuery = useActivities(
         isValidElderId ? parsedElderId : undefined,
