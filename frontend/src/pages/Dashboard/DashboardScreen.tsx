@@ -108,6 +108,47 @@ function DashboardScreen() {
         return '알 수 없는 오류가 발생했습니다.';
     }, [dashboardQuery.error]);
 
+    const dashboardData = dashboardQuery.data;
+    const elderName = dashboardData?.elderName;
+    const elderStatus = dashboardData?.elderStatus;
+    const todaySummary = dashboardData?.todaySummary ?? null;
+    const recentNotifications = dashboardData?.recentNotifications ?? [];
+    const weeklyCalendar = dashboardData?.weeklyCalendar ?? [];
+    const robotStatus = dashboardData?.robotStatus ?? null;
+
+    const activeRealtimeRobotStatus = useMemo(() => {
+        if (!realtime.robotStatus) {
+            return null;
+        }
+        if (robotStatus && realtime.robotStatus.robotId !== robotStatus.id) {
+            return null;
+        }
+        if (realtime.robotStatus.elderId !== null && realtime.robotStatus.elderId !== parsedElderId) {
+            return null;
+        }
+
+        return realtime.robotStatus;
+    }, [parsedElderId, realtime.robotStatus, robotStatus]);
+
+    const activeRealtimeElderStatus = useMemo(() => {
+        if (!realtime.elderStatus || realtime.elderStatus.elderId !== parsedElderId) {
+            return undefined;
+        }
+
+        return ensureElderStatus(realtime.elderStatus.status);
+    }, [parsedElderId, realtime.elderStatus]);
+
+    const mergedRobotStatus = robotStatus
+        ? {
+            ...robotStatus,
+            batteryLevel: activeRealtimeRobotStatus?.batteryLevel ?? robotStatus.batteryLevel,
+            networkStatus: activeRealtimeRobotStatus?.networkStatus ?? robotStatus.networkStatus,
+            currentLocation: activeRealtimeRobotStatus?.currentLocation ?? robotStatus.currentLocation,
+            lcdMode: activeRealtimeRobotStatus?.lcdMode ?? robotStatus.lcdMode,
+        }
+        : null;
+    const mergedElderStatus = activeRealtimeElderStatus ?? elderStatus;
+
     if (!isValidElderId) {
         return (
             <GuardianAppContainer title="대시보드" description="오늘의 상태 요약을 확인합니다.">
@@ -130,7 +171,7 @@ function DashboardScreen() {
         );
     }
 
-    if (dashboardQuery.isError || !dashboardQuery.data) {
+    if (dashboardQuery.isError || !dashboardData) {
         return (
             <GuardianAppContainer title="대시보드" description="오늘의 상태 요약을 확인합니다.">
                 <div className="rounded-2xl border border-danger bg-danger-bg p-5 text-sm text-danger">
@@ -141,38 +182,6 @@ function DashboardScreen() {
             </GuardianAppContainer>
         );
     }
-
-    const { elderName, elderStatus, todaySummary, recentNotifications, weeklyCalendar, robotStatus } = dashboardQuery.data;
-    const activeRealtimeRobotStatus = useMemo(() => {
-        if (!realtime.robotStatus) {
-            return null;
-        }
-        if (robotStatus && realtime.robotStatus.robotId !== robotStatus.id) {
-            return null;
-        }
-        if (realtime.robotStatus.elderId !== null && realtime.robotStatus.elderId !== parsedElderId) {
-            return null;
-        }
-
-        return realtime.robotStatus;
-    }, [parsedElderId, realtime.robotStatus, robotStatus]);
-    const activeRealtimeElderStatus = useMemo(() => {
-        if (!realtime.elderStatus || realtime.elderStatus.elderId !== parsedElderId) {
-            return undefined;
-        }
-
-        return ensureElderStatus(realtime.elderStatus.status);
-    }, [parsedElderId, realtime.elderStatus]);
-    const mergedRobotStatus = robotStatus
-        ? {
-            ...robotStatus,
-            batteryLevel: activeRealtimeRobotStatus?.batteryLevel ?? robotStatus.batteryLevel,
-            networkStatus: activeRealtimeRobotStatus?.networkStatus ?? robotStatus.networkStatus,
-            currentLocation: activeRealtimeRobotStatus?.currentLocation ?? robotStatus.currentLocation,
-            lcdMode: activeRealtimeRobotStatus?.lcdMode ?? robotStatus.lcdMode,
-        }
-        : null;
-    const mergedElderStatus = activeRealtimeElderStatus ?? elderStatus;
 
     return (
         <GuardianAppContainer
