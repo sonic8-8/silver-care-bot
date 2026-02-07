@@ -358,7 +358,7 @@
 - [x] `feature/phase2-*` 브랜치 로컬/원격 정리
 - [x] `management/architect`를 `develop` 기준 최신화
 - [x] Agent 1~4 Phase 3 브랜치 생성 및 워크트리 재할당
-- [ ] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
+- [x] Phase 3 작업 지시서(`.agent/dispatch/WORK-INSTRUCTION-P3-AGENT*.md`) 배포
 
 Phase 2 잔여 항목 처리 원칙 (Gate):
 - [ ] 일정 관리 Frontend (`/elders/:id/schedule`) 구현 완료

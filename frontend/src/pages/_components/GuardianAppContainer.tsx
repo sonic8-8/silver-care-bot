@@ -27,7 +27,7 @@ function GuardianAppContainer({
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                             <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                Silver Care
+                                동행
                             </span>
                             <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
                             {description ? (
