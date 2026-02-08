@@ -5,9 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 import site.silverbot.api.auth.request.LoginRequest;
 import site.silverbot.api.auth.request.SignupRequest;
+import site.silverbot.api.auth.response.AuthUserResponse;
 import site.silverbot.api.auth.response.TokenResponse;
 import site.silverbot.config.JwtTokenProvider;
 import site.silverbot.domain.user.User;
@@ -37,7 +39,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        return issueTokens(savedUser);
+        return issueTokens(savedUser, true);
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -48,11 +50,11 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        return issueTokens(user);
+        return issueTokens(user, true);
     }
 
-    public TokenResponse refresh(HttpServletRequest request) {
-        String refreshToken = extractRefreshToken(request);
+    public TokenResponse refresh(HttpServletRequest request, String refreshTokenFromBody) {
+        String refreshToken = extractRefreshToken(request, refreshTokenFromBody);
         if (refreshToken == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is missing");
         }
@@ -70,10 +72,10 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token mismatch");
         }
 
-        return issueTokens(user);
+        return issueTokens(user, false);
     }
 
-    private TokenResponse issueTokens(User user) {
+    private TokenResponse issueTokens(User user, boolean includeUser) {
         String accessToken = jwtTokenProvider.createAccessToken(
                 String.valueOf(user.getId()),
                 user.getRole().name(),
@@ -81,10 +83,38 @@ public class AuthService {
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(String.valueOf(user.getId()));
         user.updateRefreshToken(refreshToken);
-        return TokenResponse.of(accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiration());
+        AuthUserResponse userResponse = includeUser
+                ? new AuthUserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getPhone()
+                )
+                : null;
+
+        return new TokenResponse(
+                accessToken,
+                refreshToken,
+                jwtTokenProvider.getAccessTokenExpiration(),
+                userResponse,
+                null
+        );
     }
 
-    private String extractRefreshToken(HttpServletRequest request) {
+    private String extractRefreshToken(HttpServletRequest request, String refreshTokenFromBody) {
+        String refreshTokenFromCookie = extractRefreshTokenFromCookie(request);
+        if (StringUtils.hasText(refreshTokenFromCookie)) {
+            return refreshTokenFromCookie;
+        }
+
+        if (StringUtils.hasText(refreshTokenFromBody)) {
+            return refreshTokenFromBody.trim();
+        }
+        return null;
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
             return null;

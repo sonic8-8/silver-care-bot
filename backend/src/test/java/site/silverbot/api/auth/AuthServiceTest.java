@@ -51,6 +51,8 @@ class AuthServiceTest {
         assertThat(user.getRefreshToken()).isNotBlank();
         assertThat(response.accessToken()).isNotBlank();
         assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.user()).isNotNull();
+        assertThat(response.user().email()).isEqualTo("signup@test.com");
     }
 
     @Test
@@ -70,6 +72,26 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_returnsUserPayload() {
+        SignupRequest request = new SignupRequest(
+                "홍길동",
+                "login-success@test.com",
+                "password123",
+                "01012345678",
+                UserRole.WORKER
+        );
+        authService.signup(request);
+
+        TokenResponse response = authService.login(new LoginRequest("login-success@test.com", "password123"));
+
+        assertThat(response.accessToken()).isNotBlank();
+        assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.user()).isNotNull();
+        assertThat(response.user().email()).isEqualTo("login-success@test.com");
+        assertThat(response.user().role()).isEqualTo(UserRole.WORKER);
+    }
+
+    @Test
     void refresh_rotatesTokens() {
         SignupRequest signupRequest = new SignupRequest(
                 "홍길동",
@@ -83,13 +105,33 @@ class AuthServiceTest {
         MockHttpServletRequest mockRequest = new MockHttpServletRequest();
         mockRequest.setCookies(new Cookie("refreshToken", loginResponse.refreshToken()));
 
-        TokenResponse refreshResponse = authService.refresh(mockRequest);
+        TokenResponse refreshResponse = authService.refresh(mockRequest, null);
 
         User user = userRepository.findByEmail("refresh@test.com").orElseThrow();
         assertThat(refreshResponse.accessToken()).isNotBlank();
         assertThat(refreshResponse.refreshToken()).isNotBlank();
         assertThat(refreshResponse.refreshToken()).isNotEqualTo(loginResponse.refreshToken());
         assertThat(user.validateRefreshToken(refreshResponse.refreshToken())).isTrue();
+        assertThat(refreshResponse.user()).isNull();
+    }
+
+    @Test
+    void refresh_acceptsBodyTokenWhenCookieMissing() {
+        SignupRequest signupRequest = new SignupRequest(
+                "홍길동",
+                "refresh-body@test.com",
+                "password123",
+                null,
+                UserRole.WORKER
+        );
+        TokenResponse signupResponse = authService.signup(signupRequest);
+
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        TokenResponse refreshResponse = authService.refresh(mockRequest, signupResponse.refreshToken());
+
+        assertThat(refreshResponse.accessToken()).isNotBlank();
+        assertThat(refreshResponse.refreshToken()).isNotBlank();
+        assertThat(refreshResponse.user()).isNull();
     }
 
 }

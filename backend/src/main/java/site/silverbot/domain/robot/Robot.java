@@ -135,10 +135,10 @@ public class Robot {
             LocalTime morningMedicationTime,
             LocalTime eveningMedicationTime,
             Integer ttsVolume,
-        LocalTime patrolStartTime,
-        LocalTime patrolEndTime,
-        LocalDateTime lastSyncAt,
-        LocalDateTime offlineNotifiedAt
+            LocalTime patrolStartTime,
+            LocalTime patrolEndTime,
+            LocalDateTime lastSyncAt,
+            LocalDateTime offlineNotifiedAt
     ) {
         this.elder = elder;
         this.serialNumber = serialNumber;
@@ -224,6 +224,30 @@ public class Robot {
     public void updateDispenserRemaining(Integer remaining) {
         if (remaining != null) {
             this.dispenserRemaining = remaining;
+        }
+    }
+
+    public void updateSettings(
+            LocalTime morningMedicationTime,
+            LocalTime eveningMedicationTime,
+            Integer ttsVolume,
+            LocalTime patrolStartTime,
+            LocalTime patrolEndTime
+    ) {
+        if (morningMedicationTime != null) {
+            this.morningMedicationTime = morningMedicationTime;
+        }
+        if (eveningMedicationTime != null) {
+            this.eveningMedicationTime = eveningMedicationTime;
+        }
+        if (ttsVolume != null) {
+            this.ttsVolume = ttsVolume;
+        }
+        if (patrolStartTime != null) {
+            this.patrolStartTime = patrolStartTime;
+        }
+        if (patrolEndTime != null) {
+            this.patrolEndTime = patrolEndTime;
         }
     }
 

@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import site.silverbot.api.auth.request.RobotLoginRequest;
+import site.silverbot.api.auth.response.AuthRobotResponse;
 import site.silverbot.api.auth.response.TokenResponse;
 import site.silverbot.config.JwtTokenProvider;
+import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
 
@@ -23,6 +25,13 @@ public class RobotAuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid robot credentials"));
 
         String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(robot.getId()), "ROBOT", null);
-        return TokenResponse.accessOnly(accessToken, jwtTokenProvider.getAccessTokenExpiration());
+        Elder elder = robot.getElder();
+        AuthRobotResponse robotResponse = new AuthRobotResponse(
+                robot.getId(),
+                robot.getSerialNumber(),
+                elder == null ? null : elder.getId(),
+                elder == null ? null : elder.getName()
+        );
+        return TokenResponse.withRobot(accessToken, robotResponse);
     }
 }

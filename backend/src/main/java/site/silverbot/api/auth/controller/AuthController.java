@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.silverbot.api.auth.request.LoginRequest;
+import site.silverbot.api.auth.request.RefreshTokenRequest;
 import site.silverbot.api.auth.request.RobotLoginRequest;
 import site.silverbot.api.auth.request.SignupRequest;
 import site.silverbot.api.auth.response.TokenResponse;
@@ -36,7 +37,7 @@ public class AuthController {
     ) {
         TokenResponse tokens = authService.signup(signupRequest);
         setRefreshCookie(httpRequest, response, tokens.refreshToken());
-        return ApiResponse.success(TokenResponse.accessOnly(tokens.accessToken(), tokens.expiresIn()));
+        return ApiResponse.success(tokens);
     }
 
     @PostMapping("/login")
@@ -47,14 +48,19 @@ public class AuthController {
     ) {
         TokenResponse tokens = authService.login(loginRequest);
         setRefreshCookie(httpRequest, response, tokens.refreshToken());
-        return ApiResponse.success(TokenResponse.accessOnly(tokens.accessToken(), tokens.expiresIn()));
+        return ApiResponse.success(tokens);
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<TokenResponse> refresh(HttpServletRequest httpRequest, HttpServletResponse response) {
-        TokenResponse tokens = authService.refresh(httpRequest);
+    public ApiResponse<TokenResponse> refresh(
+            HttpServletRequest httpRequest,
+            HttpServletResponse response,
+            @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest
+    ) {
+        String refreshToken = refreshTokenRequest == null ? null : refreshTokenRequest.refreshToken();
+        TokenResponse tokens = authService.refresh(httpRequest, refreshToken);
         setRefreshCookie(httpRequest, response, tokens.refreshToken());
-        return ApiResponse.success(TokenResponse.accessOnly(tokens.accessToken(), tokens.expiresIn()));
+        return ApiResponse.success(tokens);
     }
 
     @PostMapping("/robot/login")
