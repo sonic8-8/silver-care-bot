@@ -62,3 +62,9 @@ cd backend && ./gradlew --no-daemon test --console=plain \
 ### 우려 사항 / 특별 검토 요청
 - `EmergencyService`의 `LocalDateTime -> OffsetDateTime` 변환은 서버 현재 오프셋을 사용합니다. 운영 타임존 정책과 일치하는지 확인 부탁드립니다.
 - `robot.types`의 `commandId`는 number/string 혼용 입력을 string으로 정규화합니다. Agent 2 소비 코드에서 number를 직접 기대하지 않는지 확인 부탁드립니다.
+
+### FIX-INSTRUCTION 반영 (Round 2)
+- 기준 문서: `agent-0/.agent/dispatch/FIX-INSTRUCTION-P7-AGENT4.md`
+- 반영 결과: **추가 코드 수정 없음**
+  - 리뷰 결과가 `Approve`로 확정되어 P7 범위 내 신규 수정 지시사항이 없습니다.
+  - `feature/phase7-contract-websocket` 브랜치의 구현/테스트 상태를 유지하고 병합 대기합니다.
