@@ -70,4 +70,51 @@ describe('useAuth', () => {
 
         expect(navigateMock).toHaveBeenCalledWith('/elders/7');
     });
+
+    it('uses user contract when jwt role claim is missing', async () => {
+        const accessToken = createToken({ sub: '3' });
+        const tokens: AuthTokens = {
+            accessToken,
+            refreshToken: 'refresh',
+            user: {
+                id: 3,
+                role: 'WORKER',
+                email: 'worker3@test.com',
+            },
+        };
+        vi.mocked(authApi.login).mockResolvedValue(tokens);
+
+        const { result } = renderHook(() => useAuth());
+
+        await act(async () => {
+            await result.current.login({ email: 'worker3@test.com', password: 'password123' });
+        });
+
+        expect(navigateMock).toHaveBeenCalledWith('/elders');
+        expect(useAuthStore.getState().user?.role).toBe('WORKER');
+        expect(useAuthStore.getState().user?.id).toBe(3);
+    });
+
+    it('uses robot contract when jwt claims are missing', async () => {
+        const accessToken = createToken({});
+        const tokens: AuthTokens = {
+            accessToken,
+            robot: {
+                id: 99,
+                serialNumber: 'ROBOT-2026-X99',
+                elderId: 2,
+            },
+        };
+        vi.mocked(authApi.robotLogin).mockResolvedValue(tokens);
+
+        const { result } = renderHook(() => useAuth());
+
+        await act(async () => {
+            await result.current.robotLogin({ serialNumber: 'ROBOT-2026-X99', authCode: '9999' });
+        });
+
+        expect(navigateMock).toHaveBeenCalledWith('/robots/99/lcd');
+        expect(useAuthStore.getState().user?.role).toBe('ROBOT');
+        expect(useAuthStore.getState().user?.id).toBe(99);
+    });
 });

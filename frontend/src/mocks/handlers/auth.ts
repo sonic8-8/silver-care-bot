@@ -53,11 +53,16 @@ export const authHandlers = [
         return HttpResponse.json({
             success: true,
             data: {
-                id: 1,
-                name: body.name,
-                email: body.email,
-                role: body.role ?? 'WORKER',
-                phone: body.phone,
+                accessToken: 'mock-access-token',
+                refreshToken: 'mock-refresh-token',
+                expiresIn: 3600,
+                user: {
+                    id: 1,
+                    name: body.name,
+                    email: body.email,
+                    role: body.role ?? 'WORKER',
+                    phone: body.phone,
+                },
             },
             timestamp,
         }, { status: 201 });
@@ -75,9 +80,11 @@ export const authHandlers = [
     // POST /api/auth/refresh - 토큰 갱신
     http.post('/api/auth/refresh', async ({ request }) => {
         const timestamp = new Date().toISOString();
-        const body = await request.json() as { refreshToken: string };
+        const body = await request.json()
+            .then((value) => value as { refreshToken?: string })
+            .catch(() => ({} as { refreshToken?: string }));
 
-        if (body.refreshToken !== 'mock-refresh-token') {
+        if (body.refreshToken && body.refreshToken !== 'mock-refresh-token') {
             return HttpResponse.json(
                 {
                     success: false,

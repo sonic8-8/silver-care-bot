@@ -9,6 +9,25 @@ export type RobotLcdMode =
     | 'EMERGENCY'
     | 'SLEEP';
 
+export interface RobotPatrolTimeRange {
+    start: string;
+    end: string;
+}
+
+export interface RobotSettings {
+    morningMedicationTime?: string;
+    eveningMedicationTime?: string;
+    ttsVolume?: number;
+    patrolTimeRange?: RobotPatrolTimeRange;
+}
+
+export interface UpdateRobotSettingsPayload {
+    morningMedicationTime?: string;
+    eveningMedicationTime?: string;
+    ttsVolume?: number;
+    patrolTimeRange?: RobotPatrolTimeRange;
+}
+
 export interface RobotStatus {
     id: number;
     serialNumber: string;
@@ -23,13 +42,5 @@ export interface RobotStatus {
         capacity: number;
         daysUntilEmpty?: number;
     };
-    settings?: {
-        morningMedicationTime?: string;
-        eveningMedicationTime?: string;
-        ttsVolume?: number;
-        patrolTimeRange?: {
-            start: string;
-            end: string;
-        };
-    };
+    settings?: RobotSettings;
 }
