@@ -230,7 +230,7 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void syncRobot() throws Exception {
         RobotCommand pending = RobotCommand.builder()
                 .robot(robot)
@@ -331,11 +331,40 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void syncRobot_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "batteryLevel", 78,
+                "isCharging", false
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/sync", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void syncRobot_mismatchedRobotPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "batteryLevel", 78,
+                "isCharging", false
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/sync", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void acknowledgeCommand_completed_updatesStatusAndResult() throws Exception {
         RobotCommand command = robotCommandRepository.save(RobotCommand.builder()
                 .robot(robot)
                 .commandId("cmd-ack-1")
                 .command(CommandType.MOVE_TO)
+                .status(site.silverbot.domain.robot.CommandStatus.RECEIVED)
                 .issuedAt(LocalDateTime.now().minusSeconds(20))
                 .build());
 
@@ -389,6 +418,27 @@ class RobotControllerTest extends RestDocsSupport {
     }
 
     @Test
+    void acknowledgeCommand_pendingToCompleted_badRequest() throws Exception {
+        RobotCommand command = robotCommandRepository.save(RobotCommand.builder()
+                .robot(robot)
+                .commandId("cmd-ack-3")
+                .command(CommandType.MOVE_TO)
+                .issuedAt(LocalDateTime.now().minusMinutes(1))
+                .build());
+
+        Map<String, Object> request = Map.of("status", "COMPLETED");
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/commands/{commandId}/ack",
+                                robot.getId(), command.getCommandId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
+    }
+
+    @Test
     void uploadRobotMap_multipart_createsOrUpdatesRooms() throws Exception {
         MockMultipartFile mapImage = new MockMultipartFile(
                 "mapImage",
@@ -425,6 +475,89 @@ class RobotControllerTest extends RestDocsSupport {
                 .andExpect(jsonPath("$.data.rooms.length()").value(2));
 
         assertThat(roomRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void uploadRobotMap_invalidExtension_badRequest() throws Exception {
+        MockMultipartFile mapImage = new MockMultipartFile(
+                "mapImage",
+                "house-map.png",
+                "image/png",
+                "fake".getBytes()
+        );
+        MockMultipartFile mapConfig = new MockMultipartFile(
+                "mapConfig",
+                "house-map.yaml",
+                "application/x-yaml",
+                "image: house-map.pgm\nresolution: 0.05\n".getBytes()
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.multipart("/api/robots/{robotId}/map", robot.getId())
+                        .file(mapImage)
+                        .file(mapConfig)
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .with(request -> {
+                            request.setMethod("POST");
+                            return request;
+                        }))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
+    }
+
+    @Test
+    void uploadRobotMap_invalidRoomsJson_badRequest() throws Exception {
+        MockMultipartFile mapImage = new MockMultipartFile(
+                "mapImage",
+                "house-map.pgm",
+                "application/octet-stream",
+                "P2\n1 1\n255\n0\n".getBytes()
+        );
+        MockMultipartFile mapConfig = new MockMultipartFile(
+                "mapConfig",
+                "house-map.yaml",
+                "application/x-yaml",
+                "image: house-map.pgm\nresolution: 0.05\n".getBytes()
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.multipart("/api/robots/{robotId}/map", robot.getId())
+                        .file(mapImage)
+                        .file(mapConfig)
+                        .param("rooms", "{invalid-json")
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .with(request -> {
+                            request.setMethod("POST");
+                            return request;
+                        }))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("Invalid request"));
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void uploadRobotMap_nonOwnerWorker_forbidden() throws Exception {
+        MockMultipartFile mapImage = new MockMultipartFile(
+                "mapImage",
+                "house-map.pgm",
+                "application/octet-stream",
+                "P2\n1 1\n255\n0\n".getBytes()
+        );
+        MockMultipartFile mapConfig = new MockMultipartFile(
+                "mapConfig",
+                "house-map.yaml",
+                "application/x-yaml",
+                "image: house-map.pgm\nresolution: 0.05\n".getBytes()
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.multipart("/api/robots/{robotId}/map", robot.getId())
+                        .file(mapImage)
+                        .file(mapConfig)
+                        .with(request -> {
+                            request.setMethod("POST");
+                            return request;
+                        }))
+                .andExpect(status().isForbidden());
     }
 
     @Test

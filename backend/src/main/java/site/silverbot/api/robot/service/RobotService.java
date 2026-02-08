@@ -152,6 +152,7 @@ public class RobotService {
     @Transactional
     public RobotSyncResponse sync(Long robotId, RobotSyncRequest request) {
         Robot robot = getRobot(robotId);
+        validateRobotWriteAccess(robot, "Robot sync access denied");
 
         applySync(robot, request);
 

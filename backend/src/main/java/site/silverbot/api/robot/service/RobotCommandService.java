@@ -183,13 +183,12 @@ public class RobotCommandService {
                 }
             }
             case IN_PROGRESS -> {
-                if (current != CommandStatus.PENDING && current != CommandStatus.RECEIVED) {
+                if (current != CommandStatus.RECEIVED) {
                     throw new IllegalArgumentException("Invalid transition: " + current + " -> " + next);
                 }
             }
             case COMPLETED, FAILED, CANCELLED -> {
-                if (current != CommandStatus.PENDING
-                        && current != CommandStatus.RECEIVED
+                if (current != CommandStatus.RECEIVED
                         && current != CommandStatus.IN_PROGRESS) {
                     throw new IllegalArgumentException("Invalid transition: " + current + " -> " + next);
                 }

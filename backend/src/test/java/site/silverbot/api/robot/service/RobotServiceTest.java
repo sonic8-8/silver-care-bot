@@ -156,6 +156,7 @@ class RobotServiceTest {
     }
 
     @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void syncUpdatesStatusAndReturnsPendingCommands() {
         RobotCommand pending = robotCommandRepository.save(RobotCommand.builder()
                 .robot(robot)
@@ -207,6 +208,38 @@ class RobotServiceTest {
         assertThat(response.medications()).hasSize(1);
         assertThat(response.medications().get(0).medicationId()).isEqualTo(medication.getId());
         assertThat(response.serverTime()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void sync_nonOwnerUser_throwsAccessDeniedException() {
+        RobotSyncRequest request = new RobotSyncRequest(
+                80,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThrows(AccessDeniedException.class, () -> robotService.sync(robot.getId(), request));
+    }
+
+    @Test
+    @WithMockUser(username = "999999", roles = {"ROBOT"})
+    void sync_robotPrincipalMismatch_throwsAccessDeniedException() {
+        RobotSyncRequest request = new RobotSyncRequest(
+                80,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThrows(AccessDeniedException.class, () -> robotService.sync(robot.getId(), request));
     }
 
     @Test
