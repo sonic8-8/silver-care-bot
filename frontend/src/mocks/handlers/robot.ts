@@ -1,10 +1,13 @@
 import { http, HttpResponse } from 'msw';
 import {
+    parseRobotCommandAckRequest,
+    parseRobotCommandAckResponse,
     parseRobotEventsRequest,
     parseRobotEventsResponse,
     parseRobotLcdModeChangeRequest,
     parseRobotLcdModeChangeResponse,
     parseRobotLcdStatePayload,
+    parseRobotSyncPayload,
     type RobotEventPayload,
     type RobotLcdStatePayload,
 } from '@/shared/types';
@@ -35,6 +38,16 @@ const lcdStateByRobotId = new Map<number, RobotLcdStatePayload>([
     [1, createDefaultLcdState()],
 ]);
 
+type PendingCommand = {
+    commandId: string;
+    command: string;
+    params: Record<string, unknown> | null;
+    issuedAt: string;
+};
+
+const pendingCommandsByRobotId = new Map<number, PendingCommand[]>();
+let commandSequence = 120;
+
 const getLcdState = (robotId: number): RobotLcdStatePayload => {
     const current = lcdStateByRobotId.get(robotId);
     if (current) {
@@ -43,6 +56,16 @@ const getLcdState = (robotId: number): RobotLcdStatePayload => {
 
     const initial = createDefaultLcdState();
     lcdStateByRobotId.set(robotId, initial);
+    return initial;
+};
+
+const getPendingCommands = (robotId: number): PendingCommand[] => {
+    const current = pendingCommandsByRobotId.get(robotId);
+    if (current) {
+        return current;
+    }
+    const initial: PendingCommand[] = [];
+    pendingCommandsByRobotId.set(robotId, initial);
     return initial;
 };
 
@@ -165,17 +188,101 @@ export const robotHandlers = [
     // POST /api/robots/:robotId/commands - 로봇 명령 전송
     http.post('/api/robots/:robotId/commands', async ({ request, params }) => {
         const timestamp = new Date().toISOString();
+        const resolvedRobotId = resolveRobotId(params.robotId);
         const body = await request.json() as { command: string; params?: Record<string, unknown> };
+        const commandId = `cmd-${commandSequence++}`;
+        const queuedCommand: PendingCommand = {
+            commandId,
+            command: body.command,
+            params: body.params ?? null,
+            issuedAt: timestamp,
+        };
+        getPendingCommands(resolvedRobotId).push(queuedCommand);
 
         return HttpResponse.json({
             success: true,
             data: {
-                commandId: 100,
-                robotId: Number(params.robotId),
+                commandId,
+                robotId: resolvedRobotId,
                 command: body.command,
                 params: body.params ?? null,
-                status: 'QUEUED',
+                status: 'PENDING',
+                issuedAt: timestamp,
             },
+            timestamp,
+        });
+    }),
+
+    // POST /api/robots/:robotId/sync - 상태 동기화 및 대기 작업 수신
+    http.post('/api/robots/:robotId/sync', async ({ params }) => {
+        const resolvedRobotId = resolveRobotId(params.robotId);
+        const timestamp = new Date().toISOString();
+
+        const payload = parseRobotSyncPayload({
+            pendingCommands: getPendingCommands(resolvedRobotId),
+            scheduleReminders: [
+                {
+                    scheduleId: 1,
+                    title: '병원 방문',
+                    datetime: '2026-01-29T14:00:00+09:00',
+                    remindAt: '2026-01-29T12:00:00+09:00',
+                },
+            ],
+            medications: [
+                {
+                    medicationId: 2,
+                    scheduledAt: '2026-01-29T19:00:00+09:00',
+                    name: '저녁약 (당뇨)',
+                },
+            ],
+            serverTime: timestamp,
+        });
+
+        return HttpResponse.json({
+            success: true,
+            data: payload,
+            timestamp,
+        });
+    }),
+
+    // POST /api/robots/:robotId/commands/:commandId/ack - 명령 응답 보고
+    http.post('/api/robots/:robotId/commands/:commandId/ack', async ({ request, params }) => {
+        const resolvedRobotId = resolveRobotId(params.robotId);
+        const timestamp = new Date().toISOString();
+        const commandId = String(params.commandId ?? '');
+        if (!commandId) {
+            return badRequest('commandId is required');
+        }
+
+        let parsedRequest: ReturnType<typeof parseRobotCommandAckRequest>;
+        try {
+            parsedRequest = parseRobotCommandAckRequest(await request.json());
+        } catch (error) {
+            return badRequest(error instanceof Error ? error.message : 'Invalid request');
+        }
+
+        const commandQueue = getPendingCommands(resolvedRobotId);
+        if (
+            parsedRequest.status === 'COMPLETED'
+            || parsedRequest.status === 'FAILED'
+            || parsedRequest.status === 'CANCELLED'
+        ) {
+            pendingCommandsByRobotId.set(
+                resolvedRobotId,
+                commandQueue.filter((command) => command.commandId !== commandId)
+            );
+        }
+
+        const response = parseRobotCommandAckResponse({
+            commandId,
+            status: parsedRequest.status,
+            receivedAt: parsedRequest.completedAt ?? timestamp,
+            result: parsedRequest.result,
+        });
+
+        return HttpResponse.json({
+            success: true,
+            data: response,
             timestamp,
         });
     }),

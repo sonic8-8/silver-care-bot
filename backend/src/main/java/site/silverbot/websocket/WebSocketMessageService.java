@@ -12,6 +12,8 @@ import site.silverbot.websocket.dto.RobotStatusMessage;
 @Service
 @RequiredArgsConstructor
 public class WebSocketMessageService {
+    // 서버는 STOMP `/topic/**`에 envelope 메시지를 발행한다.
+    // 임베디드 클라이언트는 필요 시 payload만 소비할 수 있도록 FE 파서에서 호환 처리한다.
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendRobotStatus(long robotId, RobotStatusMessage.Payload payload) {

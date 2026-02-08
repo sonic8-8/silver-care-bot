@@ -27,6 +27,9 @@ import site.silverbot.domain.emergency.EmergencyRepository;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
+import site.silverbot.websocket.WebSocketMessageService;
+import site.silverbot.websocket.dto.ElderStatusMessage;
+import site.silverbot.websocket.dto.EmergencyMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,7 @@ public class EmergencyService {
     private final ElderRepository elderRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final WebSocketMessageService webSocketMessageService;
 
     public EmergencyResponse reportEmergency(Long robotId, ReportEmergencyRequest request) {
         Robot robot = robotRepository.findById(robotId)
@@ -73,6 +77,8 @@ public class EmergencyService {
                 elder.getName() + " 어르신에게 긴급 이벤트가 발생했습니다.",
                 "/emergency/" + saved.getId()
         );
+        publishElderStatus(elder);
+        publishEmergency(saved);
 
         return toResponse(saved);
     }
@@ -120,9 +126,35 @@ public class EmergencyService {
         if (!hasPending) {
             elder.updateStatus(ElderStatus.SAFE);
             elderRepository.save(elder);
+            publishElderStatus(elder);
         }
 
         return toResponse(emergency);
+    }
+
+    private void publishElderStatus(Elder elder) {
+        webSocketMessageService.sendElderStatus(
+                elder.getId(),
+                new ElderStatusMessage.Payload(
+                        elder.getId(),
+                        elder.getStatus().name(),
+                        toOffsetDateTime(elder.getLastActivityAt()),
+                        elder.getLastLocation()
+                )
+        );
+    }
+
+    private void publishEmergency(Emergency emergency) {
+        webSocketMessageService.broadcastEmergency(
+                new EmergencyMessage.Payload(
+                        emergency.getId(),
+                        emergency.getElder().getId(),
+                        emergency.getElder().getName(),
+                        emergency.getType().name(),
+                        emergency.getLocation(),
+                        toOffsetDateTime(emergency.getDetectedAt())
+                )
+        );
     }
 
     private void validateOwnership(Elder elder) {
@@ -152,5 +184,12 @@ public class EmergencyService {
             return LocalDateTime.now();
         }
         return detectedAt.toLocalDateTime();
+    }
+
+    private OffsetDateTime toOffsetDateTime(LocalDateTime value) {
+        if (value == null) {
+            return null;
+        }
+        return value.atOffset(OffsetDateTime.now().getOffset());
     }
 }
