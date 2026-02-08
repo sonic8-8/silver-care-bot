@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,10 @@ import site.silverbot.api.medication.model.MedicationStatus;
 import site.silverbot.api.medication.model.MedicationTimeOfDay;
 import site.silverbot.api.medication.repository.MedicationJdbcRepository;
 import site.silverbot.api.notification.service.NotificationService;
+import site.silverbot.api.robot.request.MedicationReminderRequest;
+import site.silverbot.api.robot.request.MedicationResponseRequest;
 import site.silverbot.api.robot.request.ReportRobotEventsRequest;
+import site.silverbot.api.robot.request.ReportSleepWakeRequest;
 import site.silverbot.api.robot.response.RobotEventsReportResponse;
 import site.silverbot.domain.elder.Elder;
 import site.silverbot.domain.robot.Robot;
@@ -85,6 +89,70 @@ public class RobotEventService {
     private final NotificationService notificationService;
     private final CurrentUserService currentUserService;
     private final ObjectMapper objectMapper;
+
+    @Transactional
+    public RobotEventsReportResponse reportSleepWake(Long robotId, ReportSleepWakeRequest request) {
+        String normalizedStatus = normalizeRequired(request.status(), "status");
+        String eventType = switch (normalizedStatus) {
+            case "WAKE" -> "WAKE_UP";
+            case "SLEEP" -> "SLEEP";
+            default -> throw new IllegalArgumentException("Unsupported sleep-wake status: " + normalizedStatus);
+        };
+
+        ReportRobotEventsRequest eventRequest = new ReportRobotEventsRequest(
+                List.of(new ReportRobotEventsRequest.RobotEventRequest(
+                        eventType,
+                        null,
+                        null,
+                        null,
+                        request.detectedAt(),
+                        null,
+                        request.confidence(),
+                        null
+                ))
+        );
+        return reportEvents(robotId, eventRequest);
+    }
+
+    @Transactional
+    public RobotEventsReportResponse reportMedicationReminder(Long robotId, MedicationReminderRequest request) {
+        Robot robot = getAccessibleRobot(robotId, true);
+        validateElderId(robot, request.elderId());
+
+        ReportRobotEventsRequest eventRequest = new ReportRobotEventsRequest(
+                List.of(new ReportRobotEventsRequest.RobotEventRequest(
+                        EVENT_TYPE_MEDICATION,
+                        null,
+                        request.medicationId(),
+                        request.startedAt(),
+                        null,
+                        null,
+                        null,
+                        Map.of("source", "MEDICATION_REMINDER")
+                ))
+        );
+        return reportEvents(robotId, eventRequest);
+    }
+
+    @Transactional
+    public RobotEventsReportResponse reportMedicationResponse(Long robotId, MedicationResponseRequest request) {
+        Robot robot = getAccessibleRobot(robotId, true);
+        validateElderId(robot, request.elderId());
+
+        ReportRobotEventsRequest eventRequest = new ReportRobotEventsRequest(
+                List.of(new ReportRobotEventsRequest.RobotEventRequest(
+                        EVENT_TYPE_MEDICATION,
+                        request.action(),
+                        request.medicationId(),
+                        request.respondedAt(),
+                        null,
+                        null,
+                        null,
+                        Map.of("source", "MEDICATION_RESPONSE")
+                ))
+        );
+        return reportEvents(robotId, eventRequest);
+    }
 
     @Transactional
     public RobotEventsReportResponse reportEvents(Long robotId, ReportRobotEventsRequest request) {
@@ -262,6 +330,16 @@ public class RobotEventService {
             throw new EntityNotFoundException("Robot is not assigned to elder");
         }
         return elder;
+    }
+
+    private void validateElderId(Robot robot, Long elderId) {
+        if (elderId == null) {
+            return;
+        }
+        Elder elder = requireRobotElder(robot);
+        if (!elderId.equals(elder.getId())) {
+            throw new IllegalArgumentException("elderId does not match robot owner elder");
+        }
     }
 
     private void insertActivity(Robot robot, ActivityType activityType, LocalDateTime occurredAt, String location) {

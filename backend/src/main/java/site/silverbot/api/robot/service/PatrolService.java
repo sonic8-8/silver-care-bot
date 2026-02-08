@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.robot.request.ReportPatrolRequest;
+import site.silverbot.api.robot.request.ReportPatrolResultsRequest;
 import site.silverbot.api.robot.response.PatrolHistoryEntryResponse;
 import site.silverbot.api.robot.response.PatrolHistoryResponse;
 import site.silverbot.api.robot.response.PatrolItemResponse;
@@ -176,6 +177,29 @@ public class PatrolService {
         return toReportResponse(saved);
     }
 
+    public PatrolReportResponse reportPatrolResults(Long robotId, ReportPatrolResultsRequest request) {
+        LocalDateTime patrolledAt = request.patrolledAt().toLocalDateTime();
+
+        List<ReportPatrolRequest.PatrolItemRequest> items = request.results().stream()
+                .map(item -> new ReportPatrolRequest.PatrolItemRequest(
+                        item.target(),
+                        item.label(),
+                        item.status(),
+                        item.confidence(),
+                        item.imageUrl(),
+                        patrolledAt
+                ))
+                .toList();
+
+        ReportPatrolRequest converted = new ReportPatrolRequest(
+                "vision-" + java.util.UUID.randomUUID(),
+                patrolledAt,
+                patrolledAt,
+                items
+        );
+        return reportPatrol(robotId, converted);
+    }
+
     private PatrolHistoryEntryResponse toHistoryEntry(PatrolResult patrolResult) {
         return new PatrolHistoryEntryResponse(
                 patrolResult.getId(),
@@ -249,6 +273,7 @@ public class PatrolService {
         return switch (target) {
             case "GAS_VALVE" -> "가스밸브";
             case "DOOR" -> "현관문";
+            case "APPLIANCE" -> "전열기구";
             case "OUTLET" -> "콘센트";
             case "WINDOW" -> "창문";
             case "MULTI_TAP" -> "멀티탭";

@@ -94,4 +94,12 @@ public class RobotCommand {
     public void markReceived() {
         this.status = CommandStatus.RECEIVED;
     }
+
+    public void updateResult(String result) {
+        this.result = result;
+    }
+
+    public void updateCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
 }
