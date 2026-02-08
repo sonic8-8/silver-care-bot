@@ -6,14 +6,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record TokenResponse(
         String accessToken,
         String refreshToken,
-        String tokenType,
-        Long expiresIn
+        Long expiresIn,
+        AuthUserResponse user,
+        AuthRobotResponse robot
 ) {
-    public static TokenResponse of(String accessToken, String refreshToken, Long expiresIn) {
-        return new TokenResponse(accessToken, refreshToken, "Bearer", expiresIn);
+    public static TokenResponse withUser(
+            String accessToken,
+            String refreshToken,
+            Long expiresIn,
+            AuthUserResponse user
+    ) {
+        return new TokenResponse(accessToken, refreshToken, expiresIn, user, null);
+    }
+
+    public static TokenResponse withRobot(String accessToken, AuthRobotResponse robot) {
+        return new TokenResponse(accessToken, null, null, null, robot);
+    }
+
+    public static TokenResponse tokens(String accessToken, String refreshToken, Long expiresIn) {
+        return new TokenResponse(accessToken, refreshToken, expiresIn, null, null);
     }
 
     public static TokenResponse accessOnly(String accessToken, Long expiresIn) {
-        return new TokenResponse(accessToken, null, "Bearer", expiresIn);
+        return tokens(accessToken, null, expiresIn);
     }
 }

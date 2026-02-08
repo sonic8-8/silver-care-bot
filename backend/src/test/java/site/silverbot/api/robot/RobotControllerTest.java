@@ -1082,6 +1082,134 @@ class RobotControllerTest extends RestDocsSupport {
 
     @Test
     @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotSettings() throws Exception {
+        Map<String, Object> request = Map.of(
+                "morningMedicationTime", "07:30",
+                "eveningMedicationTime", "19:45",
+                "ttsVolume", 55,
+                "patrolTimeRange", Map.of(
+                        "start", "10:00",
+                        "end", "17:00"
+                )
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.morningMedicationTime").value("07:30"))
+                .andExpect(jsonPath("$.data.eveningMedicationTime").value("19:45"))
+                .andExpect(jsonPath("$.data.ttsVolume").value(55))
+                .andExpect(jsonPath("$.data.patrolTimeRange.start").value("10:00"))
+                .andExpect(jsonPath("$.data.patrolTimeRange.end").value("17:00"))
+                .andDo(document("robot-settings-update",
+                        pathParameters(
+                                parameterWithName("robotId").description("로봇 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("morningMedicationTime").type(JsonFieldType.STRING).description("아침 복약 시간(HH:mm)").optional(),
+                                fieldWithPath("eveningMedicationTime").type(JsonFieldType.STRING).description("저녁 복약 시간(HH:mm)").optional(),
+                                fieldWithPath("ttsVolume").type(JsonFieldType.NUMBER).description("TTS 볼륨(0~100)").optional(),
+                                fieldWithPath("patrolTimeRange").type(JsonFieldType.OBJECT).description("순찰 시간 범위").optional(),
+                                fieldWithPath("patrolTimeRange.start").type(JsonFieldType.STRING).description("순찰 시작 시간(HH:mm)").optional(),
+                                fieldWithPath("patrolTimeRange.end").type(JsonFieldType.STRING).description("순찰 종료 시간(HH:mm)").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
+                                fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답 데이터"),
+                                fieldWithPath("data.morningMedicationTime").type(JsonFieldType.STRING).description("아침 복약 시간"),
+                                fieldWithPath("data.eveningMedicationTime").type(JsonFieldType.STRING).description("저녁 복약 시간"),
+                                fieldWithPath("data.ttsVolume").type(JsonFieldType.NUMBER).description("TTS 볼륨"),
+                                fieldWithPath("data.patrolTimeRange").type(JsonFieldType.OBJECT).description("순찰 시간 범위"),
+                                fieldWithPath("data.patrolTimeRange.start").type(JsonFieldType.STRING).description("순찰 시작 시간"),
+                                fieldWithPath("data.patrolTimeRange.end").type(JsonFieldType.STRING).description("순찰 종료 시간"),
+                                fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("업데이트 시각"),
+                                fieldWithPath("timestamp").type(JsonFieldType.STRING).description("응답 시각")
+                        )
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "other@test.com", roles = {"WORKER"})
+    void updateRobotSettings_nonOwnerWorker_forbidden() throws Exception {
+        Map<String, Object> request = Map.of("ttsVolume", 60);
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateRobotSettings_roleRobotWithMatchedPrincipal_ok() throws Exception {
+        Map<String, Object> request = Map.of("ttsVolume", 65);
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ttsVolume").value(65));
+    }
+
+    @Test
+    void updateRobotSettings_roleRobotWithMismatchedPrincipal_forbidden() throws Exception {
+        Map<String, Object> request = Map.of("ttsVolume", 65);
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .with(user(String.valueOf(robot.getId() + 1)).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotSettings_invalidTtsVolume_badRequest() throws Exception {
+        Map<String, Object> request = Map.of("ttsVolume", 120);
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.details").value("ttsVolume must be between 0 and 100"));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotSettings_invalidMorningTime_badRequest() throws Exception {
+        Map<String, Object> request = Map.of("morningMedicationTime", "7:30");
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.details").value("morningMedicationTime must be in HH:mm format"));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
+    void updateRobotSettings_invalidPatrolRange_badRequest() throws Exception {
+        Map<String, Object> request = Map.of(
+                "patrolTimeRange", Map.of(
+                        "start", "18:00",
+                        "end", "10:00"
+                )
+        );
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/api/robots/{robotId}/settings", robot.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.details").value("patrolTimeRange.start must be earlier than patrolTimeRange.end"));
+    }
+
+    @Test
+    @WithMockUser(username = "worker@test.com", roles = {"WORKER"})
     void updateRobotLocation() throws Exception {
         Map<String, Object> request = Map.of(
                 "x", 42.1,
