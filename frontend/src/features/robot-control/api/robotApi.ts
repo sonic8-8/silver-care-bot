@@ -1,7 +1,12 @@
 import { api } from '@/shared/api';
 import { unwrapApiResponse } from '@/shared/api/response';
 import type { ApiResult } from '@/shared/types';
-import type { RobotLcdMode, RobotStatus } from '@/shared/types/robot.types';
+import type {
+    RobotLcdMode,
+    RobotSettings,
+    RobotStatus,
+    UpdateRobotSettingsPayload,
+} from '@/shared/types/robot.types';
 
 export type RobotCommandType =
     | 'MOVE_TO'
@@ -52,11 +57,26 @@ interface ElderDashboardResponse {
     robotStatus?: DashboardRobotStatusPayload | null;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
 const ensureData = <T>(data: T | null, message: string): T => {
     if (!data) {
         throw new Error(message);
     }
     return data;
+};
+
+const parseRobotSettings = (value: unknown): RobotSettings => {
+    if (!isRecord(value)) {
+        throw new Error('Robot settings response is empty');
+    }
+
+    if (isRecord(value.settings)) {
+        return value.settings as RobotSettings;
+    }
+
+    return value as RobotSettings;
 };
 
 export const robotApi = {
@@ -79,5 +99,13 @@ export const robotApi = {
         const response = await api.get<ApiResult<ElderDashboardResponse>>(`/elders/${elderId}/dashboard`);
         const data = unwrapApiResponse(response.data);
         return typeof data?.robotStatus?.robotId === 'number' ? data.robotStatus.robotId : null;
+    },
+
+    async updateSettings(robotId: number, payload: UpdateRobotSettingsPayload): Promise<RobotSettings> {
+        const response = await api.patch<ApiResult<RobotSettings | RobotStatus>>(
+            `/robots/${robotId}/settings`,
+            payload
+        );
+        return parseRobotSettings(unwrapApiResponse(response.data));
     },
 };

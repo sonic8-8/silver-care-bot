@@ -7,14 +7,17 @@ import { parseJwtPayload } from '@/features/auth/utils/jwt';
 
 const resolvePostLoginPath = (tokens: AuthTokens): string => {
     const payload = parseJwtPayload(tokens.accessToken);
-    const role = payload?.role;
-    const subject = payload?.sub;
+    const role = payload?.role ?? tokens.user?.role ?? (tokens.robot ? 'ROBOT' : undefined);
+    const subject = payload?.sub ?? (tokens.robot ? String(tokens.robot.id) : undefined);
 
     if (role === 'WORKER') {
         return '/elders';
     }
     if (role === 'FAMILY') {
-        const elderId = typeof payload?.elderId === 'number' ? payload.elderId : null;
+        const elderId =
+            typeof payload?.elderId === 'number'
+                ? payload.elderId
+                : (typeof tokens.user?.elderId === 'number' ? tokens.user.elderId : null);
         return elderId ? `/elders/${elderId}` : '/elders';
     }
     if (role === 'ROBOT') {

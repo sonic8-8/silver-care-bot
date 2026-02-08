@@ -37,17 +37,46 @@ const persistTokens = (tokens: AuthTokens | null) => {
 const buildUserFromTokens = (tokens: AuthTokens | null): AuthUser | null => {
     if (!tokens?.accessToken) return null;
     const payload = parseJwtPayload(tokens.accessToken);
-    if (!payload?.sub) return null;
-    const role = payload.role as AuthRole | undefined;
-    if (!role) return null;
-    const userId = Number(payload.sub);
-    if (Number.isNaN(userId)) return null;
-    return {
-        id: userId,
-        role,
-        email: typeof payload.email === 'string' ? payload.email : undefined,
-        elderId: typeof payload.elderId === 'number' ? payload.elderId : undefined,
-    };
+    if (payload?.sub) {
+        const role = payload.role as AuthRole | undefined;
+        if (role) {
+            const userId = Number(payload.sub);
+            if (!Number.isNaN(userId)) {
+                const fallbackUser = tokens.user;
+                return {
+                    id: userId,
+                    role,
+                    email:
+                        typeof payload.email === 'string'
+                            ? payload.email
+                            : fallbackUser?.email,
+                    elderId:
+                        typeof payload.elderId === 'number'
+                            ? payload.elderId
+                            : fallbackUser?.elderId,
+                };
+            }
+        }
+    }
+
+    if (tokens.robot) {
+        return {
+            id: tokens.robot.id,
+            role: 'ROBOT',
+            elderId: tokens.robot.elderId,
+        };
+    }
+
+    if (tokens.user) {
+        return {
+            id: tokens.user.id,
+            role: tokens.user.role,
+            email: tokens.user.email,
+            elderId: tokens.user.elderId,
+        };
+    }
+
+    return null;
 };
 
 const initialTokens = getStoredTokens();

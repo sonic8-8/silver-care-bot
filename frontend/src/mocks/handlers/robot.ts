@@ -11,6 +11,7 @@ import {
     type RobotEventPayload,
     type RobotLcdStatePayload,
 } from '@/shared/types';
+import type { RobotSettings } from '@/shared/types/robot.types';
 
 const resolveRobotId = (value: string | readonly string[] | undefined): number => {
     const robotId = Number(value);
@@ -48,6 +49,23 @@ type PendingCommand = {
 const pendingCommandsByRobotId = new Map<number, PendingCommand[]>();
 let commandSequence = 120;
 
+const createDefaultRobotSettings = (): RobotSettings => ({
+    morningMedicationTime: '08:00',
+    eveningMedicationTime: '19:00',
+    ttsVolume: 70,
+    patrolTimeRange: {
+        start: '09:00',
+        end: '18:00',
+    },
+});
+
+const robotSettingsByRobotId = new Map<number, RobotSettings>([
+    [1, createDefaultRobotSettings()],
+]);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
 const getLcdState = (robotId: number): RobotLcdStatePayload => {
     const current = lcdStateByRobotId.get(robotId);
     if (current) {
@@ -67,6 +85,47 @@ const getPendingCommands = (robotId: number): PendingCommand[] => {
     const initial: PendingCommand[] = [];
     pendingCommandsByRobotId.set(robotId, initial);
     return initial;
+};
+
+const getRobotSettings = (robotId: number): RobotSettings => {
+    const current = robotSettingsByRobotId.get(robotId);
+    if (current) {
+        return current;
+    }
+    const initial = createDefaultRobotSettings();
+    robotSettingsByRobotId.set(robotId, initial);
+    return initial;
+};
+
+const mergeRobotSettings = (current: RobotSettings, value: unknown): RobotSettings => {
+    if (!isRecord(value)) {
+        return current;
+    }
+
+    const next: RobotSettings = { ...current };
+
+    if (typeof value.morningMedicationTime === 'string') {
+        next.morningMedicationTime = value.morningMedicationTime;
+    }
+    if (typeof value.eveningMedicationTime === 'string') {
+        next.eveningMedicationTime = value.eveningMedicationTime;
+    }
+    if (typeof value.ttsVolume === 'number') {
+        next.ttsVolume = value.ttsVolume;
+    }
+    if (isRecord(value.patrolTimeRange)) {
+        const currentRange = current.patrolTimeRange ?? { start: '09:00', end: '18:00' };
+        next.patrolTimeRange = {
+            start: typeof value.patrolTimeRange.start === 'string'
+                ? value.patrolTimeRange.start
+                : currentRange.start,
+            end: typeof value.patrolTimeRange.end === 'string'
+                ? value.patrolTimeRange.end
+                : currentRange.end,
+        };
+    }
+
+    return next;
 };
 
 const badRequest = (message: string) => {
@@ -154,6 +213,7 @@ export const robotHandlers = [
     http.get('/api/robots/:robotId/status', ({ params }) => {
         const resolvedRobotId = resolveRobotId(params.robotId);
         const lcdState = getLcdState(resolvedRobotId);
+        const settings = getRobotSettings(resolvedRobotId);
         const timestamp = new Date().toISOString();
         return HttpResponse.json({
             success: true,
@@ -171,17 +231,23 @@ export const robotHandlers = [
                     capacity: 7,
                     daysUntilEmpty: 2,
                 },
-                settings: {
-                    morningMedicationTime: '08:00',
-                    eveningMedicationTime: '19:00',
-                    ttsVolume: 70,
-                    patrolTimeRange: {
-                        start: '09:00',
-                        end: '18:00',
-                    },
-                },
+                settings,
             },
             timestamp,
+        });
+    }),
+
+    // PATCH /api/robots/:robotId/settings - 로봇 설정 변경
+    http.patch('/api/robots/:robotId/settings', async ({ params, request }) => {
+        const resolvedRobotId = resolveRobotId(params.robotId);
+        const currentSettings = getRobotSettings(resolvedRobotId);
+        const nextSettings = mergeRobotSettings(currentSettings, await request.json());
+        robotSettingsByRobotId.set(resolvedRobotId, nextSettings);
+
+        return HttpResponse.json({
+            success: true,
+            data: nextSettings,
+            timestamp: new Date().toISOString(),
         });
     }),
 
