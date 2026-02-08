@@ -8,6 +8,7 @@ import { parseJwtPayload } from '@/features/auth/utils/jwt';
 const resolvePostLoginPath = (tokens: AuthTokens): string => {
     const payload = parseJwtPayload(tokens.accessToken);
     const role = payload?.role;
+    const subject = payload?.sub;
 
     if (role === 'WORKER') {
         return '/elders';
@@ -15,6 +16,9 @@ const resolvePostLoginPath = (tokens: AuthTokens): string => {
     if (role === 'FAMILY') {
         const elderId = typeof payload?.elderId === 'number' ? payload.elderId : null;
         return elderId ? `/elders/${elderId}` : '/elders';
+    }
+    if (role === 'ROBOT') {
+        return subject ? `/robots/${subject}/lcd` : '/login';
     }
     return '/';
 };
@@ -50,7 +54,7 @@ export const useAuth = () => {
     const robotLogin = useCallback(async (payload: RobotLoginPayload) => {
         const result = await authApi.robotLogin(payload);
         setTokens(result);
-        navigate('/');
+        navigate(resolvePostLoginPath(result));
         return result;
     }, [navigate, setTokens]);
 

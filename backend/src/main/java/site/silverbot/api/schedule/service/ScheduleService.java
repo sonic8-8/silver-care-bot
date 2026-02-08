@@ -10,13 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.schedule.request.CreateScheduleRequest;
 import site.silverbot.api.schedule.request.CreateVoiceScheduleRequest;
 import site.silverbot.api.schedule.request.UpdateScheduleRequest;
@@ -29,7 +26,6 @@ import site.silverbot.domain.schedule.ScheduleRepository;
 import site.silverbot.domain.schedule.ScheduleSource;
 import site.silverbot.domain.schedule.ScheduleType;
 import site.silverbot.domain.user.User;
-import site.silverbot.domain.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +33,7 @@ import site.silverbot.domain.user.UserRepository;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ElderRepository elderRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     public ScheduleResponse createSchedule(Long elderId, CreateScheduleRequest request) {
         Elder elder = getOwnedElder(elderId);
@@ -185,14 +181,7 @@ public class ScheduleService {
     }
 
     private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
-        }
-        return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return currentUserService.getCurrentUser();
     }
 
     private ScheduleResponse toResponse(Schedule schedule) {

@@ -44,11 +44,12 @@ export interface RobotLcdResponse {
     lastUpdatedAt?: string;
 }
 
-interface ElderDetailResponse {
-    id: number;
-    robot?: {
-        id: number;
-    };
+interface DashboardRobotStatusPayload {
+    robotId?: number | null;
+}
+
+interface ElderDashboardResponse {
+    robotStatus?: DashboardRobotStatusPayload | null;
 }
 
 const ensureData = <T>(data: T | null, message: string): T => {
@@ -75,8 +76,8 @@ export const robotApi = {
     },
 
     async getRobotIdByElder(elderId: number): Promise<number | null> {
-        const response = await api.get<ApiResult<ElderDetailResponse>>(`/elders/${elderId}`);
+        const response = await api.get<ApiResult<ElderDashboardResponse>>(`/elders/${elderId}/dashboard`);
         const data = unwrapApiResponse(response.data);
-        return data?.robot?.id ?? null;
+        return typeof data?.robotStatus?.robotId === 'number' ? data.robotStatus.robotId : null;
     },
 };

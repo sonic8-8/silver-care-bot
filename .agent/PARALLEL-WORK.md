@@ -1,6 +1,6 @@
 # 병렬 작업 분배 전략
 
-> **버전**: v3.14
+> **버전**: v3.15
 > **작성일**: 2026-02-04
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PLAN.md](./PLAN.md)
@@ -372,7 +372,7 @@ git branch -D feature/phase4-map-room-be feature/phase4-map-video-fe
 git branch -D feature/phase4-video-location-be feature/phase4-contract-realtime-map
 ```
 
-### 2.11 Phase 6용 Worktree 전환 (현재 단계)
+### 2.11 Phase 6용 Worktree 전환 (완료 기록)
 
 ```bash
 # ============================================
@@ -407,6 +407,43 @@ git checkout -B feature/phase6-lcd-data-quality-be origin/develop
 cd ../agent-4
 git reset --hard HEAD && git clean -fd
 git checkout -B feature/phase6-lcd-contract-e2e origin/develop
+```
+
+### 2.12 Phase 7용 Worktree 전환 (현재 단계)
+
+```bash
+# ============================================
+# develop 최신화 + management 브랜치 동기화
+# ============================================
+cd /mnt/c/Users/SSAFY/Desktop/S14P11C104/sh/agent-0
+git fetch origin
+git checkout management/architect
+git merge --ff-only origin/develop
+git push origin management/architect
+
+# ============================================
+# Agent 1~4: Phase 7 브랜치 생성 및 체크아웃
+# ============================================
+
+# Agent 1: Auth/Settings Backend 계약 정렬
+cd ../agent-1
+git reset --hard HEAD && git clean -fd
+git checkout -B feature/phase7-auth-settings-be origin/develop
+
+# Agent 2: Frontend 소비 계약/긴급 화면 정렬
+cd ../agent-2
+git reset --hard HEAD && git clean -fd
+git checkout -B feature/phase7-frontend-contract-fe origin/develop
+
+# Agent 3: Robot 미구현 API Backend
+cd ../agent-3
+git reset --hard HEAD && git clean -fd
+git checkout -B feature/phase7-robot-ingest-be origin/develop
+
+# Agent 4: 계약/Mock/WebSocket 정렬 및 통합 검증
+cd ../agent-4
+git reset --hard HEAD && git clean -fd
+git checkout -B feature/phase7-contract-websocket origin/develop
 ```
 
 ---
@@ -452,12 +489,12 @@ git checkout -B feature/phase6-lcd-contract-e2e origin/develop
 
 ### 실무 Agent (1~4) Phase별 역할
 
-| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 4 역할 (완료) | Phase 5 역할 (완료) | Phase 6 역할 (계획) | Phase 6 브랜치 |
-|-------|-------------|-------------|--------------------|---------------------|---------------------|---------------------|----------------|
-| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Map 조회/Room CRUD BE | LCD 제어/액션 Backend API + 권한 검증 | LCD Backend 회귀/보안/문서 하드닝 | `feature/phase6-lcd-hardening-be` |
-| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | 지도 Canvas + Snapshot 갤러리 FE | LCD React UI(모드 화면/상호작용) | LCD UI 접근성/표현 고도화 | `feature/phase6-lcd-hardening-fe` |
-| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | Snapshot 저장/조회 + Location BE | LCD 이벤트 저장/조회 + 필요한 스키마 확장 | 이벤트 데이터 품질/정합성 보강 | `feature/phase6-lcd-data-quality-be` |
-| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | 계약/Mock/WebSocket 위치 정렬 | LCD 계약/Mock/WebSocket 토픽 정렬 | 계약/Mock/E2E 검증 및 회귀 방지 | `feature/phase6-lcd-contract-e2e` |
+| Agent | Phase 0 역할 | Phase 1 역할 | Phase 2 역할 (완료) | Phase 4 역할 (완료) | Phase 5 역할 (완료) | Phase 6 역할 (완료) | Phase 7 역할 (계획) | Phase 7 브랜치 |
+|-------|-------------|-------------|--------------------|---------------------|---------------------|---------------------|---------------------|----------------|
+| **1** | BE-INFRA | AUTH | Medication BE + Dashboard BE | Map 조회/Room CRUD BE | LCD 제어/액션 Backend API + 권한 검증 | LCD Backend 회귀/보안/문서 하드닝 | Auth/Robot Settings 계약 정렬 + 보안/응답 회귀 테스트 | `feature/phase7-auth-settings-be` |
+| **2** | FE-INFRA | ELDER | Medication FE + Dashboard FE | 지도 Canvas + Snapshot 갤러리 FE | LCD React UI(모드 화면/상호작용) | LCD UI 접근성/표현 고도화 | Frontend 소비 계약 정렬 + 긴급연락처 UI 보강 | `feature/phase7-frontend-contract-fe` |
+| **3** | DB-SCHEMA | ROBOT | DB 확장 + Schedule BE | Snapshot 저장/조회 + Location BE | LCD 이벤트 저장/조회 + 필요한 스키마 확장 | 이벤트 데이터 품질/정합성 보강 | Robot 미구현 API(map/ack/patrol-results/sleep-wake/sync 확장) 구현 | `feature/phase7-robot-ingest-be` |
+| **4** | CONTRACTS | WEBSOCKET | Notification + Realtime + Schedule FE | 계약/Mock/WebSocket 위치 정렬 | LCD 계약/Mock/WebSocket 토픽 정렬 | 계약/Mock/E2E 검증 및 회귀 방지 | 계약/Mock/WebSocket 정렬 + 교차 통합 검증 | `feature/phase7-contract-websocket` |
 
 ---
 
@@ -1151,6 +1188,66 @@ git commit -m "fix: merge conflict 해결 [Agent N]"
 - [x] Phase 6 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P6-AGENT*`, `COORDINATION-P6`)
 - [x] merge 완료된 `feature/phase6-*` 원격 브랜치 정리
 - [x] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] sync.sh 실행하여 Team Repo 동기화
+```
+
+### Phase 7 착수 준비 기준
+
+```markdown
+## 브랜치 정리 및 재할당 계획
+
+- [x] `develop` 기준 미구현/불일치 항목 목록화 완료
+- [x] Agent 1~4용 `feature/phase7-*` 브랜치명 확정
+  - Agent 1: `feature/phase7-auth-settings-be`
+  - Agent 2: `feature/phase7-frontend-contract-fe`
+  - Agent 3: `feature/phase7-robot-ingest-be`
+  - Agent 4: `feature/phase7-contract-websocket`
+- [x] Agent 1~4 Worktree 전환 명령 정의 완료
+- [x] Phase 7 작업 지시서/DoD 배포 (`COORDINATION-P7`, `WORK-INSTRUCTION-P7-AGENT*`)
+```
+
+### Phase 7 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [ ] Agent 1~4 새 세션 리뷰 Approve 완료
+- [ ] `feature/phase7-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [ ] `management/architect`가 `origin/develop`에 포함됨
+- [ ] Phase 7 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P7-AGENT*`, `COORDINATION-P7`)
+- [ ] merge 완료된 `feature/phase7-*` 원격 브랜치 정리
+- [ ] `feature/phase7-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] sync.sh 실행하여 Team Repo 동기화
+```
+
+### Phase 8 착수 준비 기준
+
+```markdown
+## 브랜치 정리 및 재할당 계획
+
+- [x] Phase 8 목표/우선순위 확정 (초안 UI 유지 최우선, 프로젝트명 `동행` 유지)
+- [x] 기준 디자인 소스 확정 (`sh/Playground/index.tsx`, `sh/Playground/RobotLCD.tsx`)
+- [x] Agent 1~4용 `feature/phase8-*` 브랜치명 확정
+  - Agent 1: `feature/phase8-shell-auth-routing`
+  - Agent 2: `feature/phase8-elder-dashboard-ui`
+  - Agent 3: `feature/phase8-robot-domain-ui`
+  - Agent 4: `feature/phase8-design-system-foundation`
+- [x] Phase 8 작업 지시서/DoD 배포 (`COORDINATION-P8`, `WORK-INSTRUCTION-P8-AGENT*`)
+- [ ] Agent 1~4 Worktree를 `feature/phase8-*`로 전환
+```
+
+### Phase 8 완료 기준
+
+```markdown
+## 통합 및 머지 검증
+
+- [ ] Agent 1~4 새 세션 리뷰 Approve 완료
+- [ ] `feature/phase8-*` 4개 브랜치가 `origin/develop`에 포함됨
+- [ ] `management/architect`가 `origin/develop`에 포함됨
+- [ ] Phase 8 최종 FIX 지시서 반영 완료 (`FIX-INSTRUCTION-P8-AGENT*`, `COORDINATION-P8`)
+- [ ] merge 완료된 `feature/phase8-*` 원격 브랜치 정리
+- [ ] `feature/phase8-*` 로컬 브랜치 정리 및 Worktree 재할당
+- [ ] `/playground` 개발전용 플래그 숨김 정책 적용 확인
 - [ ] sync.sh 실행하여 Team Repo 동기화
 ```
 

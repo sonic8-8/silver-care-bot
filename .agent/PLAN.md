@@ -1,6 +1,6 @@
 # PLAN: 구현 계획서
 
-> **버전**: v1.16
+> **버전**: v1.18
 > **작성일**: 2026-02-02
 > **최종 수정일**: 2026-02-08
 > **기반 문서**: [PRD.md](./PRD.md), [database-erd.md](../docs/database-erd.md)
@@ -571,6 +571,103 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 - [x] `feature/phase6-*` 로컬 브랜치 정리 및 Worktree 재할당
 - [ ] sync.sh 실행하여 Team Repo 동기화
 
+### Phase 7: API 계약 정합 및 미구현 기능 마무리
+> PRD + API 기준 문서(`api-ai.md`, `api-embedded.md`, `api-specification.md`)와 코드 구현을 동기화
+
+#### 7.0 Phase 7 착수 준비 (2026-02-08)
+- [x] `develop` 기준 미구현/불일치 항목 확정
+- [x] Agent 1~4 분배 전략/브랜치명 확정
+- [x] Phase 7 작업 지시서 배포 (`COORDINATION-P7`, `WORK-INSTRUCTION-P7-AGENT*`)
+
+권장 분배(충돌 최소화):
+
+| Agent | 권장 브랜치 | 우선 구현 범위 |
+|-------|-------------|----------------|
+| Agent 1 | `feature/phase7-auth-settings-be` | Auth 응답 계약 정렬 + Robot Settings API |
+| Agent 2 | `feature/phase7-frontend-contract-fe` | Frontend 소비 계약 정렬 + 긴급연락처 UI 보강 |
+| Agent 3 | `feature/phase7-robot-ingest-be` | Robot 미구현 API(map/ack/patrol-results/sleep-wake/sync 확장) |
+| Agent 4 | `feature/phase7-contract-websocket` | 계약/Mock/WebSocket 정렬 + 교차 검증 |
+
+#### 7.1 인증/설정 계약 정렬 (Auth + Settings)
+- [ ] `POST /api/auth/login` 응답 계약 정렬 (`accessToken`, `refreshToken`, `user`)
+- [ ] `POST /api/auth/refresh` 요청/응답 계약 정렬 (쿠키 기반 + body 호환)
+- [ ] `POST /api/auth/robot/login` 응답 계약 정렬 (`accessToken`, `robot`)
+- [ ] `PATCH /api/robots/{robotId}/settings` 구현 (시간/볼륨/순찰시간대)
+- [ ] Frontend 인증 스토어/타입/파서 계약 정렬
+
+#### 7.2 로봇 미구현 API 보강 (Robot Ingestion)
+- [ ] `POST /api/robots/{robotId}/map` 구현 (multipart 업로드 + 저장 경로/메타)
+- [ ] `POST /api/robots/{robotId}/commands/{commandId}/ack` 구현 (명령 상태 전이)
+- [ ] `POST /api/robots/{robotId}/patrol-results` 구현 (Vision 정찰 결과)
+- [ ] `POST /api/robots/{robotId}/sleep-wake` 구현 (기상/취침 감지)
+- [ ] `POST /api/robots/{robotId}/medication-reminder` 구현 (후순위 계약 정렬)
+- [ ] `POST /api/robots/{robotId}/medication-response` 구현 (후순위 계약 정렬)
+
+#### 7.3 동기화/순찰 계약 호환성 정렬
+- [ ] `POST /api/robots/{robotId}/sync` 응답 확장 (`scheduleReminders`, `medications`, `serverTime`)
+- [ ] 순찰 대상 계약 호환 (`APPLIANCE`, `MULTI_TAP` 동시 허용)
+- [ ] 관련 REST Docs/통합 테스트 갱신
+
+#### 7.4 WebSocket/실시간 계약 정렬
+- [ ] `/topic/emergency`, `/topic/elder/{elderId}/status` 발행 경로를 운영 코드에 연결
+- [ ] STOMP 구현과 임베디드 소비 계약 간 차이 해소
+  - [ ] 옵션 A: raw 이벤트(`SUBSCRIBE/PING/PONG`) 호환 레이어 추가
+  - [ ] 옵션 B: STOMP 기준 소비 가이드/Mock/테스트를 전면 정렬
+- [ ] `frontend/src/shared/*`, `frontend/src/mocks/*`, `frontend-lcd/*` 회귀 테스트 보강
+
+#### 7.5 Phase 7 통합/운영 정리
+- [ ] Agent 1~4 P7 리뷰 Approve 및 FIX 지시서 반영
+- [ ] `feature/phase7-*` 4개 브랜치를 `origin/develop`로 병합
+- [ ] `management/architect`를 `origin/develop`에 병합
+- [ ] merge 완료된 `feature/phase7-*` 원격/로컬 브랜치 정리
+- [ ] sync.sh 실행 여부를 운영 일정에 맞춰 확정
+
+### Phase 8: 초안 디자인 복원 + 기능 보존 통합
+> `sh/Playground/index.tsx`, `sh/Playground/RobotLCD.tsx`의 초기 디자인을 현재 기능에 재적용
+
+#### 8.0 Phase 8 착수 준비 (2026-02-08)
+- [x] 사용자 요구사항 확정 (초안 UI 최우선, 프로젝트명 `동행` 유지)
+- [x] 기준 소스 확정 (`Playground/index.tsx`, `Playground/RobotLCD.tsx`)
+- [x] 현재 구현과 기준 소스 차이 분석 완료
+- [x] Phase 8 작업 지시서 배포 (`COORDINATION-P8`, `WORK-INSTRUCTION-P8-AGENT*`)
+
+권장 분배(충돌 최소화):
+
+| Agent | 권장 브랜치 | 우선 구현 범위 |
+|-------|-------------|----------------|
+| Agent 1 | `feature/phase8-shell-auth-routing` | 앱 셸/인증 흐름/루트 라우팅 + `/playground` 개발전용 숨김 |
+| Agent 2 | `feature/phase8-elder-dashboard-ui` | Elders/Dashboard/Notification/Emergency 초기 디자인 복원 |
+| Agent 3 | `feature/phase8-robot-domain-ui` | Robot/LCD/Map/Schedule/Medication/History 초기 디자인 복원 |
+| Agent 4 | `feature/phase8-design-system-foundation` | 공유 UI 토큰/컴포넌트 스타일 기초 정렬 + 회귀 가드 |
+
+#### 8.1 공유 UI/토큰 기반 정렬
+- [ ] `shared/ui` 스타일을 초기 Playground 디자인 톤으로 복원
+- [ ] `Button/Card/Header/Badge/Input/SectionHeader` 시각 규칙 재정렬
+- [ ] 라이트/다크 토글 기준 유지(기능 유지), 디자인은 초기 초안 우선
+
+#### 8.2 보호자 앱 화면 디자인 복원
+- [ ] Login/Signup 화면을 초기 초안 레이아웃/톤으로 복원
+- [ ] ElderSelect/Dashboard/Notification/Emergency 화면 복원
+- [ ] Settings/RobotControl/Schedule/Medication/History/Map 화면 복원
+- [ ] 기존 API 연동/상태관리 훅 동작 회귀 없음
+
+#### 8.3 로봇 LCD 디자인 복원
+- [ ] `RobotLCD`를 초기 초안(`Playground/RobotLCD.tsx`) 기준으로 복원
+- [ ] mode별 애니메이션/카피/칩/버튼 배치 일치
+- [ ] 실제 라우트(`/robots/{robotId}/lcd`, `/elders/:id/robot/lcd`)에서 정상 동작
+
+#### 8.4 라우팅/운영 정책 정렬
+- [x] `/` 기본 진입은 로그인 우선 흐름 유지
+- [x] `ROBOT` 로그인 후 로봇 전용 화면 라우팅 유지
+- [x] `/playground`는 개발 전용 플래그로 숨김(`VITE_ENABLE_PLAYGROUND=true`일 때만 노출)
+
+#### 8.5 Phase 8 통합/운영 정리
+- [ ] Agent 1~4 P8 리뷰 Approve 및 FIX 지시서 반영
+- [ ] `feature/phase8-*` 4개 브랜치를 `origin/develop`로 병합
+- [ ] `management/architect`를 `origin/develop`에 병합
+- [ ] merge 완료된 `feature/phase8-*` 원격/로컬 브랜치 정리
+- [ ] sync.sh 실행 여부를 운영 일정에 맞춰 확정
+
 ---
 
 ## 3. 테스트 전략
@@ -635,6 +732,8 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | Phase 4 | ✅ 구현 완료 (Map/Room/Location/Snapshot + 계약 정렬) | 100% |
 | Phase 5 | ✅ 완료 (LCD 핵심 기능 + P6 하드닝 반영 완료) | 100% |
 | Phase 6 | ✅ 구현/병합 완료 (운영 정리만 잔여) | 95% |
+| Phase 7 | 🔄 진행 중 (API 계약 정렬/미구현 보강) | 40% |
+| Phase 8 | 🔄 착수 준비 완료 (초안 디자인 복원 착수) | 10% |
 
 ---
 
@@ -659,3 +758,5 @@ Phase 2 잔여 항목 처리 원칙 (Gate):
 | v1.14 | 2026-02-08 | Phase 6 완료 반영: UI/Backend/계약 하드닝 체크 완료, `origin/develop` 병합 상태 및 운영 잔여 작업(브랜치 정리/동기화) 갱신 |
 | v1.15 | 2026-02-08 | develop 코드 기준 미체크 항목 정리: Phase 1/5 구현 완료 체크 보강 및 부분 구현 항목(예: 긴급연락처 목록, Framer Motion)은 미체크 유지 |
 | v1.16 | 2026-02-08 | 운영 마감 반영: `feature/phase6-*` 원격/로컬 브랜치 정리 및 Worktree 재할당 체크 완료 (`sync.sh`는 보류) |
+| v1.17 | 2026-02-08 | 미구현 기능 후속계획 추가: Phase 7(API 계약/미구현 엔드포인트/WebSocket 정렬) 분배안 및 체크리스트 신설 |
+| v1.18 | 2026-02-08 | Phase 8 신설: 초기 Playground 디자인 복원 + 기능 보존 통합 계획, `/playground` 개발전용 숨김 정책 및 agent 분배안 반영 |

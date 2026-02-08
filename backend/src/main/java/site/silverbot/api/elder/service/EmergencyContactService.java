@@ -5,13 +5,10 @@ import java.util.List;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.elder.request.CreateContactRequest;
 import site.silverbot.api.elder.request.UpdateContactRequest;
 import site.silverbot.api.elder.response.ContactResponse;
@@ -20,7 +17,6 @@ import site.silverbot.domain.elder.ElderRepository;
 import site.silverbot.domain.elder.EmergencyContact;
 import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.user.User;
-import site.silverbot.domain.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +24,7 @@ import site.silverbot.domain.user.UserRepository;
 public class EmergencyContactService {
     private final ElderRepository elderRepository;
     private final EmergencyContactRepository emergencyContactRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     public ContactResponse createContact(Long elderId, CreateContactRequest request) {
         Elder elder = getOwnedElder(elderId);
@@ -94,14 +90,6 @@ public class EmergencyContactService {
     }
 
     private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
-        }
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return currentUserService.getCurrentUser();
     }
 }

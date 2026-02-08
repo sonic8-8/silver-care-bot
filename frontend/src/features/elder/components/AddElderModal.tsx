@@ -17,6 +17,7 @@ type AddElderModalProps = {
 
 export function AddElderModal({ open, isSubmitting, onClose, onSubmit }: AddElderModalProps) {
     const [name, setName] = useState('');
+    const [nameError, setNameError] = useState<string | undefined>(undefined);
     const [birthDate, setBirthDate] = useState('');
     const [gender, setGender] = useState<'MALE' | 'FEMALE' | ''>('');
     const [address, setAddress] = useState('');
@@ -24,6 +25,7 @@ export function AddElderModal({ open, isSubmitting, onClose, onSubmit }: AddElde
     useEffect(() => {
         if (!open) {
             setName('');
+            setNameError(undefined);
             setBirthDate('');
             setGender('');
             setAddress('');
@@ -36,8 +38,10 @@ export function AddElderModal({ open, isSubmitting, onClose, onSubmit }: AddElde
 
     const handleSubmit = () => {
         if (!name.trim()) {
+            setNameError('이름을 입력해 주세요.');
             return;
         }
+        setNameError(undefined);
         onSubmit({
             name: name.trim(),
             birthDate: birthDate || undefined,
@@ -64,7 +68,14 @@ export function AddElderModal({ open, isSubmitting, onClose, onSubmit }: AddElde
                         label="이름"
                         placeholder="어르신 이름"
                         value={name}
-                        onChange={(event) => setName(event.target.value)}
+                        error={nameError}
+                        onChange={(event) => {
+                            const next = event.target.value;
+                            setName(next);
+                            if (next.trim()) {
+                                setNameError(undefined);
+                            }
+                        }}
                     />
                     <Input
                         label="생년월일"
@@ -100,7 +111,7 @@ export function AddElderModal({ open, isSubmitting, onClose, onSubmit }: AddElde
                 </div>
                 <div className="mt-6 flex gap-3">
                     <Button variant="white" fullWidth onClick={onClose}>취소</Button>
-                    <Button fullWidth onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
+                    <Button fullWidth onClick={handleSubmit} disabled={isSubmitting}>
                         {isSubmitting ? '등록 중...' : '등록하기'}
                     </Button>
                 </div>

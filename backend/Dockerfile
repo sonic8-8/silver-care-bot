@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.gradle \
 COPY . .
 RUN chmod +x gradlew
 RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon bootJar -x test
+    ./gradlew --no-daemon bootJar -x test -x asciidoctor
 
 FROM eclipse-temurin:${JAVA_VERSION}-jre
 WORKDIR /app

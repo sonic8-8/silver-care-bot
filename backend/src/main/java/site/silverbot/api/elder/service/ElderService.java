@@ -14,14 +14,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import site.silverbot.api.common.service.CurrentUserService;
 import site.silverbot.api.elder.request.CreateContactRequest;
 import site.silverbot.api.elder.request.CreateElderRequest;
 import site.silverbot.api.elder.request.UpdateElderRequest;
@@ -41,7 +38,6 @@ import site.silverbot.domain.emergency.EmergencyType;
 import site.silverbot.domain.robot.NetworkStatus;
 import site.silverbot.domain.robot.RobotRepository;
 import site.silverbot.domain.user.User;
-import site.silverbot.domain.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +47,7 @@ public class ElderService {
     private final EmergencyContactRepository emergencyContactRepository;
     private final EmergencyRepository emergencyRepository;
     private final RobotRepository robotRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     public ElderResponse createElder(CreateElderRequest request) {
         User user = getCurrentUser();
@@ -245,14 +241,6 @@ public class ElderService {
     }
 
     private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
-        }
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return currentUserService.getCurrentUser();
     }
 }
