@@ -27,7 +27,7 @@ class FlywayMigrationVerificationTest {
         MigrateResult migrateResult = flyway.migrate();
         assertThat(migrateResult.success).isTrue();
         assertThat(migrateResult.targetSchemaVersion).isNotNull();
-        assertThat(migrateResult.targetSchemaVersion).isEqualTo("12");
+        assertThat(migrateResult.targetSchemaVersion).isEqualTo("13");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {
@@ -41,6 +41,7 @@ class FlywayMigrationVerificationTest {
             assertThat(hasTable(connection, "search_result")).isTrue();
             assertThat(hasTable(connection, "ai_report")).isTrue();
             assertThat(hasIndex(connection, "idx_robot_lcd_event_robot_action_occurred")).isTrue();
+            assertThat(hasEnumValue(connection, "patrol_target", "APPLIANCE")).isTrue();
         }
     }
 
@@ -91,7 +92,7 @@ class FlywayMigrationVerificationTest {
 
         MigrateResult migrated = flyway.migrate();
         assertThat(migrated.success).isTrue();
-        assertThat(migrated.targetSchemaVersion).isEqualTo("12");
+        assertThat(migrated.targetSchemaVersion).isEqualTo("13");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
         try (Connection connection = flyway.getConfiguration().getDataSource().getConnection()) {
@@ -105,6 +106,7 @@ class FlywayMigrationVerificationTest {
             assertThat(hasTable(connection, "search_result")).isTrue();
             assertThat(hasTable(connection, "ai_report")).isTrue();
             assertThat(hasIndex(connection, "idx_robot_lcd_event_robot_action_occurred")).isTrue();
+            assertThat(hasEnumValue(connection, "patrol_target", "APPLIANCE")).isTrue();
         }
     }
 
@@ -183,6 +185,20 @@ class FlywayMigrationVerificationTest {
              ResultSet resultSet = statement.executeQuery(
                      "SELECT 1 FROM pg_indexes WHERE schemaname='"
                              + TEST_SCHEMA + "' AND indexname='" + indexName + "'"
+             )) {
+            return resultSet.next();
+        }
+    }
+
+    private boolean hasEnumValue(Connection connection, String enumType, String enumLabel) throws Exception {
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(
+                     "SELECT 1 FROM pg_type t "
+                             + "JOIN pg_namespace n ON n.oid = t.typnamespace "
+                             + "JOIN pg_enum e ON e.enumtypid = t.oid "
+                             + "WHERE n.nspname='" + TEST_SCHEMA + "' "
+                             + "AND t.typname='" + enumType + "' "
+                             + "AND e.enumlabel='" + enumLabel + "'"
              )) {
             return resultSet.next();
         }

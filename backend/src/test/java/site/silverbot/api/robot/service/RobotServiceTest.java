@@ -37,6 +37,9 @@ import site.silverbot.domain.elder.ElderStatus;
 import site.silverbot.domain.elder.EmergencyContactRepository;
 import site.silverbot.domain.elder.Gender;
 import site.silverbot.domain.emergency.EmergencyRepository;
+import site.silverbot.domain.medication.Medication;
+import site.silverbot.domain.medication.MedicationFrequency;
+import site.silverbot.domain.medication.MedicationRepository;
 import site.silverbot.domain.robot.CommandType;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
@@ -45,6 +48,10 @@ import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotCommand;
 import site.silverbot.domain.robot.RobotCommandRepository;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.schedule.Schedule;
+import site.silverbot.domain.schedule.ScheduleRepository;
+import site.silverbot.domain.schedule.ScheduleSource;
+import site.silverbot.domain.schedule.ScheduleType;
 import site.silverbot.domain.user.User;
 import site.silverbot.domain.user.UserRepository;
 import site.silverbot.domain.user.UserRole;
@@ -77,6 +84,12 @@ class RobotServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ScheduleRepository scheduleRepository;
+
+    @Autowired
+    private MedicationRepository medicationRepository;
+
     @MockBean
     private WebSocketMessageService webSocketMessageService;
 
@@ -90,6 +103,8 @@ class RobotServiceTest {
     @BeforeEach
     void setUp() {
         robotCommandRepository.deleteAllInBatch();
+        scheduleRepository.deleteAllInBatch();
+        medicationRepository.deleteAllInBatch();
         emergencyRepository.deleteAllInBatch();
         robotRepository.deleteAllInBatch();
         emergencyContactRepository.deleteAllInBatch();
@@ -149,6 +164,24 @@ class RobotServiceTest {
                 .issuedAt(LocalDateTime.now())
                 .build());
 
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .elder(robot.getElder())
+                .title("병원 방문")
+                .description("정기 검진")
+                .scheduledAt(LocalDateTime.now().plusHours(3))
+                .location("서울의료원")
+                .type(ScheduleType.HOSPITAL)
+                .source(ScheduleSource.MANUAL)
+                .remindBeforeMinutes(60)
+                .build());
+
+        Medication medication = medicationRepository.save(Medication.builder()
+                .elder(robot.getElder())
+                .name("아침약")
+                .frequency(MedicationFrequency.MORNING)
+                .isActive(true)
+                .build());
+
         RobotSyncRequest request = new RobotSyncRequest(
                 80,
                 true,
@@ -169,6 +202,11 @@ class RobotServiceTest {
 
         assertThat(response.pendingCommands()).hasSize(1);
         assertThat(response.pendingCommands().get(0).commandId()).isEqualTo(pending.getCommandId());
+        assertThat(response.scheduleReminders()).hasSize(1);
+        assertThat(response.scheduleReminders().get(0).scheduleId()).isEqualTo(schedule.getId());
+        assertThat(response.medications()).hasSize(1);
+        assertThat(response.medications().get(0).medicationId()).isEqualTo(medication.getId());
+        assertThat(response.serverTime()).isNotNull();
     }
 
     @Test

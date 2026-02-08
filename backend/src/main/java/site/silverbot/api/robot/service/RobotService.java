@@ -1,9 +1,14 @@
 package site.silverbot.api.robot.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,11 +29,17 @@ import site.silverbot.api.robot.response.RobotStatusResponse;
 import site.silverbot.api.robot.response.RobotSyncResponse;
 import site.silverbot.api.robot.response.UpdateRobotLcdModeResponse;
 import site.silverbot.domain.elder.Elder;
+import site.silverbot.domain.medication.Medication;
+import site.silverbot.domain.medication.MedicationFrequency;
+import site.silverbot.domain.medication.MedicationRepository;
 import site.silverbot.domain.robot.LcdEmotion;
 import site.silverbot.domain.robot.LcdMode;
 import site.silverbot.domain.robot.NetworkStatus;
 import site.silverbot.domain.robot.Robot;
 import site.silverbot.domain.robot.RobotRepository;
+import site.silverbot.domain.schedule.Schedule;
+import site.silverbot.domain.schedule.ScheduleRepository;
+import site.silverbot.domain.schedule.ScheduleStatus;
 import site.silverbot.domain.user.User;
 import site.silverbot.websocket.WebSocketMessageService;
 import site.silverbot.websocket.dto.LcdModeMessage;
@@ -44,6 +55,8 @@ public class RobotService {
     private final RobotStatusNotifier robotStatusNotifier;
     private final CurrentUserService currentUserService;
     private final WebSocketMessageService webSocketMessageService;
+    private final ScheduleRepository scheduleRepository;
+    private final MedicationRepository medicationRepository;
 
     public RobotStatusResponse getStatus(Long robotId) {
         Robot robot = getRobot(robotId);
@@ -149,7 +162,12 @@ public class RobotService {
             robotStatusNotifier.notifyStatusChanged(robot);
         }
 
-        return new RobotSyncResponse(robotCommandService.consumePendingCommands(robotId));
+        return new RobotSyncResponse(
+                robotCommandService.consumePendingCommands(robotId),
+                loadScheduleReminders(robot),
+                loadMedicationSyncItems(robot),
+                OffsetDateTime.now()
+        );
     }
 
     @Transactional
@@ -253,6 +271,95 @@ public class RobotService {
 
     private String normalizeLcdText(String value) {
         return value == null ? "" : value;
+    }
+
+    private List<RobotSyncResponse.ScheduleReminderResponse> loadScheduleReminders(Robot robot) {
+        Elder elder = robot.getElder();
+        if (elder == null) {
+            return List.of();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Schedule> schedules = scheduleRepository
+                .findTop5ByElderIdAndStatusAndScheduledAtGreaterThanEqualOrderByScheduledAtAscIdAsc(
+                        elder.getId(),
+                        ScheduleStatus.UPCOMING,
+                        now
+                );
+        return schedules.stream()
+                .map(schedule -> new RobotSyncResponse.ScheduleReminderResponse(
+                        schedule.getId(),
+                        schedule.getTitle(),
+                        schedule.getScheduledAt(),
+                        schedule.getScheduledAt().minusMinutes(schedule.getRemindBeforeMinutes())
+                ))
+                .toList();
+    }
+
+    private List<RobotSyncResponse.MedicationResponse> loadMedicationSyncItems(Robot robot) {
+        Elder elder = robot.getElder();
+        if (elder == null) {
+            return List.of();
+        }
+
+        List<Medication> medications = medicationRepository.findAllByElderIdAndIsActiveTrueOrderByIdAsc(elder.getId());
+        if (medications.isEmpty()) {
+            return List.of();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<RobotSyncResponse.MedicationResponse> responses = new ArrayList<>();
+        for (Medication medication : medications) {
+            LocalDateTime nextScheduledAt = resolveMedicationScheduledAt(robot, medication, now);
+            if (nextScheduledAt != null) {
+                responses.add(new RobotSyncResponse.MedicationResponse(
+                        medication.getId(),
+                        nextScheduledAt,
+                        medication.getName()
+                ));
+            }
+        }
+
+        return responses.stream()
+                .sorted(Comparator.comparing(RobotSyncResponse.MedicationResponse::scheduledAt))
+                .limit(10)
+                .toList();
+    }
+
+    private LocalDateTime resolveMedicationScheduledAt(Robot robot, Medication medication, LocalDateTime now) {
+        LocalDate today = now.toLocalDate();
+        LocalDate startDate = medication.getStartDate();
+        LocalDate endDate = medication.getEndDate();
+        if (endDate != null && endDate.isBefore(today)) {
+            return null;
+        }
+
+        LocalDate baseDate = startDate != null && startDate.isAfter(today) ? startDate : today;
+        List<LocalDateTime> candidates = new ArrayList<>();
+        for (LocalTime time : resolveMedicationTimes(robot, medication.getFrequency())) {
+            LocalDateTime candidate = LocalDateTime.of(baseDate, time);
+            if (!candidate.isAfter(now)) {
+                candidate = candidate.plusDays(1);
+            }
+            if (endDate == null || !candidate.toLocalDate().isAfter(endDate)) {
+                candidates.add(candidate);
+            }
+        }
+
+        return candidates.stream()
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    private List<LocalTime> resolveMedicationTimes(Robot robot, MedicationFrequency frequency) {
+        if (frequency == null) {
+            return List.of();
+        }
+        return switch (frequency) {
+            case MORNING -> List.of(robot.getMorningMedicationTime());
+            case EVENING -> List.of(robot.getEveningMedicationTime());
+            case BOTH -> List.of(robot.getMorningMedicationTime(), robot.getEveningMedicationTime());
+        };
     }
 
     private LcdMode parseRequiredMode(String mode) {

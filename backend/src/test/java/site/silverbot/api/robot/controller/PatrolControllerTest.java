@@ -254,4 +254,36 @@ class PatrolControllerTest extends RestDocsSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
+
+    @Test
+    void reportPatrol_acceptsApplianceTarget() throws Exception {
+        String request = """
+                {
+                  "patrolId": "patrol-appliance-compat",
+                  "startedAt": "2026-02-07T09:00:00",
+                  "completedAt": "2026-02-07T09:05:00",
+                  "items": [
+                    {
+                      "target": "APPLIANCE",
+                      "label": "난방기",
+                      "status": "OFF",
+                      "confidence": 0.86
+                    },
+                    {
+                      "target": "MULTI_TAP",
+                      "label": "멀티탭",
+                      "status": "ON",
+                      "confidence": 0.91
+                    }
+                  ]
+                }
+                """;
+
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/robots/{robotId}/patrol/report", robot.getId())
+                        .with(user(String.valueOf(robot.getId())).roles("ROBOT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
 }
