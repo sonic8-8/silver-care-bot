@@ -149,6 +149,37 @@ describe('useRobotLcdRealtime', () => {
         expect(result.current.lcdState?.updatedAt).toBe('2026-02-08T08:31:00+09:00');
     });
 
+    it('accepts raw payload without STOMP envelope for embedded bridge compatibility', () => {
+        const onLcdChange = vi.fn();
+        const { result } = renderHook(() =>
+            useRobotLcdRealtime({
+                token: 'access-token',
+                robotId: 10,
+                onLcdChange,
+            })
+        );
+
+        const lcdSubscription = subscriptions[0];
+        expect(lcdSubscription).toBeDefined();
+
+        const payload = {
+            robotId: 10,
+            mode: 'SCHEDULE',
+            emotion: 'neutral',
+            message: '일정 시간이 다가오고 있어요.',
+            subMessage: '12:00 병원 방문',
+            updatedAt: '2026-02-08T08:31:30+09:00',
+        };
+
+        act(() => {
+            lcdSubscription?.onMessage(payload, createMessage(JSON.stringify(payload)));
+        });
+
+        expect(onLcdChange).toHaveBeenCalledTimes(1);
+        expect(result.current.lcdState?.mode).toBe('SCHEDULE');
+        expect(result.current.lcdState?.updatedAt).toBe('2026-02-08T08:31:30+09:00');
+    });
+
     it('deduplicates duplicated messages', () => {
         const onLcdChange = vi.fn();
         renderHook(() =>

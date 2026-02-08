@@ -155,6 +155,38 @@ describe('useRobotLocationRealtime', () => {
         expect(onLocation).toHaveBeenCalledTimes(1);
     });
 
+    it('accepts raw payload without STOMP envelope for embedded bridge compatibility', () => {
+        const onLocation = vi.fn();
+        const { result } = renderHook(() =>
+            useRobotLocationRealtime({
+                token: 'access-token',
+                robotId: 10,
+                onLocation,
+            })
+        );
+
+        const locationSubscription = subscriptions[0];
+        expect(locationSubscription).toBeDefined();
+
+        const payload = {
+            robotId: 10,
+            elderId: 22,
+            roomId: 'KITCHEN',
+            x: 120,
+            y: 220,
+            heading: 180,
+            timestamp: '2026-02-07T10:26:00+09:00',
+        };
+
+        act(() => {
+            locationSubscription?.onMessage(payload, createMessage(JSON.stringify(payload)));
+        });
+
+        expect(onLocation).toHaveBeenCalledTimes(1);
+        expect(result.current.location?.robotId).toBe(10);
+        expect(result.current.location?.timestamp).toBe('2026-02-07T10:26:00+09:00');
+    });
+
     it('ignores mismatched robot id and wrong message type', () => {
         const onLocation = vi.fn();
         const { result } = renderHook(() =>
