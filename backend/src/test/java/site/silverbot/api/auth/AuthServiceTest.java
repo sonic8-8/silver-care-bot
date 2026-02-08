@@ -112,6 +112,7 @@ class AuthServiceTest {
         assertThat(refreshResponse.refreshToken()).isNotBlank();
         assertThat(refreshResponse.refreshToken()).isNotEqualTo(loginResponse.refreshToken());
         assertThat(user.validateRefreshToken(refreshResponse.refreshToken())).isTrue();
+        assertThat(user.validateRefreshToken(loginResponse.refreshToken())).isFalse();
         assertThat(refreshResponse.user()).isNull();
     }
 
