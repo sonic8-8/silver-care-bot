@@ -43,4 +43,42 @@ describe('authStore', () => {
         expect(localStorage.getItem('accessToken')).toBeNull();
         expect(localStorage.getItem('refreshToken')).toBeNull();
     });
+
+    it('falls back to user.elderId when jwt elderId claim is missing', () => {
+        const accessToken = createToken({ sub: '21', role: 'FAMILY' });
+        const tokens: AuthTokens = {
+            accessToken,
+            user: {
+                id: 21,
+                role: 'FAMILY',
+                elderId: 77,
+            },
+        };
+
+        useAuthStore.getState().setTokens(tokens);
+
+        const state = useAuthStore.getState();
+        expect(state.user?.id).toBe(21);
+        expect(state.user?.role).toBe('FAMILY');
+        expect(state.user?.elderId).toBe(77);
+    });
+
+    it('falls back to user.email when jwt email claim is missing', () => {
+        const accessToken = createToken({ sub: '31', role: 'WORKER' });
+        const tokens: AuthTokens = {
+            accessToken,
+            user: {
+                id: 31,
+                role: 'WORKER',
+                email: 'worker31@test.com',
+            },
+        };
+
+        useAuthStore.getState().setTokens(tokens);
+
+        const state = useAuthStore.getState();
+        expect(state.user?.id).toBe(31);
+        expect(state.user?.role).toBe('WORKER');
+        expect(state.user?.email).toBe('worker31@test.com');
+    });
 });

@@ -42,11 +42,18 @@ const buildUserFromTokens = (tokens: AuthTokens | null): AuthUser | null => {
         if (role) {
             const userId = Number(payload.sub);
             if (!Number.isNaN(userId)) {
+                const fallbackUser = tokens.user;
                 return {
                     id: userId,
                     role,
-                    email: typeof payload.email === 'string' ? payload.email : undefined,
-                    elderId: typeof payload.elderId === 'number' ? payload.elderId : undefined,
+                    email:
+                        typeof payload.email === 'string'
+                            ? payload.email
+                            : fallbackUser?.email,
+                    elderId:
+                        typeof payload.elderId === 'number'
+                            ? payload.elderId
+                            : fallbackUser?.elderId,
                 };
             }
         }

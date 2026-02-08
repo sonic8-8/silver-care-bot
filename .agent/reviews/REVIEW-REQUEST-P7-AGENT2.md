@@ -5,6 +5,7 @@
 - 작업 범위:
   - `agent-0/.agent/dispatch/COORDINATION-P7.md`
   - `agent-0/.agent/dispatch/WORK-INSTRUCTION-P7-AGENT2.md`
+  - `agent-0/.agent/dispatch/FIX-INSTRUCTION-P7-AGENT2.md`
 - 목표:
   - Auth 소비 계약(`user`, `robot`, `refreshToken`) 정렬
   - Robot Settings 소비 경로(`PATCH /api/robots/{robotId}/settings`) 연결 및 검증
@@ -59,3 +60,31 @@ npm run build
 ### 참고 사항
 - `refresh`는 기존 쿠키 기반 흐름을 유지하며, 응답 파서만 신규 계약 형태를 수용하도록 확장했습니다.
 - Robot Settings는 기존 알림 설정 화면 안에 섹션으로 통합했습니다.
+
+---
+
+## Round 2 수정 반영 (FIX-INSTRUCTION-P7-AGENT2)
+
+### 수정 요약
+- [x] `FAMILY` 라우팅 fallback 보강
+  - `payload.elderId` 누락 시 `tokens.user.elderId`를 사용하도록 수정
+  - 우선순위: `payload.elderId` → `tokens.user.elderId` → `/elders`
+- [x] `AuthStore` 사용자 파싱 fallback 보강
+  - JWT `sub/role` 유지
+  - JWT `email/elderId` 누락 시 `tokens.user.email/elderId` fallback 반영
+- [x] 테스트 보강
+  - `useAuth.test.tsx`: FAMILY `elderId` fallback 케이스 추가
+  - `authStore.test.ts`: `elderId`/`email` fallback 케이스 추가
+
+### Round 2 변경 파일
+| 파일 | 변경 유형 | 설명 |
+|------|----------|------|
+| `frontend/src/features/auth/hooks/useAuth.ts` | 수정 | FAMILY 라우팅 시 `tokens.user.elderId` fallback 반영 |
+| `frontend/src/features/auth/store/authStore.ts` | 수정 | JWT `email/elderId` 누락 시 `tokens.user` fallback 반영 |
+| `frontend/src/features/auth/hooks/useAuth.test.tsx` | 수정 | FAMILY `elderId` fallback 회귀 테스트 1건 추가 |
+| `frontend/src/features/auth/store/authStore.test.ts` | 수정 | `elderId`/`email` fallback 테스트 2건 추가 |
+
+### Round 2 테스트 실행 결과
+- `cd frontend && npm run test -- --run src/features/auth/hooks/useAuth.test.tsx src/features/auth/store/authStore.test.ts` ✅ PASS (2 files, 9 tests)
+- `cd frontend && npm run build` ✅ PASS
+- 참고: `npm run test -- --run` 전체 실행은 Vitest worker timeout(환경 이슈)으로 완료 안정성이 낮아, 변경 범위 대상 테스트로 재검증했습니다.

@@ -14,7 +14,10 @@ const resolvePostLoginPath = (tokens: AuthTokens): string => {
         return '/elders';
     }
     if (role === 'FAMILY') {
-        const elderId = typeof payload?.elderId === 'number' ? payload.elderId : null;
+        const elderId =
+            typeof payload?.elderId === 'number'
+                ? payload.elderId
+                : (typeof tokens.user?.elderId === 'number' ? tokens.user.elderId : null);
         return elderId ? `/elders/${elderId}` : '/elders';
     }
     if (role === 'ROBOT') {

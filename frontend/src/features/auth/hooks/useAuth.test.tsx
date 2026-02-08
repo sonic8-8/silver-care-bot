@@ -71,6 +71,28 @@ describe('useAuth', () => {
         expect(navigateMock).toHaveBeenCalledWith('/elders/7');
     });
 
+    it('uses user.elderId when family jwt elderId claim is missing', async () => {
+        const accessToken = createToken({ sub: '12', role: 'FAMILY' });
+        const tokens: AuthTokens = {
+            accessToken,
+            refreshToken: 'refresh',
+            user: {
+                id: 12,
+                role: 'FAMILY',
+                elderId: 42,
+            },
+        };
+        vi.mocked(authApi.login).mockResolvedValue(tokens);
+
+        const { result } = renderHook(() => useAuth());
+
+        await act(async () => {
+            await result.current.login({ email: 'family42@test.com', password: 'password123' });
+        });
+
+        expect(navigateMock).toHaveBeenCalledWith('/elders/42');
+    });
+
     it('uses user contract when jwt role claim is missing', async () => {
         const accessToken = createToken({ sub: '3' });
         const tokens: AuthTokens = {
